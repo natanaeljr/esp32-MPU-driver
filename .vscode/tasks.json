@@ -1,0 +1,79 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "taskName": "build",
+            "type": "shell",
+            "command": "make all",
+            "group": "build",
+            "presentation": {
+                "reveal": "always"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "taskName": "clean",
+            "type": "shell",
+            "command": "make clean",
+            "group": "build",
+            "presentation": {
+                "reveal": "silent"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "taskName": "flash",
+            "type": "shell",
+            "command": "make flash",
+            "group": "build",
+            "presentation": {
+                "reveal": "always"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "taskName": "flash monitor",
+            "type": "shell",
+            "command": "make flash monitor",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "taskName": "app-flash",
+            "type": "shell",
+            "command": "make app-flash",
+            "group": "build",
+            "presentation": {
+                "reveal": "always"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "taskName": "monitor",
+            "type": "shell",
+            "command": "make monitor",
+            "group": "test",
+            "presentation": {
+                "reveal": "always"
+            }            
+        }
+    ]
+}
