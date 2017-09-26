@@ -38,12 +38,12 @@
     #define MPU_ACONFIG_FS_SEL_BIT          (4) // [4:3]
     #define MPU_ACONFIG_FS_SEL_LENGTH       (2)
 //------------------------------------------------------------------------------
-#define MPU_RA_FF_THR               (0x1D)
-#define MPU_RA_FF_DUR               (0x1E)
+#define MPU_REG_FF_THR               (0x1D)
+#define MPU_REG_FF_DUR               (0x1E)
 #define MPU_REG_MOTION_THR          (0x1F) // [7:0] // MPU9250_REG_WOM_THR
 #define MPU_REG_MOTION_DUR          (0x20)
-#define MPU_RA_ZRMOTION_THR         (0x21)
-#define MPU_RA_ZRMOTION_DUR         (0x22)
+#define MPU_REG_ZRMOTION_THR         (0x21)
+#define MPU_REG_ZRMOTION_DUR         (0x22)
 //------------------------------------------------------------------------------
 #define MPU_REG_FIFO_EN             (0x23)
     #define MPU_FIFO_TEMP_EN_BIT            (7)
@@ -121,9 +121,13 @@
     #define MPU_INT_I2C_BYPASS_EN_BIT       (1)
 //------------------------------------------------------------------------------
 #define MPU_REG_INT_ENABLE          (0x38)
+    #define MPU_INT_FREEFALL_EN_BIT         (7)
     #define MPU_INT_MOTION_EN_BIT           (6)
+    #define MPU_INT_ZEROMOTION_EN_BIT       (5)
     #define MPU_INT_FIFO_OFLOW_EN_BIT       (4)
     #define MPU_INT_FSYNC_INT_EN_BIT        (3)
+    #define MPU_INT_PLL_RDY_EN_BIT          (2)
+    #define MPU_INT_DMP_RDY_EN_BIT          (1)
     #define MPU_INT_RAW_DATA_RDY_EN_BIT     (0)
 //------------------------------------------------------------------------------
 #define MPU_REG_DMP_INT_STATUS      (0x39)
@@ -303,12 +307,15 @@
     #define MPU6500_ACONFIG2_A_DLPF_CFG_LENGTH      (3)
 //------------------------------------------------------------------------------
 #define MPU6500_REG_LP_ACCEL_ODR        (0x1E)
+    #define MPU6500_LPA_ODR_CLKSEL_BIT              (3) // [3:0]
+    #define MPU6500_LPA_ODR_CLKSEL_LENGTH           (4)
+//------------------------------------------------------------------------------
 #define MPU6500_REG_XA_OFFSET_H         (0x77)
 #define MPU6500_REG_XA_OFFSET_L         (0x78)
 #define MPU6500_REG_YA_OFFSET_H         (0x7A)
 #define MPU6500_REG_YA_OFFSET_L         (0x7B)
 #define MPU6500_REG_ZA_OFFSET_H         (0x7D)
-#define MPU6500_REG_ZA_OFFSET_L         (0x7C)
+#define MPU6500_REG_ZA_OFFSET_L         (0x7C) // review this ones, might be wrong
 #endif
 
 

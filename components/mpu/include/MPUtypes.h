@@ -1,6 +1,7 @@
 #ifndef _MPU_TYPES_H_
 #define _MPU_TYPES_H_
 
+#include "MPUregistermap.h"
 #include <stdint.h>
 
 typedef enum {
@@ -10,18 +11,18 @@ typedef enum {
 
 // Gyro full-scale-range
 typedef enum {
-    MPU_GYRO_FSR_250DPS  = 0,
-    MPU_GYRO_FSR_500DPS  = 1,
-    MPU_GYRO_FSR_1000DPS = 2,
-    MPU_GYRO_FSR_2000DPS = 3
+    MPU_GYRO_FS_250DPS  = 0,
+    MPU_GYRO_FS_500DPS  = 1,
+    MPU_GYRO_FS_1000DPS = 2,
+    MPU_GYRO_FS_2000DPS = 3
 } mpu_gyro_fsr_t;
 
 // Accel full-scale-range
 typedef enum {
-    MPU_ACCEL_FSR_2G  = 0,
-    MPU_ACCEL_FSR_4G  = 1,
-    MPU_ACCEL_FSR_8G  = 2,
-    MPU_ACCEL_FSR_16G = 3
+    MPU_ACCEL_FS_2G  = 0,
+    MPU_ACCEL_FS_4G  = 1,
+    MPU_ACCEL_FS_8G  = 2,
+    MPU_ACCEL_FS_16G = 3
 } mpu_accel_fsr_t;
 
 // Digital low-pass filter (based on gyro bandwidth)
@@ -38,15 +39,11 @@ typedef enum {
 
 // Clock source
 typedef enum {
-    MPU_CLOCK_INTERNAL = 0, // 20MHz for MPU6500 and 8MHz for MPU6050
-#if defined _MPU6500_
+    MPU_CLOCK_INTERNAL   = 0, // 20MHz for MPU6500 and 8MHz for MPU6050
     MPU_CLOCK_PLL = 3       // Selects automatically best pll source
-#elif defined _MPU6050_
-    MPU_CLOCK_PLL_XG   = 1,
-    MPU_CLOCK_PLL_YG   = 2,
-    MPU_CLOCK_PLL_ZG   = 3,
-    MPU_CLOCK_EXT32KHZ = 4,
-    MPU_CLOCK_EXT19MHZ = 5,
+#if defined _MPU6050_
+    ,MPU_CLOCK_EXT32KHZ  = 4,
+    MPU_CLOCK_EXT19MHZ   = 5,
     MPU_CLOCK_KEEP_RESET = 7
 #endif
 } mpu_clock_src_t;
@@ -119,13 +116,73 @@ typedef enum {
 } mpu_int_clear_t;
 
 #ifdef _MPU6500_
+
 // MPU6500 Fifo size
 typedef enum {
     MPU6500_FIFO_SIZE_1K = 1,
     MPU6500_FIFO_SIZE_2K = 2,
     MPU6500_FIFO_SIZE_4K = 3,
 } mpu6500_fifo_size_t;
+
 #endif
+
+// DMP Interrupt mode
+typedef enum {
+    DMP_INT_MODE_PACKET = 0,
+    DMP_INT_MODE_GESTURE = 1
+} dmp_int_mode_t;
+
+// Enable Sensors to go into FIFO
+#define MPU_FIFO_GYRO           (MPU_FIFO_XGYRO_EN_BIT | MPU_FIFO_YGYRO_EN_BIT | MPU_FIFO_ZGYRO_EN_BIT) 
+#define MPU_FIFO_ACCEL          (MPU_FIFO_ACCEL_EN_BIT)
+#define MPU_FIFO_TEMPERATURE    (MPU_FIFO_TEMP_EN_BIT)
+#define MPU_FIFO_SLAVE0         (MPU_FIFO_SLV_0_EN_BIT)
+#define MPU_FIFO_SLAVE1         (MPU_FIFO_SLV_1_EN_BIT)
+#define MPU_FIFO_SLAVE2         (MPU_FIFO_SLV_2_EN_BIT)
+#define MPU_FIFO_SLAVE3         (0x100)
+typedef uint16_t mpu_fifo_sensors_t;
+
+// Enable features to generate signal at Interrupt pin
+#define MPU_INT_FREEFALL        (MPU_INT_FREEFALL_EN_BIT)
+#define MPU_INT_MOTION          (MPU_INT_MOTION_EN_BIT)
+#define MPU_INT_ZEROMOTION      (MPU_INT_ZEROMOTION_EN_BIT)
+#define MPU_INT_FIFO_OVERFLOW   (MPU_INT_FIFO_OFLOW_EN_BIT)
+#define MPU_INT_FSYNC           (MPU_INT_FSYNC_INT_EN_BIT)
+#define MPU_INT_PLL_READY       (MPU_INT_PLL_RDY_EN_BIT)
+#define MPU_INT_DMP_READY       (MPU_INT_DMP_RDY_EN_BIT)
+#define MPU_INT_RAWDATA_READY   (MPU_INT_RAW_DATA_RDY_EN_BIT)
+typedef uint8_t mpu_int_t;
+
+// Enable DMP features 
+/* @note DMP_FEATURE_LP_QUAT and DMP_FEATURE_6X_LP_QUAT are mutually exclusive.
+ * @note DMP_FEATURE_SEND_RAW_GYRO and DMP_FEATURE_SEND_CAL_GYRO are also
+ * mutually exclusive.
+ * @note DMP_FEATURE_PEDOMETER is always enabled.
+ */
+#define DMP_FEATURE_TAP             (0x001)
+#define DMP_FEATURE_ANDROID_ORIENT  (0x002)
+#define DMP_FEATURE_LP_QUAT         (0x004)
+#define DMP_FEATURE_PEDOMETER       (0x008)
+#define DMP_FEATURE_6X_LP_QUAT      (0x010)
+#define DMP_FEATURE_GYRO_CAL        (0x020)
+#define DMP_FEATURE_SEND_RAW_ACCEL  (0x040)
+#define DMP_FEATURE_SEND_RAW_GYRO   (0x080)
+#define DMP_FEATURE_SEND_CAL_GYRO   (0x100)
+typedef uint16_t dmp_features_t;
+
+// DMP Tap axes
+#define DMP_TAP_X       (0x30)
+#define DMP_TAP_Y       (0x0C)
+#define DMP_TAP_Z       (0x03)
+#define DMP_TAP_XYZ     (0x3F)
+typedef uint8_t dmp_tap_axis_t;
+
+// Axis for cache gyro and accel
+typedef struct {
+    int16_t x;
+    int16_t y;
+    int16_t z;
+} mpu_axis_t;
 
 // MPU configuration cache
 typedef struct mpu_config_s {

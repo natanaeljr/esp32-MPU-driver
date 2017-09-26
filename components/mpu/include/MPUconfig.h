@@ -13,12 +13,18 @@
 
 
 /*******************************************************************************
- * DEBUG ERRORS: Logs any error inside MPU functions. Uncomment for enable
+ * DEBUG ERRORS: Logs any error within MPU methods. Uncomment for enable
  ******************************************************************************/
 #define MPU_ERROR_LOGGER
 
 
 
+// TODO: cache option
+
+
+// Checks for FIFO corruption throught QUATERNION analyses (DMP mode only)
+// TODO: elaborate
+#define FIFO_CORRUPTION_CHECK
 
 
 
@@ -27,22 +33,14 @@
 
 
 
+/*******************************************************************************
+ * DO NOT EDIT FROM HERE ON
+ ******************************************************************************/
 
-
-
-
-
-
-
-
-
-/*********************
- * DO NOT CROSS HERE *
- *********************/
 
 /************************** MPU SELECTION CHECK *******************************/
 #if !defined _MPU6050_ && !defined _MPU9150_ && !defined _MPU6500_ && !defined _MPU9250_
-#error  Which MPU are you using? See 'MPUconfig.h' to select a MPU chip.
+#error  Which MPU are you using? See 'MPUconfig.h' to select a MPU CHECK.
 #endif
 #if defined _MPU9250_ && defined _MPU9150_
 #error MPU9250 and MPU9150 cannot both be defined. See 'MPUconfig.h' to select a MPU chip.
@@ -79,6 +77,9 @@
 #define AK89xx_SECONDARY
 #endif
 /******************************************************************************/
+
+
+
 
 
 #endif /* end of include guard: _MPU_CONFIG_H_ */

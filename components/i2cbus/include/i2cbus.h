@@ -4,9 +4,14 @@
 #include "driver/i2c.h"
 #include "esp_err.h"
 
-// Config
+/*************************************
+ * CONFIGS
+ *************************************/
 #define TIMEOUT_DEFAULT     (1000)      /*!< Timeout in milliseconds */
-#define I2C_ESP_LOG         ESP_LOGV    /*!< Comment out or change log level, logging stuff will be the same at all levels */
+#define I2C_LOG_ERRORS      (true)      /*!< Logs any read/write error that ocurrs. Uncomment for disable*/
+#define I2C_LOG_READWRITES  ESP_LOGV    /*!< Logs all successful read/write operations performed.
+                                             You can set the ESP-log-level here. Uncomment for disable.*/
+
 
 // Receive Acknowledge
 #define ACK_CHECK_ENABLE    (0x1)       /*!< Every write is checked by default*/

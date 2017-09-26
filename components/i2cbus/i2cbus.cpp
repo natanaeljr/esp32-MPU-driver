@@ -31,6 +31,7 @@ esp_err_t i2cbus_t::begin(gpio_num_t sda_io_num, gpio_num_t scl_io_num, gpio_pul
     conf.master.clk_speed = clk_speed;
     esp_err_t err = i2c_param_config(port, &conf);
     if (!err) err = i2c_driver_install(port, conf.mode, 0, 0, 0);
+    // do not need to log errors here, esp-i2c lib will do
     return err;
 }
 
@@ -79,8 +80,16 @@ esp_err_t i2cbus_t::write_bytes(uint8_t address, uint8_t _register, uint8_t leng
     i2c_master_stop(cmd);
     esp_err_t err = i2c_master_cmd_begin(port, cmd, ticks_to_wait);
     i2c_cmd_link_delete(cmd);
-    #if defined I2C_ESP_LOG
-        if (!err) I2C_ESP_LOG(TAG, "written %d bytes to reg(0x%X) at slave(0x%X)", length, _register, address);
+    #if defined I2C_LOG_READWRITES
+        if (!err) {I2C_LOG_READWRITES(TAG, "[0x%X] write %d bytes to reg 0x%X", address, length, _register);}
+    #endif
+    #if defined I2C_LOG_ERRORS
+        #ifdef I2C_LOG_READWRITES
+            else {
+        #else
+            if (err) {
+        #endif
+        ESP_LOGE(TAG, "[0x%X] Failed to write %d bytes to reg 0x%X", address, length, _register);}
     #endif
     return err;
 }
@@ -122,8 +131,16 @@ esp_err_t i2cbus_t::read_bytes(uint8_t address, uint8_t _register, uint8_t lengt
     i2c_master_stop(cmd);
     esp_err_t err = i2c_master_cmd_begin(port, cmd, ticks_to_wait);
     i2c_cmd_link_delete(cmd);
-    #if defined I2C_ESP_LOG
-        if (!err) I2C_ESP_LOG(TAG, "read %d bytes from reg(0x%X) at slave(0x%X)", length, _register, address);
+    #if defined I2C_LOG_READWRITES
+        if (!err) {I2C_LOG_READWRITES(TAG, "[0x%X] read %d bytes from reg 0x%X", address, length, _register);}
+    #endif
+    #if defined I2C_LOG_ERRORS
+        #ifdef I2C_LOG_READWRITES
+            else {
+        #else
+            if (err) {
+        #endif
+        ESP_LOGE(TAG, "[0x%X] Failed to read %d bytes to reg 0x%X", address, length, _register);}
     #endif
     return err;
 }

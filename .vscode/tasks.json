@@ -7,7 +7,10 @@
             "taskName": "build",
             "type": "shell",
             "command": "make all",
-            "group": "build",
+            "group": {
+                "kind": "build",
+                "isDefault": true  
+            },
             "presentation": {
                 "reveal": "always"
             },
@@ -43,10 +46,7 @@
             "taskName": "flash monitor",
             "type": "shell",
             "command": "make flash monitor",
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
+            "group": "build",
             "presentation": {
                 "reveal": "always"
             },
