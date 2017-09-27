@@ -34,7 +34,6 @@ esp_err_t I2Cbus::begin(gpio_num_t sda_io_num, gpio_num_t scl_io_num, gpio_pullu
     conf.master.clk_speed = clk_speed;
     esp_err_t err = i2c_param_config(port, &conf);
     if (!err) err = i2c_driver_install(port, conf.mode, 0, 0, 0);
-    // do not need to log errors here, esp-i2c lib will do
     return err;
 }
 
@@ -75,7 +74,7 @@ esp_err_t I2Cbus::writeByte(uint8_t devAddr, uint8_t regAddr, uint8_t data, int3
     return writeBytes(devAddr, regAddr, 1, &data, timeout);
 }
 
-esp_err_t I2Cbus::writeBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, const uint8_t *data, int32_t timeout) {
+esp_err_t I2Cbus::writeBytes(uint8_t devAddr, uint8_t regAddr, size_t length, const uint8_t *data, int32_t timeout) {
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
     i2c_master_start(cmd);
     i2c_master_write_byte(cmd, (devAddr << 1) | I2C_MASTER_WRITE, ACK_CHECK_ENABLE);
@@ -85,7 +84,12 @@ esp_err_t I2Cbus::writeBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, c
     esp_err_t err = i2c_master_cmd_begin(port, cmd, (timeout < 0 ? ticksToWait : pdMS_TO_TICKS(timeout)));
     i2c_cmd_link_delete(cmd);
     #if defined I2C_LOG_READWRITES
-        if (!err) {I2C_LOG_READWRITES(TAG, "[0x%X] write %d bytes to reg 0x%X", devAddr, length, regAddr);}
+        if (!err) { 
+            char str[length*5+1]; 
+            for(int i = 0; i < length; i++) 
+                sprintf(str+i*5, "0x%s%X ", (data[i] < 0x10 ? "0" : ""), data[i]);
+            I2C_LOG_READWRITES(TAG, "[slave:0x%X] Write %d bytes to register 0x%X, data: %s", devAddr, length, regAddr, str);
+        }
     #endif
     #if defined I2C_LOG_ERRORS
         #ifdef I2C_LOG_READWRITES
@@ -93,7 +97,8 @@ esp_err_t I2Cbus::writeBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, c
         #else
             if (err) {
         #endif
-        ESP_LOGE(TAG, "[0x%X] Failed to write %d bytes to reg 0x%X", devAddr, length, regAddr);}
+        ESP_LOGE(TAG, "[slave:0x%X] Failed to write %d bytes to register 0x%X, error: 0x%X", devAddr, length, regAddr, err);
+        }
     #endif
     return err;
 }
@@ -122,7 +127,7 @@ esp_err_t I2Cbus::readByte(uint8_t devAddr, uint8_t regAddr, uint8_t *data, int3
     return readBytes(devAddr, regAddr, 1, data, timeout);
 }
 
-esp_err_t I2Cbus::readBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data, int32_t timeout) {
+esp_err_t I2Cbus::readBytes(uint8_t devAddr, uint8_t regAddr, size_t length, uint8_t *data, int32_t timeout) {
     if(length == 0) return ESP_ERR_INVALID_SIZE;
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
     i2c_master_start(cmd);
@@ -136,7 +141,12 @@ esp_err_t I2Cbus::readBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, ui
     esp_err_t err = i2c_master_cmd_begin(port, cmd, (timeout < 0 ? ticksToWait : pdMS_TO_TICKS(timeout)));
     i2c_cmd_link_delete(cmd);
     #if defined I2C_LOG_READWRITES
-        if (!err) {I2C_LOG_READWRITES(TAG, "[0x%X] read %d bytes from reg 0x%X", devAddr, length, regAddr);}
+        if (!err) { 
+            char str[length*5+1]; 
+            for(int i = 0; i < length; i++) 
+            sprintf(str+i*5, "0x%s%X ", (data[i] < 0x10 ? "0" : ""), data[i]);
+            I2C_LOG_READWRITES(TAG, "[slave:0x%X] Read %d bytes from register 0x%X, data: %s", devAddr, length, regAddr, str);
+        }
     #endif
     #if defined I2C_LOG_ERRORS
         #ifdef I2C_LOG_READWRITES
@@ -144,7 +154,8 @@ esp_err_t I2Cbus::readBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, ui
         #else
             if (err) {
         #endif
-        ESP_LOGE(TAG, "[0x%X] Failed to read %d bytes to reg 0x%X", devAddr, length, regAddr);}
+        ESP_LOGE(TAG, "[slave:0x%X] Failed to read %d bytes from register 0x%X, error: 0x%X", devAddr, length, regAddr, err);
+        }
     #endif
     return err;
 }
@@ -171,7 +182,7 @@ void I2Cbus::scanner() {
     uint8_t count = 0;
     for (size_t i = 0x3; i < 0x78; i++) {
         if(testConnection(i) == ESP_OK){
-            printf(LOG_COLOR_W "- Device found at devAddr 0x%X%s", i, LOG_RESET_COLOR "\n");
+            printf(LOG_COLOR_W "- Device found at address 0x%X%s", i, LOG_RESET_COLOR "\n");
             count++;
         }
     }

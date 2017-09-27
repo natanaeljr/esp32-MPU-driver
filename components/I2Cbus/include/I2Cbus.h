@@ -8,7 +8,7 @@
 /*************************************
  * CONFIGS
  *************************************/
-#define CLOCKSPEED_DEFAULT  (100000U)
+#define CLOCKSPEED_DEFAULT  (100000U)   /*!< Clock speed in Hz, default: 100KHz */
 #define TIMEOUT_DEFAULT     (1000)      /*!< Timeout in milliseconds */
 #define I2C_LOG_ERRORS      (true)      /*!< Logs any read/write error that ocurrs. Uncomment for disable*/
 #define I2C_LOG_READWRITES  ESP_LOGV    /*!< Logs all successful read/write operations performed.
@@ -79,7 +79,7 @@ public:
     esp_err_t writeBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t data, int32_t timeout = -1);
     esp_err_t writeBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t data, int32_t timeout = -1);
     esp_err_t writeByte(uint8_t devAddr, uint8_t regAddr, uint8_t data, int32_t timeout = -1);
-    esp_err_t writeBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, const uint8_t *data, int32_t timeout = -1);
+    esp_err_t writeBytes(uint8_t devAddr, uint8_t regAddr, size_t length, const uint8_t *data, int32_t timeout = -1);
 
     /**
      * *** READING interface ***
@@ -100,7 +100,7 @@ public:
     esp_err_t readBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t *data, int32_t timeout = -1);
     esp_err_t readBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t *data, int32_t timeout = -1);
     esp_err_t readByte(uint8_t devAddr, uint8_t regAddr, uint8_t *data, int32_t timeout = -1);
-    esp_err_t readBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data, int32_t timeout = -1);
+    esp_err_t readBytes(uint8_t devAddr, uint8_t regAddr, size_t length, uint8_t *data, int32_t timeout = -1);
 
     /**
      * @brief  Quick check to see if a slave device responds.
