@@ -2,11 +2,13 @@
 #define _I2CBUS_H_
 
 #include "driver/i2c.h"
+#include "driver/gpio.h"
 #include "esp_err.h"
 
 /*************************************
  * CONFIGS
  *************************************/
+#define CLOCKSPEED_DEFAULT  (100000U)
 #define TIMEOUT_DEFAULT     (1000)      /*!< Timeout in milliseconds */
 #define I2C_LOG_ERRORS      (true)      /*!< Logs any read/write error that ocurrs. Uncomment for disable*/
 #define I2C_LOG_READWRITES  ESP_LOGV    /*!< Logs all successful read/write operations performed.
@@ -22,13 +24,13 @@
 
 
 
-class i2cbus_t {
+class I2Cbus {
 private:
     i2c_port_t port;            /*!< I2C port: I2C_NUM_0 or I2C_NUM_1 */
-    uint32_t ticks_to_wait;     /*!< Timeout in ticks for read and write */
+    uint32_t ticksToWait;     /*!< Timeout in ticks for read and write */
 
 public:
-    i2cbus_t(i2c_port_t _port) : port(_port), ticks_to_wait(TIMEOUT_DEFAULT / portTICK_PERIOD_MS) {}
+    I2Cbus(i2c_port_t port) : port(port), ticksToWait(TIMEOUT_DEFAULT / portTICK_PERIOD_MS) {}
 
     /** *** I2C Begin ***
      * @brief  Config I2C bus and Install Driver
@@ -42,8 +44,10 @@ public:
      *                       - ESP_ERR_INVALID_ARG Parameter error
      *                       - ESP_FAIL Driver install error
      */
-    esp_err_t begin(gpio_num_t sda_io_num, gpio_num_t scl_io_num, gpio_pullup_t sda_pullup_en, gpio_pullup_t scl_pullup_en, uint32_t clk_speed = 100000L);
-    esp_err_t begin(gpio_num_t sda_io_num, gpio_num_t scl_io_num, uint32_t clk_speed = 100000L);
+    esp_err_t begin(gpio_num_t sda_io_num, gpio_num_t scl_io_num, uint32_t clk_speed = CLOCKSPEED_DEFAULT);
+    esp_err_t begin(gpio_num_t sda_io_num, gpio_num_t scl_io_num, 
+                    gpio_pullup_t sda_pullup_en, gpio_pullup_t scl_pullup_en, 
+                    uint32_t clk_speed = CLOCKSPEED_DEFAULT);
 
     /**
      * Stop I2C bus and unninstall driver
@@ -51,9 +55,9 @@ public:
     esp_err_t close();
 
     /**
-     * Timeout read and write
+     * Timeout read and write in milliseconds
      */
-    void set_timeout(uint32_t ms);
+    void setTimeout(uint32_t ms);
 
 
     /**
@@ -61,8 +65,8 @@ public:
      * @brief  I2C commands for writing to a 8-bit slave device register.
      *         All of them returns standard esp_err_t codes. So it can be used
      *         within ESP_ERROR_CHECK();
-     * @param  address   [I2C slave device register]
-     * @param  _register [Register address to write to]
+     * @param  devAddr   [I2C slave device register]
+     * @param  regAddr [Register address to write to]
      * @param  bit       [Number of the bit position to write (bit 7~0)]
      * @param  data      [Value(s) to be write to the register]
      * @param  length    [Number of bytes to write (should be within the data buffer size)]
@@ -72,18 +76,18 @@ public:
      *          - ESP_ERR_INVALID_STATE I2C driver not installed or not in master mode.
      *          - ESP_ERR_TIMEOUT Operation timeout because the bus is busy.
      */
-    esp_err_t write_bit(uint8_t address, uint8_t _register, uint8_t bit, uint8_t data);
-    esp_err_t write_bits(uint8_t address, uint8_t _register, uint8_t bitstart, uint8_t length, uint8_t data);
-    esp_err_t write_byte(uint8_t address, uint8_t _register, uint8_t data);
-    esp_err_t write_bytes(uint8_t address, uint8_t _register, uint8_t length, uint8_t *data);
+    esp_err_t writeBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t data);
+    esp_err_t writeBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t data);
+    esp_err_t writeByte(uint8_t devAddr, uint8_t regAddr, uint8_t data);
+    esp_err_t writeBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, const uint8_t *data);
 
     /**
      * *** READING interface ***
      * @breif  I2C commands for reading a 8-bit slave device register.
      *         All of them returns standard esp_err_t codes.So it can be used
      *         within ESP_ERROR_CHECK();
-     * @param  address   [I2C slave device register]
-     * @param  _register [Register address to read from]
+     * @param  devAddr   [I2C slave device register]
+     * @param  regAddr [Register address to read from]
      * @param  bit       [Number of the bit position to write (bit 7~0)]
      * @param  data      [Buffer to store the read data(s)]
      * @param  length    [Number of bytes to read (should be within the data buffer size)]
@@ -93,32 +97,32 @@ public:
      *          - ESP_ERR_INVALID_STATE I2C driver not installed or not in master mode.
      *          - ESP_ERR_TIMEOUT Operation timeout because the bus is busy.]
      */
-    esp_err_t read_bit(uint8_t address, uint8_t _register, uint8_t bit, uint8_t *data);
-    esp_err_t read_bits(uint8_t address, uint8_t _register, uint8_t bitstart, uint8_t length, uint8_t *data);
-    esp_err_t read_byte(uint8_t address, uint8_t _register, uint8_t *data);
-    esp_err_t read_bytes(uint8_t address, uint8_t _register, uint8_t length, uint8_t *data);
+    esp_err_t readBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t *data);
+    esp_err_t readBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t *data);
+    esp_err_t readByte(uint8_t devAddr, uint8_t regAddr, uint8_t *data);
+    esp_err_t readBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data);
 
     /**
      * @brief  Quick check to see if a slave device responds.
-     * @param  address [I2C slave device register]
+     * @param  devAddr [I2C slave device register]
      * @return  - ESP_OK Success
      *          - ESP_ERR_INVALID_ARG Parameter error
      *          - ESP_FAIL Sending command error, slave doesn't ACK the transfer.
      *          - ESP_ERR_INVALID_STATE I2C driver not installed or not in master mode.
      *          - ESP_ERR_TIMEOUT Operation timeout because the bus is busy.]
      */
-    esp_err_t test(uint8_t address);
+    esp_err_t testConnection(uint8_t devAddr);
 
     /**
-     * I2C scanner utility, prints out all device addresses found on I2Cbus.
+     * I2C scanner utility, prints out all device devAddres found on I2Cbus.
      */
     void scanner();
 };
 
 
 // OBJECTS
-extern i2cbus_t i2c0;
-extern i2cbus_t i2c1;
+extern I2Cbus I2Cbus0;
+extern I2Cbus I2Cbus1;
 
 
 

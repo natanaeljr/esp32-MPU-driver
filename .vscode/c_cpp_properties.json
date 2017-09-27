@@ -31,7 +31,11 @@
                 "/usr/local/include",
                 "/usr/lib/clang/5.0.0/include",
                 "/usr/include",
+
                 "${workspaceRoot}",
+                "${workspaceRoot}/components/mpu/include",
+                "${workspaceRoot}/components/I2Cbus/include",
+
                 "/home/nanter/esp/esp-idf/components/app_trace/include",
                 "/home/nanter/esp/esp-idf/components/app_update/include",
                 "/home/nanter/esp/esp-idf/components/aws_iot/include",
@@ -64,9 +68,7 @@
                 "/home/nanter/esp/esp-idf/components/vfs/include",
                 "/home/nanter/esp/esp-idf/components/wear_levelling/include",
                 "/home/nanter/esp/esp-idf/components/wpa_supplicant/include",
-                "/home/nanter/esp/esp-idf/components/xtensa-debug-module/include",
-                "${workspaceRoot}/components/mpu/include",
-                "${workspaceRoot}/components/i2cbus/include"
+                "/home/nanter/esp/esp-idf/components/xtensa-debug-module/include"
             ],
             "defines": [],
             "intelliSenseMode": "clang-x64",
