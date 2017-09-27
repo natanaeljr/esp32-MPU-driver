@@ -27,10 +27,10 @@
 class I2Cbus {
 private:
     i2c_port_t port;            /*!< I2C port: I2C_NUM_0 or I2C_NUM_1 */
-    uint32_t ticksToWait;     /*!< Timeout in ticks for read and write */
+    uint32_t ticksToWait;       /*!< Timeout in ticks for read and write */
 
 public:
-    I2Cbus(i2c_port_t port) : port(port), ticksToWait(TIMEOUT_DEFAULT / portTICK_PERIOD_MS) {}
+    I2Cbus(i2c_port_t port);
 
     /** *** I2C Begin ***
      * @brief  Config I2C bus and Install Driver
@@ -76,10 +76,10 @@ public:
      *          - ESP_ERR_INVALID_STATE I2C driver not installed or not in master mode.
      *          - ESP_ERR_TIMEOUT Operation timeout because the bus is busy.
      */
-    esp_err_t writeBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t data);
-    esp_err_t writeBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t data);
-    esp_err_t writeByte(uint8_t devAddr, uint8_t regAddr, uint8_t data);
-    esp_err_t writeBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, const uint8_t *data);
+    esp_err_t writeBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t data, int32_t timeout = -1);
+    esp_err_t writeBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t data, int32_t timeout = -1);
+    esp_err_t writeByte(uint8_t devAddr, uint8_t regAddr, uint8_t data, int32_t timeout = -1);
+    esp_err_t writeBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, const uint8_t *data, int32_t timeout = -1);
 
     /**
      * *** READING interface ***
@@ -97,10 +97,10 @@ public:
      *          - ESP_ERR_INVALID_STATE I2C driver not installed or not in master mode.
      *          - ESP_ERR_TIMEOUT Operation timeout because the bus is busy.]
      */
-    esp_err_t readBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t *data);
-    esp_err_t readBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t *data);
-    esp_err_t readByte(uint8_t devAddr, uint8_t regAddr, uint8_t *data);
-    esp_err_t readBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data);
+    esp_err_t readBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t *data, int32_t timeout = -1);
+    esp_err_t readBits(uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t *data, int32_t timeout = -1);
+    esp_err_t readByte(uint8_t devAddr, uint8_t regAddr, uint8_t *data, int32_t timeout = -1);
+    esp_err_t readBytes(uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data, int32_t timeout = -1);
 
     /**
      * @brief  Quick check to see if a slave device responds.

@@ -2,6 +2,7 @@
     "files.associations": {
         "string_view": "cpp",
         "optional": "cpp",
-        "chrono": "cpp"
+        "chrono": "cpp",
+        "array": "cpp"
     }
 }
