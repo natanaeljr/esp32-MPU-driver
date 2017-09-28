@@ -32,7 +32,7 @@ config FIFO_CORRUPTION_CHECK
         shouldn't happen in normal operation, but if an I2C error occurs,
         the FIFO reads might become misaligned.
 
-config MPU_LOG_ERROR
+config MPU_LOG_ERRORS
     bool "Log errors on terminal"
     depends on ! LOG_DEFAULT_LEVEL_NONE
     default "y"

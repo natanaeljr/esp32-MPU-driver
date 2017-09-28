@@ -1,7 +1,7 @@
 #ifndef _MPU_H_
 #define _MPU_H_
 
-#include "MPUconfig.h"
+#include "MPUdefine.h"
 #include "MPUregistermap.h"
 #include "MPUtypes.h"
 #include <stdint.h>

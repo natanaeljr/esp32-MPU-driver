@@ -1,5 +1,5 @@
 #include "MPU.h"
-#include "MPUconfig.h"
+#include "MPUdefine.h"
 #include "MPUtypes.h"
 #include "MPUregistermap.h"
 #include "MPUdmp.h"
@@ -11,7 +11,7 @@
 
 
 
-#if defined MPU_ERROR_LOGGER
+#if defined CONFIG_MPU_LOG_ERRORS
 
 #define MPU_CHECK_RET(x)                                                                        \
     do {                                                                                        \
@@ -29,7 +29,7 @@
         }                                                                                       \
     }while(0)                
 
-#else /* ! MPU_ERROR_LOGGER */
+#else /* ! CONFIG_MPU_LOG_ERRORS */
 
 #define MPU_CHECK_RET(x)                                                                        \
     do {                                                                                        \
@@ -41,7 +41,7 @@
         err = x;                                                                                \
     }while(0)   
 
-#endif /* end of MPU_ERROR_LOGGER */
+#endif /* end of CONFIG_MPU_LOG_ERRORS */
 
 
 
@@ -91,7 +91,7 @@ esp_err_t MPU_t::initialize(mpu_address_t addr) {
     // set clock source to gyro PLL which is better than internal clock
     MPU_CHECK_RET(setClockSource(MPU_CLOCK_PLL));
 
-    #ifdef _MPU6500_
+    #ifdef CONFIG_MPU6500
     /* MPU6500 shares 4kB of memory between the DMP and the FIFO. Since the
      * first 3kB are needed by the DMP, we'll use the last 1kB for the FIFO.
      */
@@ -166,9 +166,9 @@ bool MPU_t::getLowPowerAccelMode() {
 esp_err_t MPU_t::setLowPowerAccelRate(mpu_lp_accel_rate_t rate) {
     //@note: DLPF will be off (LPA bandwith: 1.1KHz)
     // check if LPAccel is off, error
-    #ifdef _MPU6050_
+    #ifdef CONFIG_MPU6050
     MPU_CHECK_NORET(I2C.writeBit(addr, MPU_REG_PWR_MGMT2, MPU_PWR2_LP_WAKE_CTRL_BIT, MPU_PWR2_LP_WAKE_CTRL_LENGTH, rate));
-    #else // _MPU6500_
+    #else // CONFIG_MPU6500
     MPU_CHECK_RET(I2C.writeBit(addr, MPU6500_REG_LP_ACCEL_ODR, MPU6500_LPA_ODR_CLKSEL_BIT, MPU6500_LPA_ODR_CLKSEL_LENGTH, rate));
     MPU_CHECK_NORET(I2C.writeBit(addr, MPU6500_REG_ACCEL_CONFIG2, MPU6500_ACONFIG2_ACCEL_FCHOICE_B_BIT, 1));
     #endif
@@ -177,9 +177,9 @@ esp_err_t MPU_t::setLowPowerAccelRate(mpu_lp_accel_rate_t rate) {
 
 
 mpu_lp_accel_rate_t MPU_t::getLowPowerAccelRate() {
-    #ifdef _MPU6050_
+    #ifdef CONFIG_MPU6050
     MPU_CHECK_NORET(I2C.readBits(addr, MPU_REG_PWR_MGMT2, MPU_PWR2_LP_WAKE_CTRL_BIT, MPU_PWR2_LP_WAKE_CTRL_LENGTH, buffer));
-    #else // _MPU6500_
+    #else // CONFIG_MPU6500
     MPU_CHECK_NORET(I2C.readBits(addr, MPU6500_REG_LP_ACCEL_ODR, MPU6500_LPA_ODR_CLKSEL_BIT, MPU6500_LPA_ODR_CLKSEL_LENGTH, buffer));
     #endif
     return (mpu_lp_accel_rate_t) buffer[0];
@@ -226,7 +226,7 @@ esp_err_t MPU_t::setLowPassFilter(mpu_dlpf_t dlpf) {
     // if all sensor are disabled, throw error
     MPU_CHECK_RET(I2C.writeBit(addr, MPU_REG_CONFIG, MPU_CONFIG_DLPF_CFG_BIT, MPU_CONFIG_DLPF_CFG_LENGTH, dlpf));
     
-    #ifdef _MPU6500_
+    #ifdef CONFIG_MPU6500
     //MPU6500 accel/gyro dlpf separately
     MPU_CHECK_RET(I2C.writeBit(addr, MPU6500_REG_ACCEL_CONFIG2, MPU6500_ACONFIG2_A_DLPF_CFG_BIT, MPU6500_ACONFIG2_A_DLPF_CFG_LENGTH, dlpf));
     #endif
@@ -493,10 +493,10 @@ int16_t MPU_t::getTemperature() {
 
 int32_t MPU_t::getTemperatureCelsius() {
     int32_t temp = getTemperature();
-    #ifdef _MPU6050_
+    #ifdef CONFIG_MPU6050
     int16_t temp_offset = -521;
     int16_t temp_sens = 340;
-    #else //  _MPU6500_
+    #else //  CONFIG_MPU6500
     int16_t temp_offset = 0;
     int16_t temp_sens = 321;
     #endif    

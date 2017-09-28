@@ -1,6 +1,6 @@
 #include "MPU.h"
 #include "MPUdmp.h"
-#include "MPUconfig.h"
+#include "MPUdefine.h"
 #include "MPUtypes.h"
 #include "MPUregistermap.h"
 #include "MPUdmpmap.h"

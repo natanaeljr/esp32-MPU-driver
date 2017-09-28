@@ -1,6 +1,7 @@
 #ifndef _MPU_REGISTERMAP_H_
 #define _MPU_REGISTERMAP_H_
 
+#include "MPUdefine.h"
 
 
 /*******************************************************************************
@@ -264,7 +265,7 @@
 /*******************************************************************************
  * MPU6050 and MPU9150 commom registers
  ******************************************************************************/
-#if defined _MPU6050_
+#if defined CONFIG_MPU6050
 #define MPU6050_REG_XG_OFFSET_TC        (0x00) //[7] PWR_MODE, [6:1] XG_OFFS_TC, [0] OTP_BNK_VLD
 #define MPU6050_REG_YG_OFFSET_TC        (0x01) //[7] PWR_MODE, [6:1] YG_OFFS_TC, [0] OTP_BNK_VLD
 #define MPU6050_REG_ZG_OFFSET_TC        (0x02) //[7] PWR_MODE, [6:1] ZG_OFFS_TC, [0] OTP_BNK_VLD
@@ -291,7 +292,7 @@
 /*******************************************************************************
  * MPU6500 and MPU9250 commom registers ////////////////////////////////////////
  ******************************************************************************/
-#if defined _MPU6500_
+#if defined CONFIG_MPU6500
 #define MPU6500_REG_SELF_TEST_X_GYRO    (0x00) // XG_ST_DATA[7:0]
 #define MPU6500_REG_SELF_TEST_Y_GYRO    (0x01) // YG_ST_DATA[7:0]
 #define MPU6500_REG_SELF_TEST_Z_GYRO    (0x02) // ZG_ST_DATA[7:0]
