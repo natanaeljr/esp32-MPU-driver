@@ -1,0 +1,3 @@
+[submodule "components/I2Cbus"]
+	path = components/I2Cbus
+	url = /home/nanter/esp/libraries/I2Cbus/
