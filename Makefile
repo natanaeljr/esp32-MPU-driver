@@ -4,6 +4,6 @@
 #
 
 PROJECT_NAME := mpu-inv
-EXTRA_COMPONENT_DIRS := src
+# EXTRA_COMPONENT_DIRS := 
 
 include $(IDF_PATH)/make/project.mk

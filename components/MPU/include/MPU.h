@@ -5,7 +5,7 @@
 #include "MPUregistermap.h"
 #include "MPUtypes.h"
 #include <stdint.h>
-#include "i2cbus.h"
+#include "I2Cbus.h"
 #include "esp_err.h"
 
 
@@ -20,15 +20,15 @@ const mpu_address_t MPU_DEFAULT_ADDRESS = MPU_ADDRESS_AD0_LOW;
 class MPU_t {
 
 private:
-    i2cbus_t& I2C;
+    I2Cbus& I2C;
     mpu_address_t addr = MPU_DEFAULT_ADDRESS;
     esp_err_t err = ESP_OK;
     uint8_t buffer[14];
     
 public:
-    MPU_t(i2cbus_t& I2C);
-    void setI2Cbus(i2cbus_t& I2C);
-    i2cbus_t& getI2Cbus();
+    MPU_t(I2Cbus& I2C);
+    void setI2Cbus(I2Cbus& I2C);
+    I2Cbus& getI2Cbus();
     void setAddress(mpu_address_t addr);
     mpu_address_t getAddress();
     esp_err_t getLastError();

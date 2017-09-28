@@ -33,7 +33,7 @@
                 "/usr/include",
 
                 "${workspaceRoot}",
-                "${workspaceRoot}/components/mpu/include",
+                "${workspaceRoot}/components/MPU/include",
                 "${workspaceRoot}/components/I2Cbus/include",
 
                 "/home/nanter/esp/esp-idf/components/app_trace/include",
@@ -80,7 +80,8 @@
                     "/usr/lib/clang/5.0.0/include",
                     "/usr/include",
                     "${workspaceRoot}",
-                    "/home/nanter/esp/esp-idf/components"
+                    "${IDF_PATH}/components",
+                    "${HOME}/esp/libraries"
                 ],
                 "limitSymbolsToIncludedHeaders": true,
                 "databaseFilename": ""

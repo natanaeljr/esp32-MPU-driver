@@ -3,11 +3,11 @@
 #include "driver/gpio.h"
 #include "driver/i2c.h"
 #include "esp_log.h"
-// personal libs
-#include "i2cbus.h"
+#include <stdint.h>
+// private libs
+#include "I2Cbus.h"
 #include "MPU.h"
 #include "MPUdmp.h"
-#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,13 +32,13 @@ static const char* TAG = {"app_main"};
 const gpio_num_t I2C_SDA = GPIO_NUM_21;
 const gpio_num_t I2C_SCL = GPIO_NUM_22;
 
-MPU_t mpu = MPU_t(i2c0);
+MPU_t mpu = MPU_t(I2Cbus0);
 
 void app_main() {
     vTaskDelay(1000 / portTICK_PERIOD_MS);
     printf("\n\n>> APP_MAIN\n");
 
-    i2c0.begin(I2C_SDA, I2C_SCL, 400000L);
+    I2Cbus0.begin(I2C_SDA, I2C_SCL, 400000L);
 
     while(true) {
 
