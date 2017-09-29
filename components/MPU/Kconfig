@@ -17,10 +17,10 @@ config MPU9250
 endchoice
 
 config ENABLE_DMP
-    bool "Enable DMP (Digital Motion Processor)"
+    bool "Compile DMP (Digital Motion Processor)"
     default "y"
     help
-        Enable DMP (Digital Motion Processor), loads the firmware when MPU is initialized.
+        Compile DMP (Digital Motion Processor) code.
 
 config FIFO_CORRUPTION_CHECK
     bool "FIFO packet corruption check"
@@ -35,7 +35,7 @@ config FIFO_CORRUPTION_CHECK
 config MPU_LOG_ERRORS
     bool "Log errors on terminal"
     depends on ! LOG_DEFAULT_LEVEL_NONE
-    default "y"
+    default "n"
     help
         Log errors that happen within the MPU library.
 
