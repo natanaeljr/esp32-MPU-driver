@@ -10,8 +10,9 @@
 #include "esp_err.h"
 #include "esp_log.h"
 // private
-#include "MPU.h"
 #include "I2Cbus.h"
+#include "MPU.h"
+#include "DMP.h"
 
 
 /* DEFINES */
@@ -22,21 +23,22 @@ extern "C" {
 #endif
 
 /* CONSTANTS */
-static const char* TAG = "app";
+// static const char* TAG = "app";
 
 /* OBJECTS */
-MPU_t mpu = MPU_t();
+MPU_t MPU = MPU_t();
+DMP_t DMP = DMP_t(MPU);
 
 
 /* MAIN */
-void app_main() {
+void app_main() {MPUdmp
     printf(LOG_BOLD("97") "\n[APP_MAIN]" LOG_RESET_COLOR "\n");
     // setup    
-    I2Cbus0.begin(GPIO_NUM_21, GPIO_NUM_22, 400000U);
-    mpu.setI2Cbus(I2Cbus0);
-    mpu.setAddress(MPU_DEFAULT_ADDRESS);
+    I2Cbus0.begin(GPIO_NUM_21, GPIO_NUM_22, 100000U);
+    MPU.setI2Cbus(I2Cbus0);
+    MPU.setAddress(MPU_DEFAULT_ADDRESS);
 
-    if(!mpu.initialize()) {
+    if(!MPU.initialize()) {
         ESP_LOGD(TAG, "Initialize OK");
     }
     else {

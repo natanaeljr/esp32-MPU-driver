@@ -1,13 +1,13 @@
 #include "MPU.h"
 #include "MPUdefine.h"
-#include "MPUtypes.h"
 #include "MPUregisters.h"
-#include "MPUdmp.h"
+#include "MPUtypes.h"
+#include "DMPdefine.h"
 #include <stdint.h>
 #include "freertos/FreeRTOS.h"
+#include "driver/i2c.h"
 #include "esp_err.h"
 #include "esp_log.h"
-#include "driver/i2c.h"
 
 
 

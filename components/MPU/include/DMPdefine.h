@@ -1,5 +1,5 @@
-#ifndef _MPU_DMP_H_
-#define _MPU_DMP_H_
+#ifndef _DMP_DEFINE_H_
+#define _DMP_DEFINE_H_
 
 #include <stdint.h>
 
@@ -1151,4 +1151,4 @@ const uint8_t DMP_FIRMWARE[DMP_CODE_SIZE] = {
 
 
 
-#endif /* end of include guard: _MPU_DMP_H_ */
+#endif /* end of include guard: _DMP_DEFINE_H_ */
