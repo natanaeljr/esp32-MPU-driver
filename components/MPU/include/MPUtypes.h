@@ -41,7 +41,7 @@ typedef enum {
 typedef enum {
     MPU_CLOCK_INTERNAL   = 0, // 20MHz for MPU6500 and 8MHz for MPU6050
     MPU_CLOCK_PLL = 3       // Selects automatically best pll source
-#if defined _MPU6050_
+#if defined CONFIG_MPU6050
     ,MPU_CLOCK_EXT32KHZ  = 4,
     MPU_CLOCK_EXT19MHZ   = 5,
     MPU_CLOCK_KEEP_RESET = 7
@@ -50,12 +50,12 @@ typedef enum {
 
 // Low-power accel wake-up rates
 typedef enum {
-#if defined _MPU6050_
+#if defined CONFIG_MPU6050
     MPU_LP_ACCEL_1_25HZ = 0,
     MPU_LP_ACCEL_5HZ    = 1,
     MPU_LP_ACCEL_20HZ   = 2,
     MPU_LP_ACCEL_40HZ   = 3
-#elif defined _MPU6500_
+#elif defined CONFIG_MPU6500
     MPU_LP_ACCEL_0_24HZ  = 0,
     MPU_LP_ACCEL_0_49HZ  = 1,
     MPU_LP_ACCEL_0_98HZ  = 2,
