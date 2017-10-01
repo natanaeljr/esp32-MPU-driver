@@ -33,7 +33,6 @@ public:
     void setAddress(mpu_addr_t addr);
     mpu_addr_t getAddress();
     esp_err_t getLastError();
-    uint8_t readRegister(uint8_t reg);
 
     // SETUP
     esp_err_t initialize();

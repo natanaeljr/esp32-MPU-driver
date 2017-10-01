@@ -76,12 +76,6 @@ esp_err_t MPU_t::getLastError() {
 }
 
 
-uint8_t MPU_t::readRegister(uint8_t reg) {
-    MPU_CHECK_NORET(I2C.readByte(addr, reg, buffer));
-    return buffer[0];
-}
-
-
 esp_err_t MPU_t::initialize() {
     // reset device and wait a little to clear all registers
     MPU_CHECK_RET(reset());
@@ -199,7 +193,7 @@ mpu_clock_src_t MPU_t::getClockSource() {
 
 
 esp_err_t MPU_t::setGyroFullScale(mpu_gyro_fsr_t fs) {
-    MPU_CHECK_NORET(I2C.writeBit(addr, MPU_REG_GYRO_CONFIG, MPU_GCONFIG_FS_SEL_BIT, MPU_GCONFIG_FS_SEL_LENGTH, fs));
+    MPU_CHECK_NORET(I2C.writeBits(addr, MPU_REG_GYRO_CONFIG, MPU_GCONFIG_FS_SEL_BIT, MPU_GCONFIG_FS_SEL_LENGTH, fs));
     return err;
 }
 
@@ -211,7 +205,7 @@ mpu_gyro_fsr_t MPU_t::getGyroFullScale() {
 
 
 esp_err_t MPU_t::setAccelFullScale(mpu_accel_fsr_t fs) {
-    MPU_CHECK_NORET(I2C.writeBit(addr, MPU_REG_ACCEL_CONFIG, MPU_ACONFIG_FS_SEL_BIT, MPU_ACONFIG_FS_SEL_LENGTH, fs));
+    MPU_CHECK_NORET(I2C.writeBits(addr, MPU_REG_ACCEL_CONFIG, MPU_ACONFIG_FS_SEL_BIT, MPU_ACONFIG_FS_SEL_LENGTH, fs));
     return err;
 }
 
