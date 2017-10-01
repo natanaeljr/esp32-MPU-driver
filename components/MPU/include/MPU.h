@@ -2,14 +2,14 @@
 #define _MPU_H_
 
 #include "MPUdefine.h"
-#include "MPUregistermap.h"
+#include "MPUregisters.h"
 #include "MPUtypes.h"
 #include <stdint.h>
 #include "I2Cbus.h"
 #include "esp_err.h"
 
 
-const mpu_address_t MPU_DEFAULT_ADDRESS = MPU_ADDRESS_AD0_LOW;
+const mpu_addr_t MPU_DEFAULT_ADDRESS = MPU_ADDRESS_AD0_LOW;
 
 /*******************************************************************************
 * MPU class
@@ -21,21 +21,21 @@ class MPU_t {
 
 private:
     I2Cbus& I2C;
-    mpu_address_t addr = MPU_DEFAULT_ADDRESS;
+    mpu_addr_t addr = MPU_DEFAULT_ADDRESS;
     esp_err_t err = ESP_OK;
     uint8_t buffer[14];
     
 public:
-    MPU_t(I2Cbus& I2C);
+    MPU_t(I2Cbus& I2C = I2Cbus0);
     void setI2Cbus(I2Cbus& I2C);
     I2Cbus& getI2Cbus();
-    void setAddress(mpu_address_t addr);
-    mpu_address_t getAddress();
+    void setAddress(mpu_addr_t addr);
+    mpu_addr_t getAddress();
     esp_err_t getLastError();
     uint8_t readRegister(uint8_t reg);
 
     // SETUP
-    esp_err_t initialize(mpu_address_t addr = MPU_DEFAULT_ADDRESS);
+    esp_err_t initialize();
     esp_err_t reset();
     esp_err_t sleep(bool enable);
     bool getSleepStatus();
@@ -62,7 +62,7 @@ public:
     esp_err_t setGyroFullScale(mpu_gyro_fsr_t fs);
     mpu_gyro_fsr_t getGyroFullScale();
     mpu_axis_t getGyro();
-    void getGyro(int16_t *x, int16_t *y, int16_t *z);
+    esp_err_t getGyro(int16_t *x, int16_t *y, int16_t *z);
     
     // ACCELEROMETER
     esp_err_t setAccelFullScale(mpu_accel_fsr_t fs);
@@ -78,7 +78,8 @@ public:
     esp_err_t setTemperatureEnabled(bool enable);
     bool getTemperatureEnabled();
     int16_t getTemperature();
-    int32_t getTemperatureCelsius();
+    int32_t getTemperatureC();
+    // int32_t getTemperatureF();
     
     // FIFO
     esp_err_t setFIFOEnabled(bool enable);
@@ -129,16 +130,16 @@ private:
     class DMP_t {
     private: 
         MPU_t& MPU;
+        uint8_t* buffer = MPU.buffer;
         bool dmpOn = false;
         bool loaded = false;
         dmp_features_t features;
         uint8_t packetSize = 0;
-        // TODO: regs[] as buffer
+
     public:
         DMP_t(MPU_t& MPU);
         bool isLoaded();
         
-        typedef void type_t;
         // SETUP
         esp_err_t initialize();
         esp_err_t setEnabled(bool enable);

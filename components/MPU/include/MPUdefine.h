@@ -14,7 +14,7 @@
 #define CONFIG_MPU6050 
 #define AK8975_SECONDARY 
 #endif
-// Compatible compass code
+
 #if defined AK8975_SECONDARY || defined AK8963_SECONDARY
 #define AK89xx_SECONDARY 
 #endif

@@ -1,7 +1,7 @@
 #include "MPU.h"
 #include "MPUdefine.h"
 #include "MPUtypes.h"
-#include "MPUregistermap.h"
+#include "MPUregisters.h"
 #include "MPUdmp.h"
 #include <stdint.h>
 #include "freertos/FreeRTOS.h"
@@ -61,12 +61,12 @@ I2Cbus& MPU_t::getI2Cbus() {
 }
 
 
-void MPU_t::setAddress(mpu_address_t addr) {
+void MPU_t::setAddress(mpu_addr_t addr) {
     this->addr = addr;
 }
 
 
-mpu_address_t MPU_t::getAddress() {
+mpu_addr_t MPU_t::getAddress() {
     return addr;
 }
 
@@ -82,7 +82,7 @@ uint8_t MPU_t::readRegister(uint8_t reg) {
 }
 
 
-esp_err_t MPU_t::initialize(mpu_address_t addr) {
+esp_err_t MPU_t::initialize() {
     // reset device and wait a little to clear all registers
     MPU_CHECK_RET(reset());
     vTaskDelay(50 / portTICK_PERIOD_MS);
@@ -168,7 +168,7 @@ esp_err_t MPU_t::setLowPowerAccelRate(mpu_lp_accel_rate_t rate) {
     // check if LPAccel is off, error
     #ifdef CONFIG_MPU6050
     MPU_CHECK_NORET(I2C.writeBit(addr, MPU_REG_PWR_MGMT2, MPU_PWR2_LP_WAKE_CTRL_BIT, MPU_PWR2_LP_WAKE_CTRL_LENGTH, rate));
-    #else // CONFIG_MPU6500
+    #elif CONFIG_MPU6500
     MPU_CHECK_RET(I2C.writeBit(addr, MPU6500_REG_LP_ACCEL_ODR, MPU6500_LPA_ODR_CLKSEL_BIT, MPU6500_LPA_ODR_CLKSEL_LENGTH, rate));
     MPU_CHECK_NORET(I2C.writeBit(addr, MPU6500_REG_ACCEL_CONFIG2, MPU6500_ACONFIG2_ACCEL_FCHOICE_B_BIT, 1));
     #endif
@@ -179,7 +179,7 @@ esp_err_t MPU_t::setLowPowerAccelRate(mpu_lp_accel_rate_t rate) {
 mpu_lp_accel_rate_t MPU_t::getLowPowerAccelRate() {
     #ifdef CONFIG_MPU6050
     MPU_CHECK_NORET(I2C.readBits(addr, MPU_REG_PWR_MGMT2, MPU_PWR2_LP_WAKE_CTRL_BIT, MPU_PWR2_LP_WAKE_CTRL_LENGTH, buffer));
-    #else // CONFIG_MPU6500
+    #elif CONFIG_MPU6500
     MPU_CHECK_NORET(I2C.readBits(addr, MPU6500_REG_LP_ACCEL_ODR, MPU6500_LPA_ODR_CLKSEL_BIT, MPU6500_LPA_ODR_CLKSEL_LENGTH, buffer));
     #endif
     return (mpu_lp_accel_rate_t) buffer[0];
@@ -431,11 +431,12 @@ mpu_axis_t MPU_t::getGyro() {
 }
 
 
-void MPU_t::getGyro(int16_t *x, int16_t *y, int16_t *z) {
+esp_err_t MPU_t::getGyro(int16_t *x, int16_t *y, int16_t *z) {
     MPU_CHECK_NORET(I2C.readBytes(addr, MPU_REG_GYRO_XOUT_H, 6, buffer));
     *x = (buffer[0] << 8) | buffer[1];
     *y = (buffer[2] << 8) | buffer[3];
     *z = (buffer[4] << 8) | buffer[5];
+    return err;
 }
 
 
@@ -491,7 +492,7 @@ int16_t MPU_t::getTemperature() {
 }
 
 
-int32_t MPU_t::getTemperatureCelsius() {
+int32_t MPU_t::getTemperatureC() {
     int32_t temp = getTemperature();
     #ifdef CONFIG_MPU6050
     int16_t temp_offset = -521;

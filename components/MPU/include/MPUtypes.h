@@ -1,13 +1,13 @@
 #ifndef _MPU_TYPES_H_
 #define _MPU_TYPES_H_
 
-#include "MPUregistermap.h"
+#include "MPUregisters.h"
 #include <stdint.h>
 
 typedef enum {
     MPU_ADDRESS_AD0_LOW = 0x68,
     MPU_ADDRESS_AD0_HIGH = 0x69
-} mpu_address_t;
+} mpu_addr_t;
 
 // Gyro full-scale-range
 typedef enum {
@@ -115,7 +115,7 @@ typedef enum {
     MPU_INT_CLEAR_ANYREAD    = 1
 } mpu_int_clear_t;
 
-#ifdef _MPU6500_
+#ifdef CONFIG_MPU6500
 
 // MPU6500 Fifo size
 typedef enum {

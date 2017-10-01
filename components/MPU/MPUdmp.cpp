@@ -2,17 +2,15 @@
 #include "MPUdmp.h"
 #include "MPUdefine.h"
 #include "MPUtypes.h"
-#include "MPUregistermap.h"
-#include "MPUdmpmap.h"
-#include "MPUdmpkey.h"
+#include "MPUregisters.h"
 #include <stdint.h>
 #include <string.h>
 #include <math.h>
 #include "esp_log.h"
 
-static const char* TAG = {"MPUdmp"};
+static const char* TAG = "MPUdmp";
 
-#if defined MPU_ERROR_LOGGER
+#if defined CONFIG_MPU_ERROR_LOGGER
 
 #define MPU_CHECK_RET(x)                                                                            \
     do {                                                                                            \
@@ -30,7 +28,7 @@ static const char* TAG = {"MPUdmp"};
         }                                                                                           \
     }while(0)                
 
-#else /* ! MPU_ERROR_LOGGER */
+#else /* ! CONFIG_MPU_ERROR_LOGGER */
 
 #define MPU_CHECK_RET(x)                                                                            \
     do {                                                                                            \
@@ -42,10 +40,10 @@ static const char* TAG = {"MPUdmp"};
         MPU.err = x;                                                                                \
     }while(0)   
 
-#endif /* end of MPU_ERROR_LOGGER */
+#endif /* end of CONFIG_MPU_ERROR_LOGGER */
 
 
-#if defined FIFO_CORRUPTION_CHECK
+#if defined CONFIG_FIFO_CORRUPTION_CHECK
 #define QUAT_ERROR_THRESH       (1L<<24)
 #define QUAT_MAG_SQ_NORMALIZED  (1L<<28)
 #define QUAT_MAG_SQ_MIN         (QUAT_MAG_SQ_NORMALIZED - QUAT_ERROR_THRESH)
@@ -88,7 +86,7 @@ esp_err_t MPU_t::DMP_t::load() {
         MPU_CHECK_RET(MPU.readMemory(i, length, buffer));
         // compare data
         if(memcmp(DMP_FIRMWARE + i, buffer, length)) {
-            #ifdef MPU_ERROR_LOGGER
+            #ifdef CONFIG_MPU_ERROR_LOGGER
                 ESP_LOGE(TAG, "failed to load DMP, bank %d, chunk %d, length %d", (i >> 8), i, length);
             #endif
             MPU.err = ESP_FAIL;
@@ -401,7 +399,7 @@ dmp_features_t MPU_t::DMP_t::getFeaturesEnabled() {
     if(!memcmp(MPU.buffer+1, sendRawAccelRegsEnabled, 3))
         features |= DMP_FEATURE_SEND_RAW_ACCEL;
     else if(memcmp(MPU.buffer+1, sendRawDataRegsDisabled, 3)) {
-        #ifdef MPU_ERROR_LOGGER
+        #ifdef CONFIG_MPU_ERROR_LOGGER
             ESP_LOGW(TAG, "%s -> Unknown state for SEND_RAW_ACCEL regs. No match.", __FUNCTION__);
         #endif
         MPU.err = ESP_ERR_INVALID_STATE;
@@ -411,7 +409,7 @@ dmp_features_t MPU_t::DMP_t::getFeaturesEnabled() {
         if(!memcmp(MPU.buffer+10, sendCalGyroRegsEnabled, 4))
             features |= DMP_FEATURE_SEND_CAL_GYRO;
         else if(memcmp(MPU.buffer+10, sendCalGyroRegsDisabled, 4)) {
-            #ifdef MPU_ERROR_LOGGER
+            #ifdef CONFIG_MPU_ERROR_LOGGER
                 ESP_LOGW(TAG, "%s -> Unknown state for SEND_CAL_GYRO regs. No match.", __FUNCTION__);
             #endif
             MPU.err = ESP_ERR_INVALID_STATE;
@@ -420,7 +418,7 @@ dmp_features_t MPU_t::DMP_t::getFeaturesEnabled() {
             features |= DMP_FEATURE_SEND_RAW_GYRO;
     }
     else if(memcmp(MPU.buffer+4, sendRawDataRegsDisabled, 3)) {
-        #ifdef MPU_ERROR_LOGGER
+        #ifdef CONFIG_MPU_ERROR_LOGGER
             ESP_LOGW(TAG, "%s -> Unknown state for SEND_ANY_GYRO regs. No match.", __FUNCTION__);
         #endif
         MPU.err = ESP_ERR_INVALID_STATE;        
@@ -434,7 +432,7 @@ dmp_features_t MPU_t::DMP_t::getFeaturesEnabled() {
         if(MPU.buffer[1] == 0xF8)
             features |= DMP_FEATURE_TAP;
         else if(MPU.buffer[1] != 0xD8) {
-            #ifdef MPU_ERROR_LOGGER
+            #ifdef CONFIG_MPU_ERROR_LOGGER
                 ESP_LOGW(TAG, "%s -> Unknown state for TAP reg. No match.", __FUNCTION__);
             #endif
             MPU.err = ESP_ERR_INVALID_STATE;            
@@ -444,14 +442,14 @@ dmp_features_t MPU_t::DMP_t::getFeaturesEnabled() {
         if(MPU.buffer[1] == 0xD9)
             features |= DMP_FEATURE_ANDROID_ORIENT;
         else if(MPU.buffer[1] != 0xD8) {
-            #ifdef MPU_ERROR_LOGGER
+            #ifdef CONFIG_MPU_ERROR_LOGGER
                 ESP_LOGW(TAG, "%s -> Unknown state for ANDROID_ORIENT reg. No match.", __FUNCTION__);
             #endif
             MPU.err = ESP_ERR_INVALID_STATE;  
         }
     }
     else if(MPU.buffer[0] != 0xD8) {
-        #ifdef MPU_ERROR_LOGGER
+        #ifdef CONFIG_MPU_ERROR_LOGGER
             ESP_LOGW(TAG, "%s -> Unknown state for GESTURE reg. No match.", __FUNCTION__);
         #endif
         MPU.err = ESP_ERR_INVALID_STATE;
@@ -491,7 +489,7 @@ bool MPU_t::DMP_t::getGyroAutoCalibrationEnabled() {
     else if(!memcmp(regs, gyroCalibRegsDisable, 9))
         return false;
     else {
-        #ifdef MPU_ERROR_LOGGER
+        #ifdef CONFIG_MPU_ERROR_LOGGER
             ESP_LOGE(TAG, "%s -> Unknown gyro calibration state. No match.", __FUNCTION__);
         #endif
         MPU.err = ESP_ERR_INVALID_STATE;
@@ -518,7 +516,7 @@ bool MPU_t::DMP_t::getLPQuaternionEnabled() {
     else if(!memcmp(regs, lpQuaternionRegsDisable, 4))
         return false;
     else {
-        #ifdef MPU_ERROR_LOGGER
+        #ifdef CONFIG_MPU_ERROR_LOGGER
             ESP_LOGE(TAG, "%s -> Unknown LP Quaternion State. No match.", __FUNCTION__);
         #endif
         MPU.err = ESP_ERR_INVALID_STATE;
@@ -546,7 +544,7 @@ bool MPU_t::DMP_t::getLPQuaternion6XEnabled() {
     else if(!memcmp(regs, lpQuaternion6XRegsDisable, 4))
         return false;
     else {
-        #ifdef MPU_ERROR_LOGGER
+        #ifdef CONFIG_MPU_ERROR_LOGGER
             ESP_LOGE(TAG, "%s -> Unknown LP Quaternion 6X State. No match.", __FUNCTION__);
         #endif
         MPU.err = ESP_ERR_INVALID_STATE;
@@ -575,7 +573,7 @@ dmp_int_mode_t MPU_t::DMP_t::getDMPIntMode() {
     else if(!memcmp(regs, intModeRegsGesture, 11))
         return DMP_INT_MODE_GESTURE;
     else {
-        #ifdef MPU_ERROR_LOGGER
+        #ifdef CONFIG_MPU_ERROR_LOGGER
             ESP_LOGE(TAG, "%s -> Unknown DMP Interrupt Mode. No match.", __FUNCTION__);
         #endif
         MPU.err = ESP_FAIL;
@@ -588,7 +586,7 @@ static const uint8_t fifoRateRegsEnd[12] = {DINAFE, DINAF2, DINAAB, 0xc4, DINAAA
 
 esp_err_t MPU_t::DMP_t::setFIFORate(uint16_t rate) {
     if(rate > DMP_SAMPLE_RATE) {
-        #ifdef MPU_ERROR_LOGGER
+        #ifdef CONFIG_MPU_ERROR_LOGGER
             ESP_LOGE(TAG, "%s -> Invalid FIFO rate (%d). It must be <= %d", __FUNCTION__, rate, DMP_SAMPLE_RATE);
         #endif
         MPU.err = ESP_ERR_INVALID_ARG;
@@ -631,7 +629,7 @@ esp_err_t MPU_t::DMP_t::getFIFOPacket(uint8_t *packet) {
 
 esp_err_t MPU_t::DMP_t::setTapThreshold(dmp_tap_axis_t axis, uint16_t thresh) {
     if(!(axis & DMP_TAP_XYZ) || thresh > 1600) {
-        #ifdef MPU_ERROR_LOGGER
+        #ifdef CONFIG_MPU_ERROR_LOGGER
             ESP_LOGE(TAG, "%s -> Invalid argument. No axis passed or threshold > 1600.", __FUNCTION__);
         #endif
         MPU.err = ESP_ERR_INVALID_ARG;
@@ -698,7 +696,7 @@ uint16_t MPU_t::DMP_t::getTapThreshold(dmp_tap_axis_t axis) {
 
 esp_err_t MPU_t::DMP_t::setTapAxesEnabled(dmp_tap_axis_t axis) {
     if(!(axis & DMP_TAP_XYZ)) {
-        #ifdef MPU_ERROR_LOGGER
+        #ifdef CONFIG_MPU_ERROR_LOGGER
             ESP_LOGE(TAG, "%s -> Invalid argument. No axis passed.", __FUNCTION__);
         #endif
         MPU.err = ESP_ERR_INVALID_ARG;
@@ -720,13 +718,13 @@ dmp_tap_axis_t MPU_t::DMP_t::getTapAxesEnabled() {
 
 esp_err_t MPU_t::DMP_t::setTapCount(uint8_t count) {    
     if (count < 1) {
-        #ifdef MPU_ERROR_LOGGER
+        #ifdef CONFIG_MPU_ERROR_LOGGER
             ESP_LOGW(TAG, "%s -> Count (%d) constrained to %d, range(1~4)", __FUNCTION__, count, 1);
         #endif
         count = 1;
     }
     else if (count > 4) {
-        #ifdef MPU_ERROR_LOGGER
+        #ifdef CONFIG_MPU_ERROR_LOGGER
             ESP_LOGW(TAG, "%s -> Count (%d) constrained to %d, range(1~4)", __FUNCTION__, count, 4);
         #endif
         count = 4;
@@ -743,7 +741,7 @@ uint8_t MPU_t::DMP_t::getTapCount() {
     MPU_CHECK_NORET(MPU.writeMemory(DMP_D_1_79, 1, &count));
     count++;
 
-    #ifdef MPU_ERROR_LOGGER
+    #ifdef CONFIG_MPU_ERROR_LOGGER
         if(count < 1 || count > 4) {
             ESP_LOGW(TAG, "%s -> read count (%d) does not match constrains.", __FUNCTION__, count);
         }
@@ -916,7 +914,7 @@ esp_err_t MPU_t::DMP_t::getQuaternion(int32_t *quat, uint8_t *packet) {
     quat[2] = (packet[i+8] << 24) | (packet[i+9] << 16) | (packet[i+10] << 8) | packet[i+11];
     quat[3] = (packet[i+12] << 24) | (packet[i+13] << 16) | (packet[i+14] << 8) | packet[i+15];
 
-    #ifdef FIFO_CORRUPTION_CHECK
+    #ifdef CONFIG_FIFO_CORRUPTION_CHECK
         /* We can detect a corrupted FIFO by monitoring the quaternion data and
          * ensuring that the magnitude is always normalized to one. This
          * shouldn't happen in normal operation, but if an I2C error occurs,
@@ -937,14 +935,14 @@ esp_err_t MPU_t::DMP_t::getQuaternion(int32_t *quat, uint8_t *packet) {
         if ((quatMagSq < QUAT_MAG_SQ_MIN) || (quatMagSq > QUAT_MAG_SQ_MAX)) {
             /* Quaternion is outside of the acceptable threshold. */
             MPU.resetFIFO();
-            #ifdef MPU_ERROR_LOGGER
+            #ifdef CONFIG_MPU_ERROR_LOGGER
                 ESP_LOGW(TAG, "%s -> FIFO Corruption. Quaternion is outside of the acceptable threshold.", __FUNCTION__);
             #endif
             MPU.err = ESP_ERR_INVALID_STATE;
             return MPU.err;
         }
 
-    #endif /* FIFO_CORRUPTION_CHECK */
+    #endif /* CONFIG_FIFO_CORRUPTION_CHECK */
 
     MPU.err = ESP_OK;
     return MPU.err;

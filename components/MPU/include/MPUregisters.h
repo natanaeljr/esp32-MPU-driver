@@ -1,5 +1,5 @@
-#ifndef _MPU_REGISTERMAP_H_
-#define _MPU_REGISTERMAP_H_
+#ifndef _MPU_REGISTERS_H_
+#define _MPU_REGISTERS_H_
 
 #include "MPUdefine.h"
 
@@ -332,4 +332,4 @@
 
 
 
-#endif /* end of include guard: _MPU_REGISTERMAP_H_ */
+#endif /* end of include guard: _MPU_REGISTERS_H_ */
