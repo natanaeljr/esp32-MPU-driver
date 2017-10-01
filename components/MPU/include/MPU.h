@@ -24,7 +24,7 @@ private:
     mpu_addr_t addr = MPU_DEFAULT_ADDRESS;
     esp_err_t err = ESP_OK;
     uint8_t buffer[14];
-    friend class DMP_t;    
+    friend class DMP_t;
     
 public:
     MPU_t(I2Cbus& I2C = I2Cbus0);
@@ -118,16 +118,75 @@ public:
     esp_err_t readMemory(uint16_t memAddr, uint16_t length, uint8_t *data);
     esp_err_t setProgramStartAddress(uint16_t prgmAddr);
     uint16_t getProgramStartAddress();
-    
 
+    
+    
+    
 private:
     #ifdef AK89xx_SECONDARY
     esp_err_t compassInit();
     esp_err_t setCompassSampleRate(uint16_t rate);
     #endif
+    
+    // REGISTERS
+    esp_err_t readBit(uint8_t regAddr, uint8_t bitNum, uint8_t *data);
+    esp_err_t readBits(uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t *data);
+    esp_err_t readByte(uint8_t regAddr, uint8_t *data);
+    esp_err_t readBytes(uint8_t regAddr, size_t length, uint8_t *data);
+    esp_err_t writeBit(uint8_t regAddr, uint8_t bitNum, uint8_t data);
+    esp_err_t writeBits(uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t data);
+    esp_err_t writeByte(uint8_t regAddr, uint8_t data);
+    esp_err_t writeBytes(uint8_t regAddr, size_t length, const uint8_t *data);
 
     
 }; /* end of class MPU_t */
+
+
+
+
+
+
+
+
+/*********************************
+ * Inline methods implementation
+ *********************************/
+
+inline esp_err_t MPU_t::readBit(uint8_t regAddr, uint8_t bitNum, uint8_t *data) {
+    err = I2C.readBit(addr, regAddr, bitNum, data);
+    return err;
+}
+inline esp_err_t MPU_t::readBits(uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t *data) {
+    err = I2C.readBits(addr, regAddr, bitStart, length, data);
+    return err;
+}
+inline esp_err_t MPU_t::readByte(uint8_t regAddr, uint8_t *data) {
+    err = I2C.readByte(addr, regAddr, data);
+    return err;
+}
+inline esp_err_t MPU_t::readBytes(uint8_t regAddr, size_t length, uint8_t *data) {
+    err = I2C.readBytes(addr, regAddr, length, data);
+    return err;
+}
+inline esp_err_t MPU_t::writeBit(uint8_t regAddr, uint8_t bitNum, uint8_t data) {
+    err = I2C.writeBit(addr, regAddr, bitNum, data);
+    return err;
+}
+inline esp_err_t MPU_t::writeBits(uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t data) {
+    err = I2C.writeBits(addr, regAddr, bitStart, length, data);
+    return err;
+}
+inline esp_err_t MPU_t::writeByte(uint8_t regAddr, uint8_t data) {
+    err = I2C.writeByte(addr, regAddr, data);
+    return err;
+}
+inline esp_err_t MPU_t::writeBytes(uint8_t regAddr, size_t length, const uint8_t *data) {
+    err = I2C.writeBytes(addr, regAddr, length, data);
+    return err;
+}
+
+
+
 
 
 
