@@ -119,7 +119,7 @@ esp_err_t DMP_t::setEnabled(bool enable) {
     }
     // check for firmware loaded
     MPU_CHECK_RET((!loaded) ? ESP_FAIL : ESP_OK);
-    MPU_CHECK_RET(MPU.I2C.writeBit(MPU.addr, MPU_REG_USER_CTRL, MPU_USERCTRL_DMP_EN_BIT, enable));
+    MPU_CHECK_RET(MPU.writeBit(MPU_REG_USER_CTRL, MPU_USERCTRL_DMP_EN_BIT, enable));
     if(enable) {
         MPU_CHECK_RET(reset());
     }
@@ -130,13 +130,13 @@ esp_err_t DMP_t::setEnabled(bool enable) {
 
 
 bool DMP_t::getEnabled() {
-    MPU_CHECK_NORET(MPU.I2C.readBit(MPU.addr, MPU_REG_USER_CTRL, MPU_USERCTRL_DMP_EN_BIT, MPU.buffer));
+    MPU_CHECK_NORET(MPU.readBit(MPU_REG_USER_CTRL, MPU_USERCTRL_DMP_EN_BIT, MPU.buffer));
     return MPU.buffer[0];
 }
 
 
 esp_err_t DMP_t::reset() {
-    return MPU.I2C.writeBit(MPU.addr, MPU_REG_USER_CTRL, MPU_USERCTRL_DMP_RESET_BIT, true);
+    return MPU.writeBit(MPU_REG_USER_CTRL, MPU_USERCTRL_DMP_RESET_BIT, true);
 }
 
 
