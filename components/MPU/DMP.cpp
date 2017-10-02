@@ -130,8 +130,8 @@ esp_err_t DMP_t::setEnabled(bool enable) {
 
 
 bool DMP_t::getEnabled() {
-    MPU_CHECK_NORET(MPU.readBit(MPU_REG_USER_CTRL, MPU_USERCTRL_DMP_EN_BIT, MPU.buffer));
-    return MPU.buffer[0];
+    MPU_CHECK_NORET(MPU.readBit(MPU_REG_USER_CTRL, MPU_USERCTRL_DMP_EN_BIT, buffer));
+    return buffer[0];
 }
 
 
@@ -296,52 +296,52 @@ static const uint8_t sendCalGyroRegsDisabled[4] = {DINAC0, DINA80, DINAC2, DINA9
 
 esp_err_t DMP_t::setFeaturesEnabled(dmp_features_t features) {
     /* Set integration scale factor. */
-    MPU.buffer[0] = (uint8_t)((GYRO_SCALE_FACTOR >> 24) & 0xFF);
-    MPU.buffer[1] = (uint8_t)((GYRO_SCALE_FACTOR >> 16) & 0xFF);
-    MPU.buffer[2] = (uint8_t)((GYRO_SCALE_FACTOR >> 8) & 0xFF);
-    MPU.buffer[3] = (uint8_t)(GYRO_SCALE_FACTOR & 0xFF);
-    MPU_CHECK_RET(MPU.writeMemory(DMP_D_0_104, 4, MPU.buffer));
+    buffer[0] = (uint8_t)((GYRO_SCALE_FACTOR >> 24) & 0xFF);
+    buffer[1] = (uint8_t)((GYRO_SCALE_FACTOR >> 16) & 0xFF);
+    buffer[2] = (uint8_t)((GYRO_SCALE_FACTOR >> 8) & 0xFF);
+    buffer[3] = (uint8_t)(GYRO_SCALE_FACTOR & 0xFF);
+    MPU_CHECK_RET(MPU.writeMemory(DMP_D_0_104, 4, buffer));
 
     /* Send sensor data to the FIFO. */
-    MPU.buffer[0] = 0xA3;
+    buffer[0] = 0xA3;
     if (features & DMP_FEATURE_SEND_RAW_ACCEL) {
-        memcpy(MPU.buffer+1, sendRawAccelRegsEnabled, 3);
+        memcpy(buffer+1, sendRawAccelRegsEnabled, 3);
     } else {
-        memcpy(MPU.buffer+1, sendRawDataRegsDisabled, 3);
+        memcpy(buffer+1, sendRawDataRegsDisabled, 3);
     }
     if (features & DMP_FEATURE_SEND_ANY_GYRO) {
-        memcpy(MPU.buffer+4, sendAnyGyroRegsEnabled, 3);
+        memcpy(buffer+4, sendAnyGyroRegsEnabled, 3);
     } else {
-        memcpy(MPU.buffer+4, sendRawDataRegsDisabled, 3);
+        memcpy(buffer+4, sendRawDataRegsDisabled, 3);
     }
-    MPU.buffer[7] = 0xA3;
-    MPU.buffer[8] = 0xA3;
-    MPU.buffer[9] = 0xA3;
-    MPU_CHECK_RET(MPU.writeMemory(DMP_CFG_15, 10, MPU.buffer));
+    buffer[7] = 0xA3;
+    buffer[8] = 0xA3;
+    buffer[9] = 0xA3;
+    MPU_CHECK_RET(MPU.writeMemory(DMP_CFG_15, 10, buffer));
 
     if (features & DMP_FEATURE_SEND_ANY_GYRO) {
         if (features & DMP_FEATURE_SEND_CAL_GYRO) {
-            memcpy(MPU.buffer, sendCalGyroRegsEnabled, 4);
+            memcpy(buffer, sendCalGyroRegsEnabled, 4);
         } else {
-            memcpy(MPU.buffer, sendCalGyroRegsDisabled, 4);
+            memcpy(buffer, sendCalGyroRegsDisabled, 4);
         }
-        MPU_CHECK_RET(MPU.writeMemory(DMP_CFG_GYRO_RAW_DATA, 4, MPU.buffer));
+        MPU_CHECK_RET(MPU.writeMemory(DMP_CFG_GYRO_RAW_DATA, 4, buffer));
     }
     
     /* Send gesture data to the FIFO. */
     if (features & (DMP_FEATURE_TAP | DMP_FEATURE_ANDROID_ORIENT))
-        MPU.buffer[0] = DINA20;
+        buffer[0] = DINA20;
     else
-        MPU.buffer[0] = 0xD8;
-    MPU_CHECK_RET(MPU.writeMemory(DMP_CFG_27, 1, MPU.buffer));
+        buffer[0] = 0xD8;
+    MPU_CHECK_RET(MPU.writeMemory(DMP_CFG_27, 1, buffer));
 
     /* Enable Gyro Calibration */
     setGyroAutoCalibrationEnabled(features & DMP_FEATURE_GYRO_CAL);
 
     /* Enable Tap. */
     if (features & DMP_FEATURE_TAP) {
-        MPU.buffer[0] = 0xF8;
-        MPU_CHECK_RET(MPU.writeMemory(DMP_CFG_20, 1, MPU.buffer));
+        buffer[0] = 0xF8;
+        MPU_CHECK_RET(MPU.writeMemory(DMP_CFG_20, 1, buffer));
 
         MPU_CHECK_RET(setTapThreshold(DMP_TAP_XYZ, 250));
         MPU_CHECK_RET(setTapAxesEnabled(DMP_TAP_XYZ));
@@ -353,16 +353,16 @@ esp_err_t DMP_t::setFeaturesEnabled(dmp_features_t features) {
         MPU_CHECK_RET(setShakeRejectTime(40));
         MPU_CHECK_RET(setShakeRejectTimeout(10));
     } else {
-        MPU.buffer[0] = 0xD8;
-        MPU_CHECK_RET(MPU.writeMemory(DMP_CFG_20, 1, MPU.buffer));
+        buffer[0] = 0xD8;
+        MPU_CHECK_RET(MPU.writeMemory(DMP_CFG_20, 1, buffer));
     }
 
     /* Enable Android Orientation */
     if (features & DMP_FEATURE_ANDROID_ORIENT)
-        MPU.buffer[0] = 0xD9;
+        buffer[0] = 0xD9;
     else
-        MPU.buffer[0] = 0xD8;
-    MPU_CHECK_RET(MPU.writeMemory(DMP_CFG_ANDROID_ORIENT_INT, 1, MPU.buffer));
+        buffer[0] = 0xD8;
+    MPU_CHECK_RET(MPU.writeMemory(DMP_CFG_ANDROID_ORIENT_INT, 1, buffer));
 
     /* Enable gyro-only Quaternion */
     setLPQuaternionEnabled(features & DMP_FEATURE_LP_QUAT);
@@ -396,20 +396,20 @@ dmp_features_t DMP_t::getFeaturesEnabled() {
     dmp_features_t features = 0;
     MPU.err = ESP_OK;
     /* check SEND_RAW_ACCEL and SEND_ANY_GYRO regs*/
-    MPU_CHECK_NORET(MPU.readMemory(DMP_CFG_15, 10, MPU.buffer));
-    if(!memcmp(MPU.buffer+1, sendRawAccelRegsEnabled, 3))
+    MPU_CHECK_NORET(MPU.readMemory(DMP_CFG_15, 10, buffer));
+    if(!memcmp(buffer+1, sendRawAccelRegsEnabled, 3))
         features |= DMP_FEATURE_SEND_RAW_ACCEL;
-    else if(memcmp(MPU.buffer+1, sendRawDataRegsDisabled, 3)) {
+    else if(memcmp(buffer+1, sendRawDataRegsDisabled, 3)) {
         #ifdef CONFIG_MPU_ERROR_LOGGER
             ESP_LOGW(TAG, "%s -> Unknown state for SEND_RAW_ACCEL regs. No match.", __FUNCTION__);
         #endif
         MPU.err = ESP_ERR_INVALID_STATE;
     }
-    if(!memcmp(MPU.buffer+4, sendAnyGyroRegsEnabled, 3)) {
-        MPU_CHECK_NORET(MPU.readMemory(DMP_CFG_GYRO_RAW_DATA, 4, MPU.buffer+10));
-        if(!memcmp(MPU.buffer+10, sendCalGyroRegsEnabled, 4))
+    if(!memcmp(buffer+4, sendAnyGyroRegsEnabled, 3)) {
+        MPU_CHECK_NORET(MPU.readMemory(DMP_CFG_GYRO_RAW_DATA, 4, buffer+10));
+        if(!memcmp(buffer+10, sendCalGyroRegsEnabled, 4))
             features |= DMP_FEATURE_SEND_CAL_GYRO;
-        else if(memcmp(MPU.buffer+10, sendCalGyroRegsDisabled, 4)) {
+        else if(memcmp(buffer+10, sendCalGyroRegsDisabled, 4)) {
             #ifdef CONFIG_MPU_ERROR_LOGGER
                 ESP_LOGW(TAG, "%s -> Unknown state for SEND_CAL_GYRO regs. No match.", __FUNCTION__);
             #endif
@@ -418,7 +418,7 @@ dmp_features_t DMP_t::getFeaturesEnabled() {
         else
             features |= DMP_FEATURE_SEND_RAW_GYRO;
     }
-    else if(memcmp(MPU.buffer+4, sendRawDataRegsDisabled, 3)) {
+    else if(memcmp(buffer+4, sendRawDataRegsDisabled, 3)) {
         #ifdef CONFIG_MPU_ERROR_LOGGER
             ESP_LOGW(TAG, "%s -> Unknown state for SEND_ANY_GYRO regs. No match.", __FUNCTION__);
         #endif
@@ -426,30 +426,30 @@ dmp_features_t DMP_t::getFeaturesEnabled() {
     }
 
     /* check GESTURES regs */
-    MPU_CHECK_NORET(MPU.readMemory(DMP_CFG_27, 1, MPU.buffer));
-    if(MPU.buffer[0] == DINA20) {
+    MPU_CHECK_NORET(MPU.readMemory(DMP_CFG_27, 1, buffer));
+    if(buffer[0] == DINA20) {
         /* check TAP reg */
-        MPU_CHECK_NORET(MPU.readMemory(DMP_CFG_20, 1, MPU.buffer+1));
-        if(MPU.buffer[1] == 0xF8)
+        MPU_CHECK_NORET(MPU.readMemory(DMP_CFG_20, 1, buffer+1));
+        if(buffer[1] == 0xF8)
             features |= DMP_FEATURE_TAP;
-        else if(MPU.buffer[1] != 0xD8) {
+        else if(buffer[1] != 0xD8) {
             #ifdef CONFIG_MPU_ERROR_LOGGER
                 ESP_LOGW(TAG, "%s -> Unknown state for TAP reg. No match.", __FUNCTION__);
             #endif
             MPU.err = ESP_ERR_INVALID_STATE;            
         }
         /* check ANDROID_ORIENT reg */
-        MPU_CHECK_NORET(MPU.readMemory(DMP_CFG_ANDROID_ORIENT_INT, 1, MPU.buffer+1));
-        if(MPU.buffer[1] == 0xD9)
+        MPU_CHECK_NORET(MPU.readMemory(DMP_CFG_ANDROID_ORIENT_INT, 1, buffer+1));
+        if(buffer[1] == 0xD9)
             features |= DMP_FEATURE_ANDROID_ORIENT;
-        else if(MPU.buffer[1] != 0xD8) {
+        else if(buffer[1] != 0xD8) {
             #ifdef CONFIG_MPU_ERROR_LOGGER
                 ESP_LOGW(TAG, "%s -> Unknown state for ANDROID_ORIENT reg. No match.", __FUNCTION__);
             #endif
             MPU.err = ESP_ERR_INVALID_STATE;  
         }
     }
-    else if(MPU.buffer[0] != 0xD8) {
+    else if(buffer[0] != 0xD8) {
         #ifdef CONFIG_MPU_ERROR_LOGGER
             ESP_LOGW(TAG, "%s -> Unknown state for GESTURE reg. No match.", __FUNCTION__);
         #endif
@@ -595,10 +595,10 @@ esp_err_t DMP_t::setFIFORate(uint16_t rate) {
     }
 
     uint16_t div = DMP_SAMPLE_RATE / rate - 1;
-    MPU.buffer[0] = (uint8_t)((div >> 8) & 0xFF);
-    MPU.buffer[1] = (uint8_t)(div & 0xFF);
+    buffer[0] = (uint8_t)((div >> 8) & 0xFF);
+    buffer[1] = (uint8_t)(div & 0xFF);
 
-    MPU_CHECK_RET(MPU.writeMemory(DMP_D_0_22, 2, MPU.buffer));
+    MPU_CHECK_RET(MPU.writeMemory(DMP_D_0_22, 2, buffer));
     MPU_CHECK_NORET(MPU.writeMemory(DMP_CFG_6, 12, (uint8_t*)fifoRateRegsEnd));
 
     return MPU.err;
@@ -606,8 +606,8 @@ esp_err_t DMP_t::setFIFORate(uint16_t rate) {
 
 
 uint16_t DMP_t::getFIFORate() {
-    MPU_CHECK_RET(MPU.readMemory(DMP_D_0_22, 2, MPU.buffer));
-    uint16_t div = (MPU.buffer[0] << 8) | MPU.buffer[1];
+    MPU_CHECK_RET(MPU.readMemory(DMP_D_0_22, 2, buffer));
+    uint16_t div = (buffer[0] << 8) | buffer[1];
     return DMP_SAMPLE_RATE / (div + 1);
 }
 
@@ -648,22 +648,22 @@ esp_err_t DMP_t::setTapThreshold(dmp_tap_axis_t axis, uint16_t thresh) {
     dmpThresh[0] = (uint16_t)(scaledThresh * accelScaleFactor);
     dmpThresh[1] = (uint16_t)(scaledThresh * (accelScaleFactor * 0.75f));
 
-    MPU.buffer[0] = (uint8_t)(dmpThresh[0] >> 8);
-    MPU.buffer[1] = (uint8_t)(dmpThresh[0] & 0xFF);
-    MPU.buffer[2] = (uint8_t)(dmpThresh[1] >> 8);
-    MPU.buffer[3] = (uint8_t)(dmpThresh[1] & 0xFF);
+    buffer[0] = (uint8_t)(dmpThresh[0] >> 8);
+    buffer[1] = (uint8_t)(dmpThresh[0] & 0xFF);
+    buffer[2] = (uint8_t)(dmpThresh[1] >> 8);
+    buffer[3] = (uint8_t)(dmpThresh[1] & 0xFF);
 
     if (axis & DMP_TAP_X) {
-        MPU_CHECK_RET(MPU.writeMemory(DMP_TAP_THX, 2, MPU.buffer));
-        MPU_CHECK_RET(MPU.writeMemory(DMP_D_1_36, 2, MPU.buffer+2));
+        MPU_CHECK_RET(MPU.writeMemory(DMP_TAP_THX, 2, buffer));
+        MPU_CHECK_RET(MPU.writeMemory(DMP_D_1_36, 2, buffer+2));
     }
     if (axis & DMP_TAP_Y) {
-        MPU_CHECK_RET(MPU.writeMemory(DMP_TAP_THY, 2, MPU.buffer));
-        MPU_CHECK_RET(MPU.writeMemory(DMP_D_1_40, 2, MPU.buffer+2));
+        MPU_CHECK_RET(MPU.writeMemory(DMP_TAP_THY, 2, buffer));
+        MPU_CHECK_RET(MPU.writeMemory(DMP_D_1_40, 2, buffer+2));
     }
     if (axis & DMP_TAP_Z) {
-        MPU_CHECK_RET(MPU.writeMemory(DMP_TAP_THZ, 2, MPU.buffer));
-        MPU_CHECK_RET(MPU.writeMemory(DMP_D_1_44, 2, MPU.buffer+2));
+        MPU_CHECK_RET(MPU.writeMemory(DMP_TAP_THZ, 2, buffer));
+        MPU_CHECK_RET(MPU.writeMemory(DMP_D_1_44, 2, buffer+2));
     }
 
     MPU.err = ESP_OK;
@@ -673,17 +673,17 @@ esp_err_t DMP_t::setTapThreshold(dmp_tap_axis_t axis, uint16_t thresh) {
 
 uint16_t DMP_t::getTapThreshold(dmp_tap_axis_t axis) {
     if (axis & DMP_TAP_X) {
-        MPU_CHECK_RET(MPU.readMemory(DMP_TAP_THX, 2, MPU.buffer));
+        MPU_CHECK_RET(MPU.readMemory(DMP_TAP_THX, 2, buffer));
     }
     else if (axis & DMP_TAP_Y) {
-        MPU_CHECK_RET(MPU.readMemory(DMP_TAP_THY, 2, MPU.buffer));
+        MPU_CHECK_RET(MPU.readMemory(DMP_TAP_THY, 2, buffer));
     }
     else if (axis & DMP_TAP_Z) {
-        MPU_CHECK_RET(MPU.readMemory(DMP_TAP_THZ, 2, MPU.buffer));
+        MPU_CHECK_RET(MPU.readMemory(DMP_TAP_THZ, 2, buffer));
     }
 
     uint16_t dmpThresh;
-    dmpThresh = (MPU.buffer[0] << 8) | MPU.buffer[1];
+    dmpThresh = (buffer[0] << 8) | buffer[1];
 
     /* Accel full-scale-range to scale-factor */
     uint16_t accelScaleFactor = pow(2, (MPU.getAccelFullScale() + 1)) * 1024;
@@ -731,8 +731,8 @@ esp_err_t DMP_t::setTapCount(uint8_t count) {
         count = 4;
     }
 
-    MPU.buffer[0] = count - 1;
-    MPU_CHECK_NORET(MPU.writeMemory(DMP_D_1_79, 1, MPU.buffer));
+    buffer[0] = count - 1;
+    MPU_CHECK_NORET(MPU.writeMemory(DMP_D_1_79, 1, buffer));
     return MPU.err;
 }
 
@@ -754,117 +754,117 @@ uint8_t DMP_t::getTapCount() {
 
 esp_err_t DMP_t::setTapTime(uint16_t time) {
     uint16_t dmpTime = time / (1000 / DMP_SAMPLE_RATE);
-    MPU.buffer[0] = dmpTime >> 8;
-    MPU.buffer[1] = dmpTime & 0xFF;
-    MPU_CHECK_NORET(MPU.writeMemory(DMP_TAPW_MIN, 2, MPU.buffer));
+    buffer[0] = dmpTime >> 8;
+    buffer[1] = dmpTime & 0xFF;
+    MPU_CHECK_NORET(MPU.writeMemory(DMP_TAPW_MIN, 2, buffer));
     return MPU.err;
 }
 
 
 uint16_t DMP_t::getTapTime() {
-    MPU_CHECK_NORET(MPU.readMemory(DMP_TAPW_MIN, 2, MPU.buffer));
-    uint16_t dmpTime = (MPU.buffer[0] << 8) | MPU.buffer[1];
+    MPU_CHECK_NORET(MPU.readMemory(DMP_TAPW_MIN, 2, buffer));
+    uint16_t dmpTime = (buffer[0] << 8) | buffer[1];
     return dmpTime * (1000 / DMP_SAMPLE_RATE);
 }
 
 
 esp_err_t DMP_t::setTapTimeMulti(uint16_t time) {
     uint16_t dmpTime = time / (1000 / DMP_SAMPLE_RATE);
-    MPU.buffer[0] = dmpTime >> 8;
-    MPU.buffer[1] = dmpTime & 0xFF;
-    MPU_CHECK_NORET(MPU.writeMemory(DMP_D_1_218, 2, MPU.buffer));
+    buffer[0] = dmpTime >> 8;
+    buffer[1] = dmpTime & 0xFF;
+    MPU_CHECK_NORET(MPU.writeMemory(DMP_D_1_218, 2, buffer));
     return MPU.err;
 }
 
 
 uint16_t DMP_t::getTapTimeMulti() {
-    MPU_CHECK_NORET(MPU.readMemory(DMP_D_1_218, 2, MPU.buffer));
-    uint16_t dmpTime = (MPU.buffer[0] << 8) | MPU.buffer[1];
+    MPU_CHECK_NORET(MPU.readMemory(DMP_D_1_218, 2, buffer));
+    uint16_t dmpTime = (buffer[0] << 8) | buffer[1];
     return dmpTime * (1000 / DMP_SAMPLE_RATE);
 }
 
 
 esp_err_t DMP_t::setShakeRejectThreshold(uint16_t thresh) {
     uint32_t scaledThresh = GYRO_SCALE_FACTOR / 1000 * thresh;
-    MPU.buffer[0] = (scaledThresh >> 24) & 0xFF;
-    MPU.buffer[1] = (scaledThresh >> 16) & 0xFF;
-    MPU.buffer[2] = (scaledThresh >> 8) & 0xFF;
-    MPU.buffer[3] = scaledThresh & 0xFF;
-    MPU_CHECK_NORET(MPU.writeMemory(DMP_D_1_92, 4, MPU.buffer));
+    buffer[0] = (scaledThresh >> 24) & 0xFF;
+    buffer[1] = (scaledThresh >> 16) & 0xFF;
+    buffer[2] = (scaledThresh >> 8) & 0xFF;
+    buffer[3] = scaledThresh & 0xFF;
+    MPU_CHECK_NORET(MPU.writeMemory(DMP_D_1_92, 4, buffer));
     return MPU.err;
 }
 
 
 uint16_t DMP_t::getShakeRejectThreshold() {
-    MPU_CHECK_NORET(MPU.readMemory(DMP_D_1_92, 4, MPU.buffer));
-    uint32_t scaledThresh = (MPU.buffer[0] << 24) | (MPU.buffer[1] << 16) | (MPU.buffer[2] << 8) | MPU.buffer[3];
+    MPU_CHECK_NORET(MPU.readMemory(DMP_D_1_92, 4, buffer));
+    uint32_t scaledThresh = (buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) | buffer[3];
     return scaledThresh / (GYRO_SCALE_FACTOR / 1000);
 }
 
 
 esp_err_t DMP_t::setShakeRejectTime(uint16_t time) {
     uint16_t dmpTime = time / (1000 / DMP_SAMPLE_RATE);
-    MPU.buffer[0] = dmpTime >> 8;
-    MPU.buffer[1] = dmpTime & 0xFF;
-    MPU_CHECK_NORET(MPU.writeMemory(DMP_D_1_90, 2, MPU.buffer));
+    buffer[0] = dmpTime >> 8;
+    buffer[1] = dmpTime & 0xFF;
+    MPU_CHECK_NORET(MPU.writeMemory(DMP_D_1_90, 2, buffer));
     return MPU.err;
 }
 
 
 uint16_t DMP_t::getShakeRejectTime() {
-    MPU_CHECK_NORET(MPU.readMemory(DMP_D_1_90, 2, MPU.buffer));
-    uint16_t dmpTime = (MPU.buffer[0] << 8) | MPU.buffer[1];
+    MPU_CHECK_NORET(MPU.readMemory(DMP_D_1_90, 2, buffer));
+    uint16_t dmpTime = (buffer[0] << 8) | buffer[1];
     return dmpTime * (1000 / DMP_SAMPLE_RATE);
 }
 
 
 esp_err_t DMP_t::setShakeRejectTimeout(uint16_t timeout) {
     uint16_t dmpTimeout = timeout / (1000 / DMP_SAMPLE_RATE);
-    MPU.buffer[0] = dmpTimeout >> 8;
-    MPU.buffer[1] = dmpTimeout & 0xFF;
-    MPU_CHECK_NORET(MPU.writeMemory(DMP_D_1_88, 2, MPU.buffer));
+    buffer[0] = dmpTimeout >> 8;
+    buffer[1] = dmpTimeout & 0xFF;
+    MPU_CHECK_NORET(MPU.writeMemory(DMP_D_1_88, 2, buffer));
     return MPU.err;
 }
 
 
 uint16_t DMP_t::getShakeRejectTimeout() {
-    MPU_CHECK_NORET(MPU.readMemory(DMP_D_1_88, 2, MPU.buffer));
-    uint16_t dmpTimeout = (MPU.buffer[0] << 8) | MPU.buffer[1];
+    MPU_CHECK_NORET(MPU.readMemory(DMP_D_1_88, 2, buffer));
+    uint16_t dmpTimeout = (buffer[0] << 8) | buffer[1];
     return dmpTimeout * (1000 / DMP_SAMPLE_RATE);
 }
 
 
 esp_err_t DMP_t::setPedometerStepCount(uint32_t count) {
-    MPU.buffer[0] = (count >> 24) & 0xFF;
-    MPU.buffer[1] = (count >> 16) & 0xFF;
-    MPU.buffer[2] = (count >> 8) & 0xFF;
-    MPU.buffer[3] = count & 0xFF;
-    MPU_CHECK_NORET(MPU.writeMemory(DMP_D_PEDSTD_STEPCTR, 4, MPU.buffer));
+    buffer[0] = (count >> 24) & 0xFF;
+    buffer[1] = (count >> 16) & 0xFF;
+    buffer[2] = (count >> 8) & 0xFF;
+    buffer[3] = count & 0xFF;
+    MPU_CHECK_NORET(MPU.writeMemory(DMP_D_PEDSTD_STEPCTR, 4, buffer));
     return MPU.err;
 }
 
 
 uint32_t DMP_t::getPedometerStepCount() {
-    MPU_CHECK_NORET(MPU.readMemory(DMP_D_PEDSTD_STEPCTR, 4, MPU.buffer));
-    uint32_t count = (MPU.buffer[0] << 24) | (MPU.buffer[1] << 16) | (MPU.buffer[2] << 8) | MPU.buffer[3];
+    MPU_CHECK_NORET(MPU.readMemory(DMP_D_PEDSTD_STEPCTR, 4, buffer));
+    uint32_t count = (buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) | buffer[3];
     return count;
 }
 
 
 esp_err_t DMP_t::setPedometerWalkTime(uint32_t time) {
     uint32_t dmpTime = time / 20;
-    MPU.buffer[0] = (dmpTime >> 24) & 0xFF;
-    MPU.buffer[1] = (dmpTime >> 16) & 0xFF;
-    MPU.buffer[2] = (dmpTime >> 8) & 0xFF;
-    MPU.buffer[3] = dmpTime & 0xFF;
-    MPU_CHECK_NORET(MPU.writeMemory(DMP_D_PEDSTD_TIMECTR, 4, MPU.buffer));
+    buffer[0] = (dmpTime >> 24) & 0xFF;
+    buffer[1] = (dmpTime >> 16) & 0xFF;
+    buffer[2] = (dmpTime >> 8) & 0xFF;
+    buffer[3] = dmpTime & 0xFF;
+    MPU_CHECK_NORET(MPU.writeMemory(DMP_D_PEDSTD_TIMECTR, 4, buffer));
     return MPU.err;
 }
 
 
 uint32_t DMP_t::getPedometerWalkTime() {
-    MPU_CHECK_NORET(MPU.readMemory(DMP_D_PEDSTD_TIMECTR, 4, MPU.buffer));
-    uint32_t dmpTime = (MPU.buffer[0] << 24) | (MPU.buffer[1] << 16) | (MPU.buffer[2] << 8) | MPU.buffer[3];
+    MPU_CHECK_NORET(MPU.readMemory(DMP_D_PEDSTD_TIMECTR, 4, buffer));
+    uint32_t dmpTime = (buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) | buffer[3];
     return dmpTime * 20;
 }
 
