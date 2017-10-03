@@ -383,14 +383,14 @@ bool MPU_t::getIntDataReadyStatus() {
 }
 
 
-mpu_axis_t MPU_t::getGyro() {
+mpu_axis_t MPU_t::getRotation() {
     mpu_axis_t gyro;
-    MPU_ERR_CHECK(getGyro(&(gyro.x), &(gyro.y), &(gyro.z)));
+    MPU_ERR_CHECK(getRotation(&(gyro.x), &(gyro.y), &(gyro.z)));
     return gyro;
 }
 
 
-esp_err_t MPU_t::getGyro(int16_t *x, int16_t *y, int16_t *z) {
+esp_err_t MPU_t::getRotation(int16_t *x, int16_t *y, int16_t *z) {
     MPU_ERR_CHECK(readBytes(MPU_REG_GYRO_XOUT_H, 6, buffer));
     *x = (buffer[0] << 8) | buffer[1];
     *y = (buffer[2] << 8) | buffer[3];
@@ -399,14 +399,14 @@ esp_err_t MPU_t::getGyro(int16_t *x, int16_t *y, int16_t *z) {
 }
 
 
-mpu_axis_t MPU_t::getAccel() {
+mpu_axis_t MPU_t::getAcceleration() {
     mpu_axis_t accel;
-    MPU_ERR_CHECK(getAccel(&(accel.x), &(accel.y), &(accel.z)));
+    MPU_ERR_CHECK(getAcceleration(&(accel.x), &(accel.y), &(accel.z)));
     return accel;
 }
 
 
-esp_err_t MPU_t::getAccel(int16_t *x, int16_t *y, int16_t *z) {
+esp_err_t MPU_t::getAcceleration(int16_t *x, int16_t *y, int16_t *z) {
     MPU_ERR_CHECK(readBytes(MPU_REG_ACCEL_XOUT_H, 6, buffer));
     *x = (buffer[0] << 8) | buffer[1];
     *y = (buffer[2] << 8) | buffer[3];
@@ -416,17 +416,17 @@ esp_err_t MPU_t::getAccel(int16_t *x, int16_t *y, int16_t *z) {
 
 
 esp_err_t MPU_t::getMotion6(mpu_axis_t *accel, mpu_axis_t *gyro) {
-    *accel = getAccel();
+    *accel = getAcceleration();
     if(!err)
-        *gyro = getGyro();
+        *gyro = getRotation();
     return err;
 }
 
 
 esp_err_t MPU_t::getMotion6(int16_t *ax, int16_t *ay, int16_t *az, int16_t *gx, int16_t *gy, int16_t *gz) {
-    getAccel(ax, ay, az);
+    getAcceleration(ax, ay, az);
     if(!err)
-        getGyro(gx, gy, gz);
+        getRotation(gx, gy, gz);
     return err;
 }
 
