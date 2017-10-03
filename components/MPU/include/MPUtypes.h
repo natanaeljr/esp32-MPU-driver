@@ -186,12 +186,17 @@ typedef uint_fast16_t dmp_features_t;
 #define DMP_TAP_XYZ     (0x3F)
 typedef uint_fast8_t dmp_tap_axis_t;
 
-// Axis for cache gyro and accel
+// Axis struct for gyro and accel
 typedef struct {
     int16_t x;
     int16_t y;
     int16_t z;
-} mpu_axis_t;
+    int16_t& operator[](int i) {
+        if(i <= 0) return x;
+        if(i == 1) return y;
+        else return z;
+    }
+} mpu_axes_t;
 
 // MPU configuration cache
 typedef struct mpu_config_s {

@@ -81,8 +81,8 @@ public:
     
     // DATA
     esp_err_t getQuaternion(int32_t *quat, uint8_t *packet);
-    esp_err_t getAccel(mpu_axis_t *axes, uint8_t *packet);
-    esp_err_t getGyro(mpu_axis_t *axes, uint8_t *packet);
+    esp_err_t getAccel(mpu_axes_t *axes, uint8_t *packet);
+    esp_err_t getGyro(mpu_axes_t *axes, uint8_t *packet);
     esp_err_t getTap(uint8_t *direction, uint8_t *count, uint8_t *packet);
     esp_err_t getAndroidOrientation(uint8_t *orient, uint8_t *packet);
     

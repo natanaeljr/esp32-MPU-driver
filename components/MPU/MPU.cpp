@@ -346,9 +346,9 @@ mpu_int_t MPU_t::getIntEnabled() {
 }
 
 
-uint8_t MPU_t::getIntStatus() {
+mpu_int_t MPU_t::getIntStatus() {
     MPU_ERR_CHECK(readByte(MPU_REG_INT_STATUS, buffer));
-    return buffer[0];
+    return (mpu_int_t) buffer[0];
 }
 
 
@@ -364,8 +364,8 @@ bool MPU_t::getIntDataReadyStatus() {
 }
 
 
-mpu_axis_t MPU_t::getRotation() {
-    mpu_axis_t gyro;
+mpu_axes_t MPU_t::getRotation() {
+    mpu_axes_t gyro;
     MPU_ERR_CHECK(getRotation(&(gyro.x), &(gyro.y), &(gyro.z)));
     return gyro;
 }
@@ -380,8 +380,8 @@ esp_err_t MPU_t::getRotation(int16_t *x, int16_t *y, int16_t *z) {
 }
 
 
-mpu_axis_t MPU_t::getAcceleration() {
-    mpu_axis_t accel;
+mpu_axes_t MPU_t::getAcceleration() {
+    mpu_axes_t accel;
     MPU_ERR_CHECK(getAcceleration(&(accel.x), &(accel.y), &(accel.z)));
     return accel;
 }
@@ -396,7 +396,7 @@ esp_err_t MPU_t::getAcceleration(int16_t *x, int16_t *y, int16_t *z) {
 }
 
 
-esp_err_t MPU_t::getMotion6(mpu_axis_t *accel, mpu_axis_t *gyro) {
+esp_err_t MPU_t::getMotion6(mpu_axes_t *accel, mpu_axes_t *gyro) {
     return MPU_ERR_CHECK(getMotion6(&(accel->x), &(accel->y), &(accel->z), &(gyro->x), &(gyro->y), &(gyro->z)));
 }
 

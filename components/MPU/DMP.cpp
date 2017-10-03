@@ -692,13 +692,13 @@ esp_err_t DMP_t::setTapAxesEnabled(dmp_tap_axis_t axis) {
     }
 
     axis &= DMP_TAP_XYZ;
-    return MPU_ERR_CHECK(MPU.writeMemory(DMP_D_1_72, 1, &axis));
+    return MPU_ERR_CHECK(MPU.writeMemory(DMP_D_1_72, 1, (uint8_t*) &axis));
 }
 
 
 dmp_tap_axis_t DMP_t::getTapAxesEnabled() {
     dmp_tap_axis_t axis = 0;
-    MPU_ERR_CHECK(MPU.readMemory(DMP_D_1_72, 1, &axis));
+    MPU_ERR_CHECK(MPU.readMemory(DMP_D_1_72, 1, (uint8_t*) &axis));
     return (dmp_tap_axis_t) (axis & DMP_TAP_XYZ);
 }
 
@@ -935,7 +935,7 @@ esp_err_t DMP_t::getQuaternion(int32_t *quat, uint8_t *packet) {
 }
 
 
-esp_err_t DMP_t::getAccel(mpu_axis_t *axes, uint8_t *packet) {
+esp_err_t DMP_t::getAccel(mpu_axes_t *axes, uint8_t *packet) {
     uint8_t i;
     if(MPU_ERR_CHECK(getPacketIndex(DMP_FEATURE_SEND_RAW_ACCEL, &i)))
         return err;
@@ -948,7 +948,7 @@ esp_err_t DMP_t::getAccel(mpu_axis_t *axes, uint8_t *packet) {
 }
 
 
-esp_err_t DMP_t::getGyro(mpu_axis_t *axes, uint8_t *packet) {
+esp_err_t DMP_t::getGyro(mpu_axes_t *axes, uint8_t *packet) {
     uint8_t i;
     if(MPU_ERR_CHECK(getPacketIndex(DMP_FEATURE_SEND_ANY_GYRO, &i)))
         return err;

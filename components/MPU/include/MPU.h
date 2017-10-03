@@ -60,17 +60,17 @@ public:
     // GYROSCOPE
     esp_err_t setGyroFullScale(mpu_gyro_fsr_t fs);
     mpu_gyro_fsr_t getGyroFullScale();
-    mpu_axis_t getRotation();
+    mpu_axes_t getRotation();
     esp_err_t getRotation(int16_t *x, int16_t *y, int16_t *z);
     
     // ACCELEROMETER
     esp_err_t setAccelFullScale(mpu_accel_fsr_t fs);
     mpu_accel_fsr_t getAccelFullScale();
-    mpu_axis_t getAcceleration();
+    mpu_axes_t getAcceleration();
     esp_err_t getAcceleration(int16_t *x, int16_t *y, int16_t *z);
 
     // MOTION
-    esp_err_t getMotion6(mpu_axis_t *accel, mpu_axis_t *gyro);
+    esp_err_t getMotion6(mpu_axes_t *accel, mpu_axes_t *gyro);
     esp_err_t getMotion6(int16_t *ax, int16_t *ay, int16_t *az, int16_t *gx, int16_t *gy, int16_t *gz);
 
     // TEMPERATURE
