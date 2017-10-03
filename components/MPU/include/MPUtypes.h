@@ -149,7 +149,7 @@ typedef enum {
 #define MPU_FIFO_SLAVE1         (MPU_FIFO_SLV_1_EN_BIT)
 #define MPU_FIFO_SLAVE2         (MPU_FIFO_SLV_2_EN_BIT)
 #define MPU_FIFO_SLAVE3         (0x100)
-typedef uint16_t mpu_fifo_sensors_t;
+typedef uint_fast16_t mpu_fifo_sensors_t;
 
 // Enable features to generate signal at Interrupt pin
 #define MPU_INT_FREEFALL        (MPU_INT_FREEFALL_EN_BIT)
@@ -160,7 +160,7 @@ typedef uint16_t mpu_fifo_sensors_t;
 #define MPU_INT_PLL_READY       (MPU_INT_PLL_RDY_EN_BIT)
 #define MPU_INT_DMP_READY       (MPU_INT_DMP_RDY_EN_BIT)
 #define MPU_INT_RAWDATA_READY   (MPU_INT_RAW_DATA_RDY_EN_BIT)
-typedef uint8_t mpu_int_t;
+typedef uint_fast8_t mpu_int_t;
 
 // Enable DMP features 
 /* @note DMP_FEATURE_LP_QUAT and DMP_FEATURE_6X_LP_QUAT are mutually exclusive.
@@ -177,14 +177,14 @@ typedef uint8_t mpu_int_t;
 #define DMP_FEATURE_SEND_RAW_ACCEL  (0x040)
 #define DMP_FEATURE_SEND_RAW_GYRO   (0x080)
 #define DMP_FEATURE_SEND_CAL_GYRO   (0x100)
-typedef uint16_t dmp_features_t;
+typedef uint_fast16_t dmp_features_t;
 
 // DMP Tap axes
 #define DMP_TAP_X       (0x30)
 #define DMP_TAP_Y       (0x0C)
 #define DMP_TAP_Z       (0x03)
 #define DMP_TAP_XYZ     (0x3F)
-typedef uint8_t dmp_tap_axis_t;
+typedef uint_fast8_t dmp_tap_axis_t;
 
 // Axis for cache gyro and accel
 typedef struct {
