@@ -10,6 +10,7 @@ class DMP_t {
 private: 
     MPU_t& MPU;
     uint8_t* buffer = MPU.buffer;
+    esp_err_t& err = MPU.err;
     bool dmpOn = false;
     bool loaded = false;
     dmp_features_t features;

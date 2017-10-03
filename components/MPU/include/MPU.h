@@ -88,7 +88,7 @@ public:
     mpu_fifo_sensors_t getFIFOSensorsEnabled();
     esp_err_t writeFIFOByte(uint8_t data);
     uint8_t readFIFOByte();
-    esp_err_t readFIFO(uint8_t *data, uint16_t length);
+    esp_err_t readFIFO(uint8_t *data, size_t length);
     uint16_t getFIFOCount();
     esp_err_t resetFIFO(); // TODO: change to clear FIFO
     
