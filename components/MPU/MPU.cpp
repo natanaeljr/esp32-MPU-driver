@@ -464,40 +464,38 @@ int32_t MPU_t::getTemperatureC() {
 }
 
 
-esp_err_t MPU_t::setMemoryAddress(uint16_t memAddr) {
-    buffer[0] = (memAddr >> 8) & 0xFF; // bank index
-    buffer[1] = memAddr & 0xFF; // memory start address
-    return MPU_ERR_CHECK(writeBytes(MPU_REG_BANK_SEL, 2, buffer));
-}
-
-
-uint16_t MPU_t::getMemoryAddress() {
-    MPU_ERR_CHECK(readBytes(MPU_REG_BANK_SEL, 2, buffer));
-    uint16_t memAddr = (buffer[0] << 8) | buffer[1];
-    return memAddr;
-}
-
-
 esp_err_t MPU_t::writeMemory(uint16_t memAddr, uint16_t length, uint8_t *data) {
     // check bank boundaries
-    // TODO: log proper error
-    if(MPU_ERR_CHECK(((memAddr & 0xFF) + length > DMP_BANK_SIZE) ? ESP_ERR_INVALID_SIZE : ESP_OK))
+    if(((memAddr & 0xFF) + length) > DMP_BANK_SIZE) {
+        err = ESP_ERR_INVALID_ARG;
+        MPU_LOGEMSG(MPU_MSG_BANK_BOUNDARIES ", memAddr: 0x%x, length: %d, exceed: %d", memAddr, length, ((memAddr & 0xFF) + length - DMP_BANK_SIZE));
         return err;
-    setMemoryAddress(memAddr);
+    }
+    buffer[0] = (memAddr >> 8); // bank index
+    buffer[1] = memAddr & 0xFF; // memory start address
+    if(MPU_ERR_CHECK(writeBytes(MPU_REG_BANK_SEL, 2, buffer)))
+        return err;
     return MPU_ERR_CHECK(writeBytes(MPU_REG_MEM_R_W, length, data));
 }
 
 
 esp_err_t MPU_t::readMemory(uint16_t memAddr, uint16_t length, uint8_t *data) {
-    if(MPU_ERR_CHECK(((memAddr & 0xFF) + length > DMP_BANK_SIZE) ? ESP_ERR_INVALID_SIZE : ESP_OK))
+    // check bank boundaries
+    if(((memAddr & 0xFF) + length) > DMP_BANK_SIZE) {
+        err = ESP_ERR_INVALID_ARG;
+        MPU_LOGEMSG(MPU_MSG_BANK_BOUNDARIES ", memAddr: 0x%x, length: %d, exceed: %d", memAddr, length, ((memAddr & 0xFF) + length - DMP_BANK_SIZE));
         return err;
-    setMemoryAddress(memAddr);
+    }
+    buffer[0] = (memAddr >> 8); // bank index
+    buffer[1] = memAddr & 0xFF; // memory start address
+    if(MPU_ERR_CHECK(writeBytes(MPU_REG_BANK_SEL, 2, buffer)))
+        return err;
     return MPU_ERR_CHECK(readBytes(MPU_REG_MEM_R_W, length, data));
 }
 
 
 esp_err_t MPU_t::setProgramStartAddress(uint16_t prgmAddr) {
-    buffer[0] = (prgmAddr >> 8) & 0xFF;
+    buffer[0] = (prgmAddr >> 8);
     buffer[1] = prgmAddr & 0xFF;
     return MPU_ERR_CHECK(writeBytes(MPU_REG_PRGM_START_H, 2, buffer));
 }

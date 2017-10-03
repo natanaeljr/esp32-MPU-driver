@@ -22,6 +22,7 @@
 #define MPU_MSG_UNKNOWN_DMP_CFG_STATE   "Unknown DMP config state"
 #define MPU_MSG_INVALID_TAP_THRESH      "Tap threshold > 1600"
 #define MPU_MSG_NO_AXIS_PASSED          "No Axis passed"
+#define MPU_MSG_BANK_BOUNDARIES         "Bank boundaries overpass"
 #define MPU_MSG_FIFO_CORRUPTION         "FIFO Corruption. Quaternion is outside of the acceptable threshold"
 
 
