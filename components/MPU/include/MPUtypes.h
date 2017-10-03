@@ -115,6 +115,15 @@ typedef enum {
     MPU_INT_CLEAR_ANYREAD    = 1
 } mpu_int_clear_t;
 
+// Interrupt configuration struct
+typedef struct {
+    mpu_int_lvl_t level;
+    mpu_int_mode_t mode;
+    mpu_int_drive_t drive;
+    mpu_int_clear_t clear;
+    mpu_int_lvl_t fsyncLevel;
+} mpu_int_config_t;
+
 #ifdef CONFIG_MPU6500
 
 // MPU6500 Fifo size

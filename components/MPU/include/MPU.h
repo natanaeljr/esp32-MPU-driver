@@ -93,15 +93,9 @@ public:
     esp_err_t resetFIFO(); // TODO: change to clear FIFO
     
     // INTERRUPT
-    esp_err_t setIntLevel(mpu_int_lvl_t level);
-    esp_err_t setIntMode(mpu_int_mode_t mode);
-    esp_err_t setIntDrive(mpu_int_drive_t drive);
-    esp_err_t setIntClear(mpu_int_clear_t clear);
+    esp_err_t setIntConfig(mpu_int_config_t intConfig);
+    mpu_int_config_t getIntConfig();
     esp_err_t setIntEnabled(mpu_int_t mask);
-    mpu_int_lvl_t getIntLevel();
-    mpu_int_mode_t getIntMode();
-    mpu_int_drive_t getIntDrive();
-    mpu_int_clear_t getIntClear();
     mpu_int_t getIntEnabled();
     uint8_t getIntStatus();
     bool getIntFIFOOverflowStatus();

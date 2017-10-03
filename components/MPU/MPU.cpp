@@ -310,47 +310,28 @@ bool MPU_t::getI2CBypass() {
 }
 
 
-esp_err_t MPU_t::setIntLevel(mpu_int_lvl_t level) {
-    return MPU_ERR_CHECK(writeBit(MPU_REG_INT_PIN_CFG, MPU_INT_LEVEL_BIT, level));
+esp_err_t MPU_t::setIntConfig(mpu_int_config_t intConfig) {
+    if(MPU_ERR_CHECK(readByte(MPU_REG_INT_PIN_CFG, buffer)))
+        return err;
+    buffer[0] &= 0x3; // clear the interesting bits, keep the others
+    buffer[0] |= ((intConfig.level & 1) << MPU_INT_LEVEL_BIT)
+               | ((intConfig.mode  & 1) << MPU_INT_LATCH_EN_BIT)
+               | ((intConfig.drive & 1) << MPU_INT_OPEN_BIT)
+               | ((intConfig.clear & 1) << MPU_INT_ANYRD_2CLEAR_BIT)
+               | ((intConfig.fsyncLevel & 1) << MPU_INT_FSYNC_LEVEL_BIT);
+    return MPU_ERR_CHECK(writeByte(MPU_REG_INT_PIN_CFG, buffer[0]));
 }
 
 
-mpu_int_lvl_t MPU_t::getIntLevel() {
-    MPU_ERR_CHECK(readBit(MPU_REG_INT_PIN_CFG, MPU_INT_LEVEL_BIT, buffer));
-    return (mpu_int_lvl_t) buffer[0];
-}
-
-
-esp_err_t MPU_t::setIntMode(mpu_int_mode_t mode) {
-    return MPU_ERR_CHECK(writeBit(MPU_REG_INT_PIN_CFG, MPU_INT_LATCH_EN_BIT, mode));
-}
-
-
-mpu_int_mode_t MPU_t::getIntMode() {
-    MPU_ERR_CHECK(readBit(MPU_REG_INT_PIN_CFG, MPU_INT_LATCH_EN_BIT, buffer));
-    return (mpu_int_mode_t) buffer[0];
-}
-
-
-esp_err_t MPU_t::setIntDrive(mpu_int_drive_t drive) {
-    return MPU_ERR_CHECK(writeBit(MPU_REG_INT_PIN_CFG, MPU_INT_OPEN_BIT, drive));
-}
-
-
-mpu_int_drive_t MPU_t::getIntDrive() {
-    MPU_ERR_CHECK(readBit(MPU_REG_INT_PIN_CFG, MPU_INT_OPEN_BIT, buffer));
-    return (mpu_int_drive_t) buffer[0];
-}
-
-
-esp_err_t MPU_t::setIntClear(mpu_int_clear_t clear) {
-    return MPU_ERR_CHECK(writeBit(MPU_REG_INT_PIN_CFG, MPU_INT_ANYRD_2CLEAR_BIT, clear));
-}
-
-
-mpu_int_clear_t MPU_t::getIntClear() {
-    MPU_ERR_CHECK(readBit(MPU_REG_INT_PIN_CFG, MPU_INT_ANYRD_2CLEAR_BIT, buffer));
-    return (mpu_int_clear_t) buffer[0];
+mpu_int_config_t MPU_t::getIntConfig() {
+    MPU_ERR_CHECK(readByte(MPU_REG_INT_PIN_CFG, buffer));
+    mpu_int_config_t intConfig;
+    intConfig.level = (mpu_int_lvl_t) (buffer[0] & (1 << MPU_INT_LEVEL_BIT));
+    intConfig.mode = (mpu_int_mode_t) (buffer[0] & (1 << MPU_INT_LATCH_EN_BIT));
+    intConfig.drive = (mpu_int_drive_t) (buffer[0] & (1 << MPU_INT_OPEN_BIT));
+    intConfig.clear = (mpu_int_clear_t) (buffer[0] & (1 << MPU_INT_ANYRD_2CLEAR_BIT));
+    intConfig.fsyncLevel = (mpu_int_lvl_t) (buffer[0] & (1 << MPU_INT_FSYNC_LEVEL_BIT));
+    return intConfig;
 }
 
 
