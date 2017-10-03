@@ -416,17 +416,18 @@ esp_err_t MPU_t::getAcceleration(int16_t *x, int16_t *y, int16_t *z) {
 
 
 esp_err_t MPU_t::getMotion6(mpu_axis_t *accel, mpu_axis_t *gyro) {
-    *accel = getAcceleration();
-    if(!err)
-        *gyro = getRotation();
-    return err;
+    return MPU_ERR_CHECK(getMotion6(&(accel->x), &(accel->y), &(accel->z), &(gyro->x), &(gyro->y), &(gyro->z)));
 }
 
 
 esp_err_t MPU_t::getMotion6(int16_t *ax, int16_t *ay, int16_t *az, int16_t *gx, int16_t *gy, int16_t *gz) {
-    getAcceleration(ax, ay, az);
-    if(!err)
-        getRotation(gx, gy, gz);
+    MPU_ERR_CHECK(readBytes(MPU_REG_ACCEL_XOUT_H, 14, buffer));
+    *ax = (buffer[0] << 8) | buffer[1];
+    *ay = (buffer[2] << 8) | buffer[3];
+    *az = (buffer[4] << 8) | buffer[5];
+    *gx = (buffer[8] << 8) | buffer[9];
+    *gy = (buffer[10] << 8) | buffer[11];
+    *gz = (buffer[12] << 8) | buffer[13];
     return err;
 }
 
