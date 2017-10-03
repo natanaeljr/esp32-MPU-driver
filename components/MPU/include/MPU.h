@@ -2,7 +2,6 @@
 #define _MPU_H_
 
 #include "MPUdefine.h"
-#include "MPUregisters.h"
 #include "MPUtypes.h"
 #include <stdint.h>
 #include "I2Cbus.h"
@@ -97,7 +96,7 @@ public:
     mpu_int_config_t getIntConfig();
     esp_err_t setIntEnabled(mpu_int_t mask);
     mpu_int_t getIntEnabled();
-    uint8_t getIntStatus();
+    mpu_int_t getIntStatus();
     bool getIntFIFOOverflowStatus();
     bool getIntDataReadyStatus();
 
