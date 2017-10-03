@@ -1,3 +1,0 @@
-[submodule "components/I2Cbus"]
-	path = components/I2Cbus
-	url = https://github.com/natanaeljr/I2Cbus.git

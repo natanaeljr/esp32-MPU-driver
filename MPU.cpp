@@ -135,7 +135,7 @@ esp_err_t MPU_t::setLowPowerAccelRate(mpu_lp_accel_rate_t rate) {
     // check if LPAccel is off, error
     #ifdef CONFIG_MPU6050
     return MPU_ERR_CHECK(writeBits(MPU_REG_PWR_MGMT2, MPU_PWR2_LP_WAKE_CTRL_BIT, MPU_PWR2_LP_WAKE_CTRL_LENGTH, rate));
-    #elif CONFIG_MPU6500
+    #else // CONFIG_MPU6500
     if(MPU_ERR_CHECK(writeBits(MPU6500_REG_LP_ACCEL_ODR, MPU6500_LPA_ODR_CLKSEL_BIT, MPU6500_LPA_ODR_CLKSEL_LENGTH, rate)))
         return err;
     return MPU_ERR_CHECK(writeBit(MPU6500_REG_ACCEL_CONFIG2, MPU6500_ACONFIG2_ACCEL_FCHOICE_B_BIT, 1));
@@ -193,7 +193,7 @@ esp_err_t MPU_t::setLowPassFilter(mpu_dlpf_t dlpf) {
     
     #ifdef CONFIG_MPU6500
     //MPU6500 accel/gyro dlpf separately
-    MPU_ERR_CHECK(writeBit(MPU6500_REG_ACCEL_CONFIG2, MPU6500_ACONFIG2_A_DLPF_CFG_BIT, MPU6500_ACONFIG2_A_DLPF_CFG_LENGTH, dlpf));
+    MPU_ERR_CHECK(writeBits(MPU6500_REG_ACCEL_CONFIG2, MPU6500_ACONFIG2_A_DLPF_CFG_BIT, MPU6500_ACONFIG2_A_DLPF_CFG_LENGTH, dlpf));
     #endif
     
     return err;

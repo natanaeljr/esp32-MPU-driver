@@ -1,5 +1,5 @@
 .vscode/
-build/
-sdkconfig
-sdkconfig.old
+test/build/
+test/sdkconfig
+test/sdkconfig.old
 NOTES

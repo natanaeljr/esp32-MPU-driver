@@ -4,6 +4,6 @@
 #
 
 PROJECT_NAME := mpu-inv
-# EXTRA_COMPONENT_DIRS := 
+EXTRA_COMPONENT_DIRS := ${HOME}/esp/libraries
 
 include $(IDF_PATH)/make/project.mk
