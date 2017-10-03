@@ -111,7 +111,7 @@ public:
 
 
     // MEMORY
-    esp_err_t writeMemory(uint16_t memAddr, uint16_t length, uint8_t *data);
+    esp_err_t writeMemory(uint16_t memAddr, uint16_t length, const uint8_t *data);
     esp_err_t readMemory(uint16_t memAddr, uint16_t length, uint8_t *data);
     esp_err_t setProgramStartAddress(uint16_t prgmAddr);
     uint16_t getProgramStartAddress();

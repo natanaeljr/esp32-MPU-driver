@@ -464,7 +464,7 @@ int32_t MPU_t::getTemperatureC() {
 }
 
 
-esp_err_t MPU_t::writeMemory(uint16_t memAddr, uint16_t length, uint8_t *data) {
+esp_err_t MPU_t::writeMemory(uint16_t memAddr, uint16_t length, const uint8_t *data) {
     // check bank boundaries
     if(((memAddr & 0xFF) + length) > DMP_BANK_SIZE) {
         err = ESP_ERR_INVALID_ARG;

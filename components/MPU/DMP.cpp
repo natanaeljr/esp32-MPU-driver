@@ -55,7 +55,7 @@ esp_err_t DMP_t::load() {
         // watch out for the last chunk, it might be smaller
         length = (DMP_CHUNK_SIZE < (DMP_CODE_SIZE - i)) ? (DMP_CHUNK_SIZE) : (DMP_CODE_SIZE - i);
         // write chunk of dmp code
-        if(MPU_ERR_CHECK(MPU.writeMemory(i, length, ((uint8_t*) DMP_FIRMWARE + i))))
+        if(MPU_ERR_CHECK(MPU.writeMemory(i, length, (DMP_FIRMWARE + i))))
             return err;
         // read chunk back
         if(MPU_ERR_CHECK(MPU.readMemory(i, length, buffer)))
@@ -472,7 +472,7 @@ static const uint8_t gyroCalibRegsEnable[9] = {0xb8, 0xaa, 0xb3, 0x8d, 0xb4, 0x9
 static const uint8_t gyroCalibRegsDisable[9] = {0xb8, 0xaa, 0xaa, 0xaa, 0xb0, 0x88, 0xc3, 0xc5, 0xc7};
 
 esp_err_t DMP_t::setGyroAutoCalibrationEnabled(bool enable) {
-    return MPU_ERR_CHECK(MPU.writeMemory(DMP_CFG_MOTION_BIAS, 9, (uint8_t*)(enable ? gyroCalibRegsEnable : gyroCalibRegsDisable)));
+    return MPU_ERR_CHECK(MPU.writeMemory(DMP_CFG_MOTION_BIAS, 9, (enable ? gyroCalibRegsEnable : gyroCalibRegsDisable)));
 }
 
 
@@ -495,7 +495,7 @@ static const uint8_t lpQuaternionRegsEnable[4] = {DINBC0, DINBC2, DINBC4, DINBC6
 static const uint8_t lpQuaternionRegsDisable[4] = {0x8B, 0x8B, 0x8B, 0x8B};
 
 esp_err_t DMP_t::setLPQuaternionEnabled(bool enable) {
-    if(MPU_ERR_CHECK(MPU.writeMemory(DMP_CFG_LP_QUAT, 4, (uint8_t*)(enable ? lpQuaternionRegsEnable : lpQuaternionRegsDisable))))
+    if(MPU_ERR_CHECK(MPU.writeMemory(DMP_CFG_LP_QUAT, 4, (enable ? lpQuaternionRegsEnable : lpQuaternionRegsDisable))))
         return err;
     return MPU_ERR_CHECK(MPU.resetFIFO());
 }
@@ -521,7 +521,7 @@ static const uint8_t lpQuaternion6XRegsEnable[4] = {DINA20, DINA28, DINA30, DINA
 static const uint8_t lpQuaternion6XRegsDisable[4] = {0xA3, 0xA3, 0xA3, 0xA3};
 
 esp_err_t DMP_t::setLPQuaternion6XEnabled(bool enable) {
-    if(MPU_ERR_CHECK(MPU.writeMemory(DMP_CFG_8, 4, (uint8_t*)(enable ? lpQuaternion6XRegsEnable : lpQuaternion6XRegsDisable))))
+    if(MPU_ERR_CHECK(MPU.writeMemory(DMP_CFG_8, 4, (enable ? lpQuaternion6XRegsEnable : lpQuaternion6XRegsDisable))))
         return err;
     return MPU_ERR_CHECK(MPU.resetFIFO());
 }
@@ -548,9 +548,9 @@ static const uint8_t intModeRegsGesture[11] = {0xda, 0xb1, 0xb9, 0xf3, 0x8b, 0xa
 
 esp_err_t DMP_t::setDMPIntMode(dmp_int_mode_t mode) {
     if(mode == DMP_INT_MODE_PACKET)
-        return MPU_ERR_CHECK(MPU.writeMemory(DMP_CFG_FIFO_ON_EVENT, 11, (uint8_t*)intModeRegsPacket));
+        return MPU_ERR_CHECK(MPU.writeMemory(DMP_CFG_FIFO_ON_EVENT, 11, intModeRegsPacket));
     else // == DMP_INT_MODE_GESTURE
-        return MPU_ERR_CHECK(MPU.writeMemory(DMP_CFG_FIFO_ON_EVENT, 11, (uint8_t*)intModeRegsGesture));
+        return MPU_ERR_CHECK(MPU.writeMemory(DMP_CFG_FIFO_ON_EVENT, 11, intModeRegsGesture));
 }
 
 
@@ -584,7 +584,7 @@ esp_err_t DMP_t::setFIFORate(uint16_t rate) {
 
     if(MPU_ERR_CHECK(MPU.writeMemory(DMP_D_0_22, 2, buffer)))
         return err;
-    return MPU_ERR_CHECK(MPU.writeMemory(DMP_CFG_6, 12, (uint8_t*)fifoRateRegsEnd));
+    return MPU_ERR_CHECK(MPU.writeMemory(DMP_CFG_6, 12, fifoRateRegsEnd));
 }
 
 
