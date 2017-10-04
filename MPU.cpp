@@ -78,7 +78,7 @@ esp_err_t MPU_t::initialize() {
         return err;
     #endif
 
-    return ESP_OK;
+    return err;
 }
 
 
