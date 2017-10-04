@@ -300,12 +300,26 @@ esp_err_t MPU_t::writeFIFOByte(uint8_t data) {
 
 
 esp_err_t MPU_t::setI2CBypass(bool enable) {
-    return MPU_ERR_CHECK(writeBit(MPU_REG_USER_CTRL, MPU_USERCTRL_FIFO_EN_BIT, enable));
+    // disable Auxiliar I2C Master module first
+    if(MPU_ERR_CHECK(setAuxI2CMaster(!enable)))
+        return err;
+    return MPU_ERR_CHECK(writeBit(MPU_REG_INT_PIN_CFG, MPU_INT_I2C_BYPASS_EN_BIT, enable));
 }
 
 
 bool MPU_t::getI2CBypass() {
-    MPU_ERR_CHECK(readBit(MPU_REG_USER_CTRL, MPU_USERCTRL_FIFO_EN_BIT, buffer));
+    MPU_ERR_CHECK(readBit(MPU_REG_INT_PIN_CFG, MPU_INT_I2C_BYPASS_EN_BIT, buffer));
+    return buffer[0] && !getAuxI2CMaster();
+}
+
+
+esp_err_t MPU_t::setAuxI2CMaster(bool enable) {
+    return MPU_ERR_CHECK(writeBit(MPU_REG_USER_CTRL, MPU_USERCTRL_I2C_MST_EN_BIT, enable));
+}
+
+
+bool MPU_t::getAuxI2CMaster() {
+    MPU_ERR_CHECK(readBit(MPU_REG_USER_CTRL, MPU_USERCTRL_I2C_MST_EN_BIT, buffer));
     return buffer[0];
 }
 

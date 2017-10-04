@@ -56,6 +56,8 @@ public:
     // I2C
     esp_err_t setI2CBypass(bool enable);
     bool getI2CBypass();
+    esp_err_t setAuxI2CMaster(bool enable);
+    bool getAuxI2CMaster();
     
     // GYROSCOPE
     esp_err_t setGyroFullScale(mpu_gyro_fsr_t fs);
