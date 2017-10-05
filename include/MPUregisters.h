@@ -267,7 +267,10 @@
  ******************************************************************************/
 #if defined CONFIG_MPU6050
 #define MPU6050_REG_XG_OFFSET_TC        (0x00) //[7] PWR_MODE, [6:1] XG_OFFS_TC, [0] OTP_BNK_VLD
+//------------------------------------------------------------------------------
 #define MPU6050_REG_YG_OFFSET_TC        (0x01) //[7] PWR_MODE, [6:1] YG_OFFS_TC, [0] OTP_BNK_VLD
+    #define MPU6050_TC_PWR_MODE_BIT         (7)
+//------------------------------------------------------------------------------
 #define MPU6050_REG_ZG_OFFSET_TC        (0x02) //[7] PWR_MODE, [6:1] ZG_OFFS_TC, [0] OTP_BNK_VLD
 #define MPU6050_REG_X_FINE_GAIN         (0x03) //[7:0] X_FINE_GAIN
 #define MPU6050_REG_Y_FINE_GAIN         (0x04) //[7:0] Y_FINE_GAIN

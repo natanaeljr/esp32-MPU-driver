@@ -229,6 +229,21 @@ uint16_t MPU_t::getSampleRate() {
 }
 
 
+#ifdef CONFIG_MPU6050
+
+esp_err_t MPU_t::setAuxVDDIOLevel(mpu_auxvddio_lvl_t level) {
+    return MPU_ERR_CHECK(writeBit(MPU6050_REG_YG_OFFSET_TC, MPU6050_TC_PWR_MODE_BIT, level));
+}
+
+
+mpu_auxvddio_lvl_t MPU_t::getAuxVDDIOLevel() {
+    MPU_ERR_CHECK(readBit(MPU6050_REG_YG_OFFSET_TC, MPU6050_TC_PWR_MODE_BIT, buffer));
+    return (mpu_auxvddio_lvl_t) buffer[0];
+}
+
+#endif
+
+
 esp_err_t MPU_t::setFIFOEnabled(bool enable) {
     return MPU_ERR_CHECK(writeBit(MPU_REG_USER_CTRL, MPU_USERCTRL_FIFO_EN_BIT, 1));
 }

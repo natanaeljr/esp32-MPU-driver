@@ -91,6 +91,12 @@ typedef enum {
     MPU_I2C_MST_CLOCK_364KHZ = 15
 } mpu_i2c_mst_clock_t;
 
+// Auxiliary I2C bus VDDIO level
+typedef enum {
+    MPU_AUXVDDIO_LVL_VLOGIC = 0,
+    MPU_AUXVDDIO_LVL_VDD = 1
+} mpu_auxvddio_lvl_t;
+
 // Interrupt active level
 typedef enum {
     MPU_INT_LVL_ACTIVE_HIGH = 0,

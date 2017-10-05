@@ -78,6 +78,13 @@ void basicTest() {
     ASSERT_ESP_OK(MPU.setLowPassFilter(MPU_DLPF_265HZ_NOLPF));
     ASSERT_EQUAL_INT(MPU.getLowPassFilter(), MPU_DLPF_265HZ_NOLPF);
 
+    /* Test other main configs */
+    #ifdef CONFIG_MPU6050
+    ASSERT_EQUAL_INT(MPU.getAuxVDDIOLevel(), MPU_AUXVDDIO_LVL_VLOGIC);
+    ASSERT_ESP_OK(MPU.setAuxVDDIOLevel(MPU_AUXVDDIO_LVL_VDD));
+    ASSERT_EQUAL_INT(MPU.getAuxVDDIOLevel(), MPU_AUXVDDIO_LVL_VDD);
+    #endif
+    
     /* Test sleep, reset and initialize to default again */
     ASSERT_ESP_OK(MPU.sleep(true));
     ASSERT_TRUE(MPU.getSleepStatus());
@@ -87,7 +94,7 @@ void basicTest() {
 
 
 void sampleTest() {
-    
+
 }
 
 

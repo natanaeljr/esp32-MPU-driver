@@ -43,15 +43,19 @@ public:
 
     // CONFIGS
     esp_err_t setClockSource(mpu_clock_src_t clockSrc);
-    esp_err_t setLowPassFilter(mpu_dlpf_t dlpf);
-    esp_err_t setSampleRate(uint16_t rate);
-    esp_err_t setLowPowerAccelMode(bool enable);
-    esp_err_t setLowPowerAccelRate(mpu_lp_accel_rate_t rate);
     mpu_clock_src_t getClockSource();
+    esp_err_t setLowPassFilter(mpu_dlpf_t dlpf);
     mpu_dlpf_t getLowPassFilter();
+    esp_err_t setSampleRate(uint16_t rate);
     uint16_t getSampleRate();
+    esp_err_t setLowPowerAccelMode(bool enable);
     bool getLowPowerAccelMode();
+    esp_err_t setLowPowerAccelRate(mpu_lp_accel_rate_t rate);
     mpu_lp_accel_rate_t getLowPowerAccelRate();
+    #ifdef CONFIG_MPU6050
+    esp_err_t setAuxVDDIOLevel(mpu_auxvddio_lvl_t level);
+    mpu_auxvddio_lvl_t getAuxVDDIOLevel();
+    #endif
 
     // I2C
     esp_err_t setI2CBypass(bool enable);
