@@ -4,8 +4,6 @@
 #include "esp_err.h"
 #include "esp_log.h"
 
-#define LOG_ASSERTIONS_PASS
-
 
 
 /* Conventional naming */
@@ -21,19 +19,19 @@
 /* Real test macros */
 #define TEST_ASSERT_ESP_OK(x) do {\
     esp_err_t err = (esp_err_t)x;\
-    if(!err) {\
-        TEST_LOGFAIL(#x, "ERROR", "0x%X", err);\
+    if(err) {\
+        TEST_LOGFAIL(#x, "ESP_OK", "0x%X", err);\
     } else {\
-        TEST_LOGPASS(#x, "0x%x", err);\
+        TEST_LOGPASS(#x, "%X", err);\
     }}while(0);
 
 
 #define TEST_ASSERT_ESP_ERR(x) do {\
     esp_err_t err = (esp_err_t)x;\
-    if(err) {\
-        TEST_LOGFAIL(#x, "ESP_OK", "0x%X", err);\
+    if(!err) {\
+        TEST_LOGFAIL(#x, "ERROR", "0x%X", err);\
     } else {\
-        TEST_LOGPASS(#x, "%X", err);\
+        TEST_LOGPASS(#x, "0x%x", err);\
     }}while(0);
 
 
@@ -83,7 +81,7 @@
 #define TEST_LOGFAIL(expr, expected, actual, ... ) \
 printf(LOG_COLOR_E "[%s] @ %d '" expr "' -> FAIL! expected: " expected ", actual: " actual LOG_RESET_COLOR "\n", __FUNCTION__, __LINE__, ##__VA_ARGS__)
 
-#ifdef LOG_ASSERTIONS_PASS
+#ifdef CONFIG_TESTER_LOG_ASSERTION_PASS
 #define TEST_LOGPASS(expr, actual, ... ) \
 printf("[%s] @ %d '" expr "' -> " actual " PASS\n", __FUNCTION__, __LINE__, ##__VA_ARGS__)
 #else

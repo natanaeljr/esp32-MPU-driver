@@ -29,7 +29,35 @@ MPU_t MPU = MPU_t();
 DMP_t DMP = DMP_t(MPU);
 
 
+/** TESTS 
+ * This is a very basic 'unity test' program to validate 
+ * the MPU class implementation 
+ */
+void basicTest(void);
+void sampleTest(void);
+
+
+/* MAIN */
+void app_main() {
+    printf(LOG_BOLD("97") "\n[APP_MAIN]" LOG_RESET_COLOR "\n");
+    // setup    
+    I2Cbus0.begin(GPIO_NUM_21, GPIO_NUM_22, 400000U);
+    I2Cbus0.setTimeout(100);
+    MPU.setI2Cbus(I2Cbus0);
+    MPU.setAddress(MPU_DEFAULT_ADDRESS);
+    // tests to run
+    basicTest();
+    sampleTest();
+
+    printf("\nDone!\n");
+    vTaskDelay(portMAX_DELAY);
+}
+
+
+
+
 void basicTest() {
+    /* First, check for communication */
     ASSERT_TRUE(MPU.testConnection());
 
     /* Test default initializing configs */
@@ -50,19 +78,18 @@ void basicTest() {
     ASSERT_ESP_OK(MPU.setLowPassFilter(MPU_DLPF_265HZ_NOLPF));
     ASSERT_EQUAL_INT(MPU.getLowPassFilter(), MPU_DLPF_265HZ_NOLPF);
 
+    /* Test sleep, reset and initialize to default again */
+    ASSERT_ESP_OK(MPU.sleep(true));
+    ASSERT_TRUE(MPU.getSleepStatus());
+    ASSERT_ESP_OK(MPU.reset());
+    ASSERT_ESP_OK(MPU.initialize());
 }
 
-/* MAIN */
-void app_main() {
-    printf(LOG_BOLD("97") "\n[APP_MAIN]" LOG_RESET_COLOR "\n");
-    // setup    
-    I2Cbus0.begin(GPIO_NUM_21, GPIO_NUM_22, 400000U);
-    I2Cbus0.setTimeout(100);
-    MPU.setI2Cbus(I2Cbus0);
-    MPU.setAddress(MPU_DEFAULT_ADDRESS);
 
-    basicTest();
-
-
-    vTaskDelay(portMAX_DELAY);
+void sampleTest() {
+    
 }
+
+
+
+
