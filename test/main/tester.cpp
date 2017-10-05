@@ -33,7 +33,7 @@ void basicTest() {
     ASSERT_TRUE(MPU.testConnection());
 
     /* Test default initializing configs */
-    ASSERT_NOERROR(MPU.initialize());
+    ASSERT_ESP_OK(MPU.initialize());
     ASSERT_FALSE(MPU.getSleepStatus());
     ASSERT_EQUAL_INT(MPU.getClockSource(), MPU_CLOCK_PLL);
     ASSERT_EQUAL_INT(MPU.getGyroFullScale(), MPU_GYRO_FS_250DPS);
@@ -41,13 +41,13 @@ void basicTest() {
     ASSERT_EQUAL_INT(MPU.getLowPassFilter(), MPU_DLPF_42HZ);
 
     /* Change initializing configs and test then */
-    ASSERT_NOERROR(MPU.setClockSource(MPU_CLOCK_INTERNAL));
+    ASSERT_ESP_OK(MPU.setClockSource(MPU_CLOCK_INTERNAL));
     ASSERT_EQUAL_INT(MPU.getClockSource(), MPU_CLOCK_INTERNAL);
-    ASSERT_NOERROR(MPU.setGyroFullScale(MPU_GYRO_FS_2000DPS));
+    ASSERT_ESP_OK(MPU.setGyroFullScale(MPU_GYRO_FS_2000DPS));
     ASSERT_EQUAL_INT(MPU.getGyroFullScale(), MPU_GYRO_FS_2000DPS);
-    ASSERT_NOERROR(MPU.setAccelFullScale(MPU_ACCEL_FS_16G));
+    ASSERT_ESP_OK(MPU.setAccelFullScale(MPU_ACCEL_FS_16G));
     ASSERT_EQUAL_INT(MPU.getAccelFullScale(), MPU_ACCEL_FS_16G);
-    ASSERT_NOERROR(MPU.setLowPassFilter(MPU_DLPF_265HZ_NOLPF));
+    ASSERT_ESP_OK(MPU.setLowPassFilter(MPU_DLPF_265HZ_NOLPF));
     ASSERT_EQUAL_INT(MPU.getLowPassFilter(), MPU_DLPF_265HZ_NOLPF);
 
 }

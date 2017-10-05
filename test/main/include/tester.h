@@ -9,8 +9,8 @@
 
 
 /* Conventional naming */
-#define ASSERT_ERROR(x)                         TEST_ASSERT_ERROR(x)
-#define ASSERT_NOERROR(x)                       TEST_ASSERT_NOERROR(x)
+#define ASSERT_ESP_OK(x)                        TEST_ASSERT_ESP_OK(x)
+#define ASSERT_ESP_ERR(x)                       TEST_ASSERT_ESP_ERR(x)
 #define ASSERT_TRUE(x)                          TEST_ASSERT_TRUE(x)
 #define ASSERT_FALSE(x)                         TEST_ASSERT_FALSE(x)
 #define ASSERT_EQUAL_INT(x, y)                  TEST_ASSERT_EQUAL_INT(x, y)
@@ -19,7 +19,7 @@
 
 
 /* Real test macros */
-#define TEST_ASSERT_ERROR(x) do {\
+#define TEST_ASSERT_ESP_OK(x) do {\
     esp_err_t err = (esp_err_t)x;\
     if(!err) {\
         TEST_LOGFAIL(#x, "ERROR", "0x%X", err);\
@@ -28,7 +28,7 @@
     }}while(0);
 
 
-#define TEST_ASSERT_NOERROR(x) do {\
+#define TEST_ASSERT_ESP_ERR(x) do {\
     esp_err_t err = (esp_err_t)x;\
     if(err) {\
         TEST_LOGFAIL(#x, "ESP_OK", "0x%X", err);\
