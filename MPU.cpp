@@ -49,7 +49,6 @@ esp_err_t MPU_t::initialize() {
     // reset device and wait a little to clear all registers
     if(MPU_ERR_CHECK(reset()))
         return err;
-    vTaskDelay(100 / portTICK_PERIOD_MS);
     // wake-up the device (boot-up default state is asleep)
     if(MPU_ERR_CHECK(sleep(false)))
         return err;
@@ -83,7 +82,10 @@ esp_err_t MPU_t::initialize() {
 
 
 esp_err_t MPU_t::reset() {
-    return MPU_ERR_CHECK(writeBit(MPU_REG_PWR_MGMT1, MPU_PWR1_DEVICE_RESET_BIT, 1));
+    if(MPU_ERR_CHECK(writeBit(MPU_REG_PWR_MGMT1, MPU_PWR1_DEVICE_RESET_BIT, 1)))
+        return err;
+    vTaskDelay(100 / portTICK_PERIOD_MS);
+    return err;
 }
 
 
