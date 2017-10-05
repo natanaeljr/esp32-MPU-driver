@@ -44,8 +44,8 @@ public:
     // CONFIGS
     esp_err_t setClockSource(mpu_clock_src_t clockSrc);
     mpu_clock_src_t getClockSource();
-    esp_err_t setLowPassFilter(mpu_dlpf_t dlpf);
-    mpu_dlpf_t getLowPassFilter();
+    esp_err_t setLowPassFilter(mpu_lpf_t lpf);
+    mpu_lpf_t getLowPassFilter();
     esp_err_t setSampleRate(uint16_t rate);
     uint16_t getSampleRate();
     esp_err_t setLowPowerAccelMode(bool enable);

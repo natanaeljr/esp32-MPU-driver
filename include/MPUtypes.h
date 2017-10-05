@@ -35,7 +35,7 @@ typedef enum {
     MPU_DLPF_10HZ  = 5,
     MPU_DLPF_5HZ   = 6,
     MPU_DLPF_2100HZ_NOLPF = 7
-} mpu_dlpf_t;
+} mpu_lpf_t;
 
 // Clock source
 typedef enum {
@@ -209,7 +209,7 @@ typedef struct mpu_config_s {
     mpu_gyro_fsr_t gyro_fsr;
     mpu_accel_fsr_t accel_fsr;
     uint8_t sensors;
-    mpu_dlpf_t dlpf;
+    mpu_lpf_t lpf;
     mpu_clock_src_t clock_src;
     uint16_t sample_rate;
     uint8_t fifo_en_reg;

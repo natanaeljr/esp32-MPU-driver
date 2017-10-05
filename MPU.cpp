@@ -188,9 +188,9 @@ mpu_accel_fsr_t MPU_t::getAccelFullScale() {
 }
 
 
-esp_err_t MPU_t::setLowPassFilter(mpu_dlpf_t dlpf) {
+esp_err_t MPU_t::setLowPassFilter(mpu_lpf_t lpf) {
     // if all sensor are disabled, throw error
-    if(MPU_ERR_CHECK(writeBits(MPU_REG_CONFIG, MPU_CONFIG_DLPF_CFG_BIT, MPU_CONFIG_DLPF_CFG_LENGTH, dlpf)))
+    if(MPU_ERR_CHECK(writeBits(MPU_REG_CONFIG, MPU_CONFIG_DLPF_CFG_BIT, MPU_CONFIG_DLPF_CFG_LENGTH, lpf)))
         return err;
     
     #ifdef CONFIG_MPU6500
@@ -202,9 +202,9 @@ esp_err_t MPU_t::setLowPassFilter(mpu_dlpf_t dlpf) {
 }
 
 
-mpu_dlpf_t MPU_t::getLowPassFilter() {
+mpu_lpf_t MPU_t::getLowPassFilter() {
     MPU_ERR_CHECK(readBits(MPU_REG_CONFIG, MPU_CONFIG_DLPF_CFG_BIT, MPU_CONFIG_DLPF_CFG_LENGTH, buffer));
-    return (mpu_dlpf_t) buffer[0];
+    return (mpu_lpf_t) buffer[0];
 }
 
 
