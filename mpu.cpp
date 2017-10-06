@@ -1,8 +1,8 @@
-#include "MPU.h"
-#include "MPUdefine.h"
-#include "MPUregisters.h"
-#include "MPUtypes.h"
-#include "DMPdefine.h"
+#include "mpu.h"
+#include "mpu_define.h"
+#include "mpu_registers.h"
+#include "mpu_types.h"
+#include "dmp_code.h"
 #include <stdint.h>
 #include "freertos/FreeRTOS.h"
 #include "driver/i2c.h"
@@ -11,7 +11,7 @@
 
 static const char* MPU_TAG = "MPUcpp";
 
-#include "MPUlog.h"
+#include "mpu_log.h"
 
 
 
@@ -195,7 +195,7 @@ esp_err_t MPU_t::setLowPassFilter(mpu_lpf_t lpf) {
     
     #ifdef CONFIG_MPU6500
     //MPU6500 accel/gyro dlpf separately
-    MPU_ERR_CHECK(writeBits(MPU6500_REG_ACCEL_CONFIG2, MPU6500_ACONFIG2_A_DLPF_CFG_BIT, MPU6500_ACONFIG2_A_DLPF_CFG_LENGTH, dlpf));
+    MPU_ERR_CHECK(writeBits(MPU6500_REG_ACCEL_CONFIG2, MPU6500_ACONFIG2_A_DLPF_CFG_BIT, MPU6500_ACONFIG2_A_DLPF_CFG_LENGTH, lpf));
     #endif
     
     return err;

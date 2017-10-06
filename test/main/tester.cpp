@@ -10,8 +10,8 @@
 #include "esp_log.h"
 // private
 #include "I2Cbus.h"
-#include "MPU.h"
-#include "DMP.h"
+#include "mpu.h"
+#include "dmp.h"
 // test
 #include "tester.h"
 
@@ -35,6 +35,7 @@ DMP_t DMP = DMP_t(MPU);
  */
 void basicTest(void);
 void sampleTest(void);
+void fullScaleTest(void);
 
 
 /* MAIN */
@@ -98,5 +99,7 @@ void sampleTest() {
 }
 
 
-
+void fullScaleTest() {
+    
+}
 

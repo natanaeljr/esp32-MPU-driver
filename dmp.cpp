@@ -1,9 +1,8 @@
-#include "DMP.h"
-#include "DMPdefine.h"
-#include "MPU.h"
-#include "MPUdefine.h"
-#include "MPUregisters.h"
-#include "MPUtypes.h"
+#include "dmp.h"
+#include "dmp_code.h"
+#include "mpu.h"
+#include "mpu_registers.h"
+#include "mpu_types.h"
 #include <stdint.h>
 #include <string.h>
 #include <math.h>
@@ -12,7 +11,7 @@
 
 static const char* MPU_TAG = "DMPcpp";
 
-#include "MPUlog.h"
+#include "mpu_log.h"
 
 
 

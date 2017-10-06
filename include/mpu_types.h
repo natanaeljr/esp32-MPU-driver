@@ -1,8 +1,10 @@
 #ifndef _MPU_TYPES_H_
 #define _MPU_TYPES_H_
 
-#include "MPUregisters.h"
+#include "mpu_define.h"
+#include "mpu_registers.h"
 #include <stdint.h>
+
 
 typedef enum {
     MPU_ADDRESS_AD0_LOW = 0x68,

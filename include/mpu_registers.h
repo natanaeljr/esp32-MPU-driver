@@ -1,7 +1,7 @@
 #ifndef _MPU_REGISTERS_H_
 #define _MPU_REGISTERS_H_
 
-#include "MPUdefine.h"
+#include "mpu_define.h"
 
 
 /*******************************************************************************
