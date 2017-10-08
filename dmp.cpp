@@ -619,7 +619,7 @@ esp_err_t DMP_t::setTapThreshold(dmp_tap_axis_t axis, uint16_t thresh) {
     }
     
     /* Accel full-scale-range to scale-factor */
-    uint16_t accelScaleFactor = pow(2, (MPU.getAccelFullScale() + 1)) * 1024;
+    uint16_t accelScaleFactor = 16384 / pow(2.0, MPU.getAccelFullScale());
     if(err) return err;
     
     float scaledThresh = (float)thresh / DMP_SAMPLE_RATE;
@@ -674,7 +674,7 @@ uint16_t DMP_t::getTapThreshold(dmp_tap_axis_t axis) {
     dmpThresh = (buffer[0] << 8) | buffer[1];
 
     /* Accel full-scale-range to scale-factor */
-    uint16_t accelScaleFactor = pow(2, (MPU.getAccelFullScale() + 1)) * 1024;
+    uint16_t accelScaleFactor = 16384 / pow(2.0, MPU.getAccelFullScale());
     if(err) return err;
 
     uint16_t thresh = (uint16_t)(((float)dmpThresh / accelScaleFactor) * DMP_SAMPLE_RATE);
