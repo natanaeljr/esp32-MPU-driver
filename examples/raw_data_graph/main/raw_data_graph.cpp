@@ -21,7 +21,7 @@ extern "C" {
 
 #define I2C_SDA GPIO_NUM_21
 #define I2C_SCL GPIO_NUM_22
-#define I2C_CLOCK_SPEED 400000
+#define I2C_CLOCK_SPEED 400000 // hz
 
 #define GRAPH_LENGTH 31 // columns
 #define REFRESH_RATE 10 // hz
@@ -45,7 +45,7 @@ void app_main() {
     int temp;
 
     // setup
-    ESP_ERROR_CHECK(I2Cbus0.begin(GPIO_NUM_21, GPIO_NUM_22, 400000U));
+    ESP_ERROR_CHECK(I2Cbus0.begin(I2C_SDA, I2C_SCL, I2C_CLOCK_SPEED));
     MPU.setI2Cbus(I2Cbus0);
     MPU.setAddress(MPU_DEFAULT_ADDRESS);
     ESP_ERROR_CHECK(MPU.initialize());
