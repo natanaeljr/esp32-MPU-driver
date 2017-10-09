@@ -3,7 +3,7 @@
 # project subdirectory.
 #
 
-PROJECT_NAME := mpu-inv
+PROJECT_NAME := tester
 EXTRA_COMPONENT_DIRS := ${HOME}/esp/libraries
 
 include $(IDF_PATH)/make/project.mk
