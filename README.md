@@ -1,5 +1,5 @@
 # MPU Driver (esp32 idf)
 
-Library in first stage development.
+Library in first stage of development.
 
-You can clone it right into your project components directory or into a specific library path.
+You can clone it directly into your project components directory or in a specific library path.
