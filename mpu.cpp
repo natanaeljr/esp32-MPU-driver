@@ -521,7 +521,39 @@ uint16_t MPU_t::getProgramStartAddress() {
 }
 
 
+esp_err_t MPU_t::registerDump() {
+    printf("> MPU register dump\n");
+    for(int i = 0; i < 0x7F; i++) {
+        if(MPU_ERR_CHECK(readByte(i, buffer)))
+            return err;
+        printf("reg:0x%X \tvalue:0x%X\n", i, buffer[0]);
+    }
+    return err;
+}
 
+
+esp_err_t MPU_t::memoryDump(int_fast8_t bank) {
+    printf("> MPU memory dump\n");
+    if(bank >= DMP_BANK_NUM) {
+        err = ESP_ERR_INVALID_ARG;
+        MPU_LOGEMSG(MPU_MSG_BANK_BOUNDARIES " bank: %d (range 0~%d)", bank, DMP_BANK_NUM -1);
+        return err;
+    }
+
+    int i = (bank == -1) ? 0 : bank;
+    for(; i < DMP_BANK_NUM; i++) {
+        printf("-- bank # %d -- \n", i);
+        for(int j = 0; j < DMP_BANK_SIZE; j += DMP_CHUNK_SIZE) {
+            if(MPU_ERR_CHECK(readMemory(((uint16_t)(i << 8) | j), DMP_CHUNK_SIZE, buffer)))
+                return err;
+            for(int k = 0; k < DMP_CHUNK_SIZE; k++)
+                printf("0x%s%X ", (buffer[k] < 0x10 ? "0" : ""), buffer[k]);
+            printf("\n");
+        }
+        if(bank != -1) return err;
+    }
+    return err;
+}
 
 
 

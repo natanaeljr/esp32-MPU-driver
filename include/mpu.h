@@ -22,7 +22,7 @@ private:
     I2Cbus& I2C;
     mpu_addr_t addr = MPU_DEFAULT_ADDRESS;
     esp_err_t err = ESP_OK;
-    uint8_t buffer[14];
+    uint8_t buffer[16];
     friend class DMP_t;
     
 public:
@@ -115,6 +115,9 @@ public:
     esp_err_t setProgramStartAddress(uint16_t prgmAddr);
     uint16_t getProgramStartAddress();
 
+    // OTHERS
+    esp_err_t registerDump();
+    esp_err_t memoryDump(int_fast8_t bank = -1);
     
     
     

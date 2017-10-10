@@ -45,7 +45,6 @@ esp_err_t DMP_t::load() {
         return err;
     }
     
-    uint8_t buffer[DMP_CHUNK_SIZE];
     uint8_t length;
     uint16_t i = 0;
 
