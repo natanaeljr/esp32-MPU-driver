@@ -1,8 +1,5 @@
 .vscode/
-test/build/
-test/sdkconfig
-test/sdkconfig.old
-examples/raw_data_graph/build/
-examples/raw_data_graph/sdkconfig
-examples/raw_data_graph/sdkconfig.old
+**/build
+**/sdkconfig
+**/sdkconfig.old
 NOTES
