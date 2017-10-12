@@ -10,12 +10,9 @@
 
 const mpu_addr_t MPU_DEFAULT_ADDRESS = MPU_ADDRESS_AD0_LOW;
 
-/*******************************************************************************
+/******************************************************************************
 * MPU class
 ******************************************************************************/
-// TODO: rewrite mask methods with structs
-// TODO: change some set.. methods to enable..
-// TODO: override operator[] for axes structs and other suitable types and fits
 class MPU_t {
 
 private:
