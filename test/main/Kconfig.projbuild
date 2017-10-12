@@ -1,9 +1,0 @@
-menu "TESTER"
-
-config TESTER_LOG_ASSERTION_PASS
-    bool "Log assertions pass"
-    default "n"
-    help
-        Log all passed assertions.
-
-endmenu
