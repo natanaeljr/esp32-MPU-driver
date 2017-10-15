@@ -101,12 +101,14 @@ bool MPU_t::getSleepStatus() {
 
 
 bool MPU_t::testConnection() {
-    return getDeviceID() == 0x34;
+    uint8_t id = getDeviceID();
+    if(err) return false;
+    return (id >> 1) == 0x34;
 }
 
 
 uint8_t MPU_t::getDeviceID() {
-    MPU_ERR_CHECK(readBits(MPU_REG_WHO_AM_I, MPU_WHO_AM_I_BIT, MPU_WHO_AM_I_LENGTH, buffer));
+    MPU_ERR_CHECK(readByte(MPU_REG_WHO_AM_I, buffer));
     return buffer[0];
 }
 

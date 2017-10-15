@@ -36,7 +36,7 @@ public:
     esp_err_t sleep(bool enable);
     bool getSleepStatus();
     bool testConnection();
-    uint8_t getDeviceID(); // 0x34
+    uint8_t getDeviceID();
 
     // CONFIGS
     esp_err_t setClockSource(mpu_clock_src_t clockSrc);

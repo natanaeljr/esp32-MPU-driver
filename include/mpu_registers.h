@@ -252,11 +252,7 @@
 #define MPU_REG_FIFO_COUNT_H        (0x72) // [15:0]
 #define MPU_REG_FIFO_COUNT_L        (0x73)
 #define MPU_REG_FIFO_R_W            (0x74)
-//------------------------------------------------------------------------------
 #define MPU_REG_WHO_AM_I            (0x75)
-    #define MPU_WHO_AM_I_BIT                (6) // [6:1]
-    #define MPU_WHO_AM_I_LENGTH             (6)
-//------------------------------------------------------------------------------
 
 
 
