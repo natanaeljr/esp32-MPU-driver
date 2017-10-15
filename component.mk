@@ -8,3 +8,13 @@
 #
 
 COMPONENT_SRCDIRS := src .
+
+MPU_COMPONENT_NAME := $(COMPONENT_NAME)
+export MPU_COMPONENT_NAME
+
+# check definition of CONFIG_MPU_BUS before
+ifeq ("$(findstring I2Cbus, $(COMPONENTS))","")
+$(error $(COMPONENT_NAME) component dependency error: I2Cbus component not found. \
+Make sure the library is included in your components directory or added to EXTRA_COMPONENTS_DIRS. \
+See $(COMPONENT_PATH)/README.md for more information.)
+endif
