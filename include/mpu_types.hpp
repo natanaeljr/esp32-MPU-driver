@@ -1,5 +1,5 @@
-#ifndef _MPU_TYPES_H_
-#define _MPU_TYPES_H_
+#ifndef _MPU_TYPES_HPP_
+#define _MPU_TYPES_HPP_
 
 #include "mpu_define.hpp"
 #include "mpu_registers.hpp"
@@ -259,4 +259,4 @@ typedef struct mpu_test_s {
 
 
 
-#endif /* end of include guard: _MPU_TYPES_H_ */
+#endif /* end of include guard: _MPU_TYPES_HPP_ */

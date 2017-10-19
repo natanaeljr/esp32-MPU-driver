@@ -1,5 +1,5 @@
-#ifndef _MPU_DEFINE_H_
-#define _MPU_DEFINE_H_
+#ifndef _MPU_DEFINE_HPP_
+#define _MPU_DEFINE_HPP_
 
 #include "sdkconfig.h"
 
@@ -23,4 +23,4 @@
 
 
 
-#endif /* end of include guard: _MPU_DEFINE_H_ */
+#endif /* end of include guard: _MPU_DEFINE_HPP_ */

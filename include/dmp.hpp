@@ -1,5 +1,5 @@
-#ifndef _DMP_H_
-#define _DMP_H_
+#ifndef _DMP_HPP_
+#define _DMP_HPP_
 
 #include "mpu.hpp"
 #include <stdint.h>
@@ -118,4 +118,4 @@ private:
 
 
 
-#endif /* end of include guard: _DMP_H_ */
+#endif /* end of include guard: _DMP_HPP_ */

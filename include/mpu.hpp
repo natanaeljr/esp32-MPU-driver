@@ -1,5 +1,5 @@
-#ifndef _MPU_H_
-#define _MPU_H_
+#ifndef _MPU_HPP_
+#define _MPU_HPP_
 
 #include "mpu_define.hpp"
 #include "mpu_types.hpp"
@@ -189,4 +189,4 @@ inline esp_err_t MPU_t::writeBytes(uint8_t regAddr, size_t length, const uint8_t
 
 
 
-#endif /* end of include guard: _MPU_H_ */
+#endif /* end of include guard: _MPU_HPP_ */

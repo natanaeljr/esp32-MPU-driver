@@ -1,5 +1,5 @@
-#ifndef _MPU_LOG_H_
-#define _MPU_LOG_H_
+#ifndef _MPU_LOG_HPP_
+#define _MPU_LOG_HPP_
 
 #include "esp_log.h"
 #include "esp_err.h"
@@ -63,4 +63,4 @@ static inline esp_err_t mpuLogErrorCheck(esp_err_t x, const char* func, const in
 
 
 
-#endif /* end of include guard: _MPU_LOG_H_ */
+#endif /* end of include guard: _MPU_LOG_HPP_ */

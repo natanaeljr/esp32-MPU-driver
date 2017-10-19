@@ -1,5 +1,5 @@
-#ifndef _MPU_REGISTERS_H_
-#define _MPU_REGISTERS_H_
+#ifndef _MPU_REGISTERS_HPP_
+#define _MPU_REGISTERS_HPP_
 
 #include "mpu_define.hpp"
 
@@ -331,4 +331,4 @@
 
 
 
-#endif /* end of include guard: _MPU_REGISTERS_H_ */
+#endif /* end of include guard: _MPU_REGISTERS_HPP_ */

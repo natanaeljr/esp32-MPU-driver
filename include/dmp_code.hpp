@@ -1,5 +1,5 @@
-#ifndef _DMP_CODE_H_
-#define _DMP_CODE_H_
+#ifndef _DMP_CODE_HPP_
+#define _DMP_CODE_HPP_
 
 #include <stdint.h>
 
@@ -1151,4 +1151,4 @@ const uint8_t DMP_FIRMWARE[DMP_CODE_SIZE] = {
 
 
 
-#endif /* end of include guard: _DMP_CODE_H_ */
+#endif /* end of include guard: _DMP_CODE_HPP_ */
