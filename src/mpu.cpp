@@ -1,8 +1,8 @@
-#include "mpu.h"
-#include "mpu_define.h"
-#include "mpu_registers.h"
-#include "mpu_types.h"
-#include "dmp_code.h"
+#include "mpu.hpp"
+#include "mpu_define.hpp"
+#include "mpu_registers.hpp"
+#include "mpu_types.hpp"
+#include "dmp_code.hpp"
 #include <stdint.h>
 #include "freertos/FreeRTOS.h"
 #include "driver/i2c.h"
@@ -11,7 +11,7 @@
 
 static const char* MPU_TAG = "MPUcpp";
 
-#include "mpu_log.h"
+#include "mpu_log.hpp"
 
 
 

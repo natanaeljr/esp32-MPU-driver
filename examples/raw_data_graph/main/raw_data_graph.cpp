@@ -8,7 +8,7 @@
 #include "esp_log.h"
 #include "esp_err.h"
 // lib
-#include "mpu.h"
+#include "mpu.hpp"
 #include "I2Cbus.h"
 
 

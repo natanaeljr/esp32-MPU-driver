@@ -1,7 +1,7 @@
 #ifndef _DMP_H_
 #define _DMP_H_
 
-#include "mpu.h"
+#include "mpu.hpp"
 #include <stdint.h>
 #include "esp_err.h"
 

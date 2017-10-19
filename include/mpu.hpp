@@ -1,8 +1,8 @@
 #ifndef _MPU_H_
 #define _MPU_H_
 
-#include "mpu_define.h"
-#include "mpu_types.h"
+#include "mpu_define.hpp"
+#include "mpu_types.hpp"
 #include <stdint.h>
 #include "I2Cbus.h"
 #include "esp_err.h"

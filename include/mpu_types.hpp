@@ -1,8 +1,8 @@
 #ifndef _MPU_TYPES_H_
 #define _MPU_TYPES_H_
 
-#include "mpu_define.h"
-#include "mpu_registers.h"
+#include "mpu_define.hpp"
+#include "mpu_registers.hpp"
 #include <stdint.h>
 
 
