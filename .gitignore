@@ -2,11 +2,8 @@
 **/build
 **/sdkconfig
 **/sdkconfig.old
-.test_bak
 NOTES
+.test_bak
 
-# -- temporary ---
+# -- temporary --
 test
-examples/raw_data_graph/main/escape_code.hpp
-examples/raw_data_graph/README.md
-examples/raw_data_graph/sdkconfig.defaults

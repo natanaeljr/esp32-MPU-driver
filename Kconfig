@@ -1,7 +1,7 @@
-menu "Invensense MPU"
+menu "MPU"
 
 choice MPU_CHIP_MODEL
-    prompt "MPU chip selection"
+    prompt "MPU chip model"
     default MPU6050
     help
         Select MPU chip model which will be used with MPU library.
@@ -16,15 +16,48 @@ config MPU9250
     bool "MPU9250"
 endchoice
 
-config ENABLE_DMP
+config MPU_CHIP_MODEL
+    string
+    default "MPU6050" if MPU6050
+    default "MPU6500" if MPU6500
+    default "MPU9150" if MPU9150
+    default "MPU9250" if MPU9250
+
+
+choice MPU_COMM_PROTOCOL
+    prompt "Communication Protocol"
+    default MPU_I2C
+    help
+        Select MPU communication protocol. Available options are I2C and SPI, according to the MPU model.
+
+config MPU_I2C
+    bool "I2C"
+    help
+        Inter-Integrated Circuit (I²C)
+        
+config MPU_SPI
+    bool "SPI"
+    depends on MPU6500 || MPU9250
+    help
+        Serial Peripheral Interface bus (SPI)
+
+endchoice
+
+config MPU_COMM_PROTOCOL
+    string
+    default "I2C" if MPU_I2C
+    default "SPI" if MPU_SPI
+
+
+config MPU_ENABLE_DMP
     bool "Compile DMP (Digital Motion Processor)"
     default "y"
     help
         Compile DMP (Digital Motion Processor) code.
 
-config FIFO_CORRUPTION_CHECK
+config MPU_FIFO_CORRUPTION_CHECK
     bool "FIFO packet corruption check"
-    depends on ENABLE_DMP
+    depends on MPU_ENABLE_DMP
     default "y"
     help
         Check for corrupted FIFO packet by monitoring the quaternion data and
@@ -44,7 +77,7 @@ config MPU_CACHE
     default "n"
     help
         Keep MPU configuration in memory, so it does not read from registers 
-        every time a 'getConfigEnabled()' method is called inside MPU library.
+        every time a kind 'getConfigEnabled()' method is called inside MPU library.
 
 endmenu
 

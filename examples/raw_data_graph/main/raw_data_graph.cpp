@@ -9,14 +9,7 @@
 #include "esp_err.h"
 // lib
 #include "mpu.hpp"
-#include "I2Cbus.h"
-
-
-#ifdef __cplusplus
-extern "C" {
-    void app_main(void); 
-};
-#endif
+#include "I2Cbus.hpp"
 
 
 #define I2C_SDA GPIO_NUM_21
@@ -27,8 +20,8 @@ extern "C" {
 #define REFRESH_RATE 10 // hz
 
 /*
- * This example uses ANSI escape code (escape sequencies) to control the terminal screen
- * Your terminal has support such feature in order to the example work properly.
+ * This example uses ANSI escape code to control the terminal screen
+ * Your terminal has to support escape sequencies in order to the example work properly.
  */
 
 
@@ -38,7 +31,7 @@ void print_graph(int value, int min, int max) {
 }
 
 
-void app_main() {
+extern "C" void app_main() {
     MPU_t MPU = MPU_t();
     mpu_axes_t accel;
     mpu_axes_t gyro;
@@ -46,8 +39,8 @@ void app_main() {
 
     // setup
     ESP_ERROR_CHECK(I2Cbus0.begin(I2C_SDA, I2C_SCL, I2C_CLOCK_SPEED));
-    MPU.setI2Cbus(I2Cbus0);
-    MPU.setAddress(MPU_DEFAULT_ADDRESS);
+    MPU.setBus(I2Cbus0);
+    MPU.setAddressHandle(MPU_DEFAULT_ADDRESS);
     ESP_ERROR_CHECK(MPU.initialize());
     ESP_ERROR_CHECK(MPU.setGyroFullScale(MPU_GYRO_FS_2000DPS));
     ESP_ERROR_CHECK(MPU.setAccelFullScale(MPU_ACCEL_FS_2G));

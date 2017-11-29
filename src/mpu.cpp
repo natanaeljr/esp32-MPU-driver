@@ -1,42 +1,46 @@
 #include "mpu.hpp"
-#include "mpu_define.hpp"
 #include "mpu_registers.hpp"
 #include "mpu_types.hpp"
+#include "dmp.hpp"
 #include "dmp_code.hpp"
+#include "I2Cbus.hpp"
 #include <stdint.h>
 #include "freertos/FreeRTOS.h"
 #include "driver/i2c.h"
 #include "esp_err.h"
 
 
-static const char* MPU_TAG = "MPUcpp";
+static const char* MPU_TAG __attribute__((unused)) = "MPUcpp";
 
 #include "mpu_log.hpp"
 
 
 
 
-MPU_t::MPU_t(I2Cbus& I2C) : I2C(I2C) {
+MPU_t::MPU_t(mpu_bus_t& BUS) : BUS(BUS), DMP(new DMP_t(*this)) {
 }
 
 
-void MPU_t::setI2Cbus(I2Cbus& I2C) {
-    this->I2C = I2C;
+MPU_t::~MPU_t() {delete DMP;}
+
+
+void MPU_t::setBus(mpu_bus_t& BUS) {
+    this->BUS = BUS;
 }
 
 
-I2Cbus& MPU_t::getI2Cbus() {
-    return I2C;
+mpu_bus_t& MPU_t::getBus() {
+    return BUS;
 }
 
 
-void MPU_t::setAddress(mpu_addr_t addr) {
-    this->addr = addr;
+void MPU_t::setAddressHandle(mpu_addr_handle_t addrHandle) {
+    this->addrHandle = addrHandle;
 }
 
 
-mpu_addr_t MPU_t::getAddress() {
-    return addr;
+mpu_addr_handle_t MPU_t::getAddressHandle() {
+    return addrHandle;
 }
 
 
@@ -85,6 +89,8 @@ esp_err_t MPU_t::reset() {
     if(MPU_ERR_CHECK(writeBit(MPU_REG_PWR_MGMT1, MPU_PWR1_DEVICE_RESET_BIT, 1)))
         return err;
     vTaskDelay(100 / portTICK_PERIOD_MS);
+    // reset DMP object
+    *DMP = DMP_t(*this);
     return err;
 }
 
@@ -150,7 +156,7 @@ esp_err_t MPU_t::setLowPowerAccelRate(mpu_lp_accel_rate_t rate) {
 mpu_lp_accel_rate_t MPU_t::getLowPowerAccelRate() {
     #ifdef CONFIG_MPU6050
     MPU_ERR_CHECK(readBits(MPU_REG_PWR_MGMT2, MPU_PWR2_LP_WAKE_CTRL_BIT, MPU_PWR2_LP_WAKE_CTRL_LENGTH, buffer));
-    #elif CONFIG_MPU6500
+    #elif defined CONFIG_MPU6500
     MPU_ERR_CHECK(readBits(MPU6500_REG_LP_ACCEL_ODR, MPU6500_LPA_ODR_CLKSEL_BIT, MPU6500_LPA_ODR_CLKSEL_LENGTH, buffer));
     #endif
     return (mpu_lp_accel_rate_t) buffer[0];

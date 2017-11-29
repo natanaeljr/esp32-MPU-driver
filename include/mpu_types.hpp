@@ -1,15 +1,25 @@
 #ifndef _MPU_TYPES_HPP_
 #define _MPU_TYPES_HPP_
 
-#include "mpu_define.hpp"
-#include "mpu_registers.hpp"
 #include <stdint.h>
+#include "sdkconfig.h"
+#include "mpu_registers.hpp"
 
 
 typedef enum {
     MPU_ADDRESS_AD0_LOW = 0x68,
     MPU_ADDRESS_AD0_HIGH = 0x69
-} mpu_addr_t;
+} mpu_i2caddr_t;
+
+#ifdef CONFIG_MPU_I2C
+using mpu_bus_t = I2Cbus_t;
+using mpu_addr_handle_t = mpu_i2caddr_t;
+static constexpr I2Cbus_t& MPU_DEFAULT_BUS_HOST = I2Cbus0;
+#else
+using mpu_bus_t = SPIbus_t;
+using mpu_addr_handle_t = spi_device_handle_t;
+static constexpr SPIbus_t& MPU_DEFAULT_BUS_HOST = HSPI;
+#endif
 
 // Gyro full-scale-range
 typedef enum {

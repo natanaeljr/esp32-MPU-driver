@@ -1,9 +1,13 @@
 #
-# This is a project Makefile. It is assumed the directory this Makefile resides in is a
-# project subdirectory.
+# This is a project Makefile.
 #
 
 PROJECT_NAME := raw-data-graph
-EXTRA_COMPONENT_DIRS := ${HOME}/esp/libraries
+
+# Add here path to I2Cbus library
+EXTRA_COMPONENT_DIRS := ${HOME}/esp/libraries/I2Cbus
+
+# Path to the MPU library
+EXTRA_COMPONENT_DIRS += $(abspath ../..)
 
 include $(IDF_PATH)/make/project.mk

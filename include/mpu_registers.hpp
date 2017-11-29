@@ -1,7 +1,7 @@
 #ifndef _MPU_REGISTERS_HPP_
 #define _MPU_REGISTERS_HPP_
 
-#include "mpu_define.hpp"
+#include "sdkconfig.h"
 
 
 /*******************************************************************************
@@ -289,7 +289,7 @@
 
 
 /*******************************************************************************
- * MPU6500 and MPU9250 commom registers ////////////////////////////////////////
+ * MPU6500 and MPU9250 commom registers
  ******************************************************************************/
 #if defined CONFIG_MPU6500
 #define MPU6500_REG_SELF_TEST_X_GYRO    (0x00) // XG_ST_DATA[7:0]
@@ -317,15 +317,6 @@
 #define MPU6500_REG_ZA_OFFSET_H         (0x7D)
 #define MPU6500_REG_ZA_OFFSET_L         (0x7C) // review this ones, might be wrong
 #endif
-
-
-
-
-
-
-
-
-
 
 
 

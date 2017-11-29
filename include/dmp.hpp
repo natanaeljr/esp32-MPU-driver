@@ -6,22 +6,21 @@
 #include "esp_err.h"
 
 
-class DMP_t {
-private: 
+class MPU_t::DMP_t {
+
+private:
     MPU_t& MPU;
     uint8_t* buffer = MPU.buffer;
     esp_err_t& err = MPU.err;
-    bool dmpOn = false;
-    bool loaded = false;
     dmp_features_t features;
     uint8_t packetSize = 0;
 
 public:
     DMP_t(MPU_t& MPU);
-    bool isLoaded();
+    ~DMP_t();
     
     // SETUP
-    esp_err_t initialize();
+    esp_err_t load();
     esp_err_t setEnabled(bool enable);
     bool getEnabled();
     esp_err_t reset();
@@ -86,10 +85,10 @@ public:
     esp_err_t getTap(uint8_t *direction, uint8_t *count, uint8_t *packet);
     esp_err_t getAndroidOrientation(uint8_t *orient, uint8_t *packet);
     
+    DMP_t& operator=(DMP_t& DMP) {return DMP;}
+    DMP_t& operator=(DMP_t&& DMP) {return DMP;}
     
-private:
-    /** This pushes the DMP firmware into the MPU memory. */
-    esp_err_t load();
+// private:
     esp_err_t getPacketIndex(dmp_features_t feature, uint8_t *index);
     
 }; /* end of DMP_t */

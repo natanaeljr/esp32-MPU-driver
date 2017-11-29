@@ -9,7 +9,7 @@
 #include "esp_err.h"
 
 
-static const char* MPU_TAG = "DMPcpp";
+static const char* MPU_TAG __attribute__((unused)) = "DMPcpp";
 
 #include "mpu_log.hpp"
 
@@ -29,22 +29,14 @@ static const char* MPU_TAG = "DMPcpp";
 
 
 
-DMP_t::DMP_t(MPU_t& MPU) : MPU(MPU) {
+MPU_t::DMP_t::DMP_t(MPU_t& MPU) : MPU(MPU) {
 }
 
 
-bool DMP_t::isLoaded() {
-    return loaded;
-}
+MPU_t::DMP_t::~DMP_t() {}
 
 
-esp_err_t DMP_t::load() {
-    // check if dmp is already loaded
-    if(loaded) {
-        err = ESP_OK;
-        return err;
-    }
-    
+esp_err_t MPU_t::DMP_t::load() {
     uint8_t length;
     uint16_t i = 0;
 
@@ -68,52 +60,32 @@ esp_err_t DMP_t::load() {
     }
 
     // set DMP program start address
-    if(MPU_ERR_CHECK(MPU.setProgramStartAddress(DMP_START_ADDRESS)))
-        return err;
-
-    loaded = true;
-    return err;
+    return MPU_ERR_CHECK(MPU.setProgramStartAddress(DMP_START_ADDRESS));
 }
 
 
-esp_err_t DMP_t::initialize() {
-    return MPU_ERR_CHECK(load());
-}
-
-
-esp_err_t DMP_t::setEnabled(bool enable) {
-    if(dmpOn) {
-        err = ESP_OK;
-        return err;
-    }
-    if(!loaded) {
-        err = ESP_FAIL;
-        MPU_LOGEMSG(MPU_MSG_DMP_NOT_LOADED);
-        return err;
-    }
+esp_err_t MPU_t::DMP_t::setEnabled(bool enable) {
     if(MPU_ERR_CHECK(MPU.writeBit(MPU_REG_USER_CTRL, MPU_USERCTRL_DMP_EN_BIT, enable)))
         return err;
     if(enable) {
-        if(MPU_ERR_CHECK(reset()))
-            return err;
+         return MPU_ERR_CHECK(reset());
     }
-    dmpOn = enable;
     return err;
 }
 
 
-bool DMP_t::getEnabled() {
+bool MPU_t::DMP_t::getEnabled() {
     MPU_ERR_CHECK(MPU.readBit(MPU_REG_USER_CTRL, MPU_USERCTRL_DMP_EN_BIT, buffer));
     return buffer[0];
 }
 
 
-esp_err_t DMP_t::reset() {
+esp_err_t MPU_t::DMP_t::reset() {
     return MPU_ERR_CHECK(MPU.writeBit(MPU_REG_USER_CTRL, MPU_USERCTRL_DMP_RESET_BIT, true));
 }
 
 
-esp_err_t DMP_t::setChipOrientation(uint16_t scalar) {
+esp_err_t MPU_t::DMP_t::setChipOrientation(uint16_t scalar) {
     const uint8_t gyro_axes[3] = {DINA4C, DINACD, DINA6C};
     const uint8_t accel_axes[3] = {DINA0C, DINAC9, DINA2C};
     const uint8_t gyro_sign[3] = {DINA36, DINA56, DINA76};
@@ -156,7 +128,7 @@ esp_err_t DMP_t::setChipOrientation(uint16_t scalar) {
 }
 
 
-uint16_t DMP_t::getChipOrientation() {
+uint16_t MPU_t::DMP_t::getChipOrientation() {
     uint16_t scalar = 0;
     // just read gyro config, don't need to read accel cfg 
     // because it's the same scalar as gyro
@@ -195,7 +167,7 @@ uint16_t DMP_t::getChipOrientation() {
 }
 
 
-uint16_t DMP_t::getScalarFromMatrix(const int8_t *matrix) {
+uint16_t MPU_t::DMP_t::getScalarFromMatrix(const int8_t *matrix) {
     /* Scalar:
      * XYZ  010_001_000 Identity Matrix
      * XZY  001_010_000
@@ -236,7 +208,7 @@ uint16_t DMP_t::getScalarFromMatrix(const int8_t *matrix) {
 }
 
 
-void DMP_t::getMatrixFromScalar(int8_t *matrix, uint16_t scalar) {
+void MPU_t::DMP_t::getMatrixFromScalar(int8_t *matrix, uint16_t scalar) {
     // zero matrix
     for(size_t i = 0; i < 9; i++)
         matrix[i] = 0;
@@ -271,7 +243,7 @@ static const uint8_t sendRawDataRegsDisabled[3] = {0xA3, 0xA3, 0xA3};
 static const uint8_t sendCalGyroRegsEnabled[4] = {0xB2, 0x8B, 0xB6, 0x9B};
 static const uint8_t sendCalGyroRegsDisabled[4] = {DINAC0, DINA80, DINAC2, DINA90};
 
-esp_err_t DMP_t::setFeaturesEnabled(dmp_features_t features) {
+esp_err_t MPU_t::DMP_t::setFeaturesEnabled(dmp_features_t features) {
     /* Set integration scale factor. */
     buffer[0] = (uint8_t)((GYRO_SCALE_FACTOR >> 24) & 0xFF);
     buffer[1] = (uint8_t)((GYRO_SCALE_FACTOR >> 16) & 0xFF);
@@ -387,7 +359,7 @@ esp_err_t DMP_t::setFeaturesEnabled(dmp_features_t features) {
 }
 
 
-dmp_features_t DMP_t::getFeaturesEnabled() {
+dmp_features_t MPU_t::DMP_t::getFeaturesEnabled() {
     dmp_features_t features = 0;
 
     /* check SEND_RAW_ACCEL and SEND_ANY_GYRO regs*/
@@ -469,12 +441,12 @@ dmp_features_t DMP_t::getFeaturesEnabled() {
 static const uint8_t gyroCalibRegsEnable[9] = {0xb8, 0xaa, 0xb3, 0x8d, 0xb4, 0x98, 0x0d, 0x35, 0x5d};
 static const uint8_t gyroCalibRegsDisable[9] = {0xb8, 0xaa, 0xaa, 0xaa, 0xb0, 0x88, 0xc3, 0xc5, 0xc7};
 
-esp_err_t DMP_t::setGyroAutoCalibrationEnabled(bool enable) {
+esp_err_t MPU_t::DMP_t::setGyroAutoCalibrationEnabled(bool enable) {
     return MPU_ERR_CHECK(MPU.writeMemory(DMP_CFG_MOTION_BIAS, 9, (enable ? gyroCalibRegsEnable : gyroCalibRegsDisable)));
 }
 
 
-bool DMP_t::getGyroAutoCalibrationEnabled() {
+bool MPU_t::DMP_t::getGyroAutoCalibrationEnabled() {
     uint8_t regs[9];
     MPU_ERR_CHECK(MPU.readMemory(DMP_CFG_MOTION_BIAS, 9, regs));
     if(!memcmp(regs, gyroCalibRegsEnable, 9))
@@ -492,14 +464,14 @@ bool DMP_t::getGyroAutoCalibrationEnabled() {
 static const uint8_t lpQuaternionRegsEnable[4] = {DINBC0, DINBC2, DINBC4, DINBC6};
 static const uint8_t lpQuaternionRegsDisable[4] = {0x8B, 0x8B, 0x8B, 0x8B};
 
-esp_err_t DMP_t::setLPQuaternionEnabled(bool enable) {
+esp_err_t MPU_t::DMP_t::setLPQuaternionEnabled(bool enable) {
     if(MPU_ERR_CHECK(MPU.writeMemory(DMP_CFG_LP_QUAT, 4, (enable ? lpQuaternionRegsEnable : lpQuaternionRegsDisable))))
         return err;
     return MPU_ERR_CHECK(MPU.resetFIFO());
 }
 
 
-bool DMP_t::getLPQuaternionEnabled() {
+bool MPU_t::DMP_t::getLPQuaternionEnabled() {
     uint8_t regs[4];
     MPU_ERR_CHECK(MPU.readMemory(DMP_CFG_LP_QUAT, 4, regs));
 
@@ -518,14 +490,14 @@ bool DMP_t::getLPQuaternionEnabled() {
 static const uint8_t lpQuaternion6XRegsEnable[4] = {DINA20, DINA28, DINA30, DINA38};
 static const uint8_t lpQuaternion6XRegsDisable[4] = {0xA3, 0xA3, 0xA3, 0xA3};
 
-esp_err_t DMP_t::setLPQuaternion6XEnabled(bool enable) {
+esp_err_t MPU_t::DMP_t::setLPQuaternion6XEnabled(bool enable) {
     if(MPU_ERR_CHECK(MPU.writeMemory(DMP_CFG_8, 4, (enable ? lpQuaternion6XRegsEnable : lpQuaternion6XRegsDisable))))
         return err;
     return MPU_ERR_CHECK(MPU.resetFIFO());
 }
 
 
-bool DMP_t::getLPQuaternion6XEnabled() {
+bool MPU_t::DMP_t::getLPQuaternion6XEnabled() {
     uint8_t regs[4];
     MPU_ERR_CHECK(MPU.readMemory(DMP_CFG_8, 4, regs));
 
@@ -544,7 +516,7 @@ bool DMP_t::getLPQuaternion6XEnabled() {
 static const uint8_t intModeRegsPacket[11] = {0xd8, 0xb1, 0xb9, 0xf3, 0x8b, 0xa3, 0x91, 0xb6, 0x09, 0xb4, 0xd9};
 static const uint8_t intModeRegsGesture[11] = {0xda, 0xb1, 0xb9, 0xf3, 0x8b, 0xa3, 0x91, 0xb6, 0xda, 0xb4, 0xda};
 
-esp_err_t DMP_t::setDMPIntMode(dmp_int_mode_t mode) {
+esp_err_t MPU_t::DMP_t::setDMPIntMode(dmp_int_mode_t mode) {
     if(mode == DMP_INT_MODE_PACKET)
         return MPU_ERR_CHECK(MPU.writeMemory(DMP_CFG_FIFO_ON_EVENT, 11, intModeRegsPacket));
     else // == DMP_INT_MODE_GESTURE
@@ -552,7 +524,7 @@ esp_err_t DMP_t::setDMPIntMode(dmp_int_mode_t mode) {
 }
 
 
-dmp_int_mode_t DMP_t::getDMPIntMode() {
+dmp_int_mode_t MPU_t::DMP_t::getDMPIntMode() {
     uint8_t regs[11];
     MPU_ERR_CHECK(MPU.readMemory(DMP_CFG_FIFO_ON_EVENT, 11, regs));
     if(!memcmp(regs, intModeRegsPacket, 11))
@@ -569,7 +541,7 @@ dmp_int_mode_t DMP_t::getDMPIntMode() {
 
 static const uint8_t fifoRateRegsEnd[12] = {DINAFE, DINAF2, DINAAB, 0xc4, DINAAA, DINAF1, DINADF, DINADF, 0xBB, 0xAF, DINADF, DINADF};
 
-esp_err_t DMP_t::setFIFORate(uint16_t rate) {
+esp_err_t MPU_t::DMP_t::setFIFORate(uint16_t rate) {
     if(rate > DMP_SAMPLE_RATE) {
         err = ESP_ERR_INVALID_ARG;
         MPU_LOGEMSG(MPU_MSG_INVALID_FIFO_RATE "(%d). It must be <= %d", rate, DMP_SAMPLE_RATE);
@@ -586,7 +558,7 @@ esp_err_t DMP_t::setFIFORate(uint16_t rate) {
 }
 
 
-uint16_t DMP_t::getFIFORate() {
+uint16_t MPU_t::DMP_t::getFIFORate() {
     if(MPU_ERR_CHECK(MPU.readMemory(DMP_D_0_22, 2, buffer)))
         return 0;
     uint16_t div = (buffer[0] << 8) | buffer[1];
@@ -594,23 +566,23 @@ uint16_t DMP_t::getFIFORate() {
 }
 
 
-uint8_t DMP_t::getFIFOPacketSize() {
+uint8_t MPU_t::DMP_t::getFIFOPacketSize() {
     return packetSize;
 }
 
 
-bool DMP_t::packetAvailable() {
+bool MPU_t::DMP_t::packetAvailable() {
     return MPU.getFIFOCount() >= packetSize;
 }
 
 
-esp_err_t DMP_t::getFIFOPacket(uint8_t *packet) {
+esp_err_t MPU_t::DMP_t::getFIFOPacket(uint8_t *packet) {
     MPU_ERR_CHECK(MPU.readFIFO(packet, packetSize));
     return err;
 }
 
 
-esp_err_t DMP_t::setTapThreshold(dmp_tap_axis_t axis, uint16_t thresh) {
+esp_err_t MPU_t::DMP_t::setTapThreshold(dmp_tap_axis_t axis, uint16_t thresh) {
     if(!(axis & DMP_TAP_XYZ) || thresh > 1600) {
         err = ESP_ERR_INVALID_ARG;
         MPU_LOGEMSG(MPU_MSG_NO_AXIS_PASSED " or " MPU_MSG_INVALID_TAP_THRESH);
@@ -655,7 +627,7 @@ esp_err_t DMP_t::setTapThreshold(dmp_tap_axis_t axis, uint16_t thresh) {
 }
 
 
-uint16_t DMP_t::getTapThreshold(dmp_tap_axis_t axis) {
+uint16_t MPU_t::DMP_t::getTapThreshold(dmp_tap_axis_t axis) {
     if (axis & DMP_TAP_X) {
         if(MPU_ERR_CHECK(MPU.readMemory(DMP_TAP_THX, 2, buffer)))
             return err;
@@ -682,7 +654,7 @@ uint16_t DMP_t::getTapThreshold(dmp_tap_axis_t axis) {
 }
 
 
-esp_err_t DMP_t::setTapAxesEnabled(dmp_tap_axis_t axis) {
+esp_err_t MPU_t::DMP_t::setTapAxesEnabled(dmp_tap_axis_t axis) {
     if(!(axis & DMP_TAP_XYZ)) {
         err = ESP_ERR_INVALID_ARG;
         MPU_LOGEMSG(MPU_MSG_NO_AXIS_PASSED);
@@ -694,14 +666,14 @@ esp_err_t DMP_t::setTapAxesEnabled(dmp_tap_axis_t axis) {
 }
 
 
-dmp_tap_axis_t DMP_t::getTapAxesEnabled() {
+dmp_tap_axis_t MPU_t::DMP_t::getTapAxesEnabled() {
     dmp_tap_axis_t axis = 0;
     MPU_ERR_CHECK(MPU.readMemory(DMP_D_1_72, 1, (uint8_t*) &axis));
     return (dmp_tap_axis_t) (axis & DMP_TAP_XYZ);
 }
 
 
-esp_err_t DMP_t::setTapCount(uint8_t count) {    
+esp_err_t MPU_t::DMP_t::setTapCount(uint8_t count) {    
     if (count < 1) {
         MPU_LOGWMSG("Count (%d) constrained to %d, range(1~4)", count, 1);
         count = 1;
@@ -717,7 +689,7 @@ esp_err_t DMP_t::setTapCount(uint8_t count) {
 }
 
 
-uint8_t DMP_t::getTapCount() {
+uint8_t MPU_t::DMP_t::getTapCount() {
     uint8_t count = 0;
     if(MPU_ERR_CHECK(MPU.writeMemory(DMP_D_1_79, 1, &count)))
         return 0;
@@ -734,7 +706,7 @@ uint8_t DMP_t::getTapCount() {
 }
 
 
-esp_err_t DMP_t::setTapTime(uint16_t time) {
+esp_err_t MPU_t::DMP_t::setTapTime(uint16_t time) {
     uint16_t dmpTime = time / (1000 / DMP_SAMPLE_RATE);
     buffer[0] = dmpTime >> 8;
     buffer[1] = dmpTime & 0xFF;
@@ -742,7 +714,7 @@ esp_err_t DMP_t::setTapTime(uint16_t time) {
 }
 
 
-uint16_t DMP_t::getTapTime() {
+uint16_t MPU_t::DMP_t::getTapTime() {
     if(MPU_ERR_CHECK(MPU.readMemory(DMP_TAPW_MIN, 2, buffer)))
         return 0;
     uint16_t dmpTime = (buffer[0] << 8) | buffer[1];
@@ -750,7 +722,7 @@ uint16_t DMP_t::getTapTime() {
 }
 
 
-esp_err_t DMP_t::setTapTimeMulti(uint16_t time) {
+esp_err_t MPU_t::DMP_t::setTapTimeMulti(uint16_t time) {
     uint16_t dmpTime = time / (1000 / DMP_SAMPLE_RATE);
     buffer[0] = dmpTime >> 8;
     buffer[1] = dmpTime & 0xFF;
@@ -758,7 +730,7 @@ esp_err_t DMP_t::setTapTimeMulti(uint16_t time) {
 }
 
 
-uint16_t DMP_t::getTapTimeMulti() {
+uint16_t MPU_t::DMP_t::getTapTimeMulti() {
     if(MPU_ERR_CHECK(MPU.readMemory(DMP_D_1_218, 2, buffer)))
         return 0;
     uint16_t dmpTime = (buffer[0] << 8) | buffer[1];
@@ -766,7 +738,7 @@ uint16_t DMP_t::getTapTimeMulti() {
 }
 
 
-esp_err_t DMP_t::setShakeRejectThreshold(uint16_t thresh) {
+esp_err_t MPU_t::DMP_t::setShakeRejectThreshold(uint16_t thresh) {
     uint32_t scaledThresh = GYRO_SCALE_FACTOR / 1000 * thresh;
     buffer[0] = (scaledThresh >> 24) & 0xFF;
     buffer[1] = (scaledThresh >> 16) & 0xFF;
@@ -776,7 +748,7 @@ esp_err_t DMP_t::setShakeRejectThreshold(uint16_t thresh) {
 }
 
 
-uint16_t DMP_t::getShakeRejectThreshold() {
+uint16_t MPU_t::DMP_t::getShakeRejectThreshold() {
     if(MPU_ERR_CHECK(MPU.readMemory(DMP_D_1_92, 4, buffer)))
         return 0;
     uint32_t scaledThresh = (buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) | buffer[3];
@@ -784,7 +756,7 @@ uint16_t DMP_t::getShakeRejectThreshold() {
 }
 
 
-esp_err_t DMP_t::setShakeRejectTime(uint16_t time) {
+esp_err_t MPU_t::DMP_t::setShakeRejectTime(uint16_t time) {
     uint16_t dmpTime = time / (1000 / DMP_SAMPLE_RATE);
     buffer[0] = dmpTime >> 8;
     buffer[1] = dmpTime & 0xFF;
@@ -792,7 +764,7 @@ esp_err_t DMP_t::setShakeRejectTime(uint16_t time) {
 }
 
 
-uint16_t DMP_t::getShakeRejectTime() {
+uint16_t MPU_t::DMP_t::getShakeRejectTime() {
     if(MPU_ERR_CHECK(MPU.readMemory(DMP_D_1_90, 2, buffer)))
         return 0;
     uint16_t dmpTime = (buffer[0] << 8) | buffer[1];
@@ -800,7 +772,7 @@ uint16_t DMP_t::getShakeRejectTime() {
 }
 
 
-esp_err_t DMP_t::setShakeRejectTimeout(uint16_t timeout) {
+esp_err_t MPU_t::DMP_t::setShakeRejectTimeout(uint16_t timeout) {
     uint16_t dmpTimeout = timeout / (1000 / DMP_SAMPLE_RATE);
     buffer[0] = dmpTimeout >> 8;
     buffer[1] = dmpTimeout & 0xFF;
@@ -808,7 +780,7 @@ esp_err_t DMP_t::setShakeRejectTimeout(uint16_t timeout) {
 }
 
 
-uint16_t DMP_t::getShakeRejectTimeout() {
+uint16_t MPU_t::DMP_t::getShakeRejectTimeout() {
     if(MPU_ERR_CHECK(MPU.readMemory(DMP_D_1_88, 2, buffer)))
         return 0;
     uint16_t dmpTimeout = (buffer[0] << 8) | buffer[1];
@@ -816,7 +788,7 @@ uint16_t DMP_t::getShakeRejectTimeout() {
 }
 
 
-esp_err_t DMP_t::setPedometerStepCount(uint32_t count) {
+esp_err_t MPU_t::DMP_t::setPedometerStepCount(uint32_t count) {
     buffer[0] = (count >> 24) & 0xFF;
     buffer[1] = (count >> 16) & 0xFF;
     buffer[2] = (count >> 8) & 0xFF;
@@ -825,7 +797,7 @@ esp_err_t DMP_t::setPedometerStepCount(uint32_t count) {
 }
 
 
-uint32_t DMP_t::getPedometerStepCount() {
+uint32_t MPU_t::DMP_t::getPedometerStepCount() {
     if(MPU_ERR_CHECK(MPU.readMemory(DMP_D_PEDSTD_STEPCTR, 4, buffer)))
         return 0;
     uint32_t count = (buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) | buffer[3];
@@ -833,7 +805,7 @@ uint32_t DMP_t::getPedometerStepCount() {
 }
 
 
-esp_err_t DMP_t::setPedometerWalkTime(uint32_t time) {
+esp_err_t MPU_t::DMP_t::setPedometerWalkTime(uint32_t time) {
     uint32_t dmpTime = time / 20;
     buffer[0] = (dmpTime >> 24) & 0xFF;
     buffer[1] = (dmpTime >> 16) & 0xFF;
@@ -843,7 +815,7 @@ esp_err_t DMP_t::setPedometerWalkTime(uint32_t time) {
 }
 
 
-uint32_t DMP_t::getPedometerWalkTime() {
+uint32_t MPU_t::DMP_t::getPedometerWalkTime() {
     if(MPU_ERR_CHECK(MPU.readMemory(DMP_D_PEDSTD_TIMECTR, 4, buffer)))
         return 0;
     uint32_t dmpTime = (buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) | buffer[3];
@@ -851,7 +823,7 @@ uint32_t DMP_t::getPedometerWalkTime() {
 }
 
 
-esp_err_t DMP_t::getPacketIndex(dmp_features_t feature, uint8_t *index) {
+esp_err_t MPU_t::DMP_t::getPacketIndex(dmp_features_t feature, uint8_t *index) {
     // returns ESP_FAIL if feature is no enabled
     if(!(features & feature)) {
         err = ESP_ERR_NOT_FOUND;
@@ -891,7 +863,7 @@ esp_err_t DMP_t::getPacketIndex(dmp_features_t feature, uint8_t *index) {
 }
 
 
-esp_err_t DMP_t::getQuaternion(int32_t *quat, uint8_t *packet) {
+esp_err_t MPU_t::DMP_t::getQuaternion(int32_t *quat, uint8_t *packet) {
     uint8_t i;
     if(MPU_ERR_CHECK(getPacketIndex(DMP_FEATURE_LP_QUAT | DMP_FEATURE_6X_LP_QUAT, &i)))
         return err;
@@ -933,7 +905,7 @@ esp_err_t DMP_t::getQuaternion(int32_t *quat, uint8_t *packet) {
 }
 
 
-esp_err_t DMP_t::getAccel(mpu_axes_t *axes, uint8_t *packet) {
+esp_err_t MPU_t::DMP_t::getAccel(mpu_axes_t *axes, uint8_t *packet) {
     uint8_t i;
     if(MPU_ERR_CHECK(getPacketIndex(DMP_FEATURE_SEND_RAW_ACCEL, &i)))
         return err;
@@ -946,7 +918,7 @@ esp_err_t DMP_t::getAccel(mpu_axes_t *axes, uint8_t *packet) {
 }
 
 
-esp_err_t DMP_t::getGyro(mpu_axes_t *axes, uint8_t *packet) {
+esp_err_t MPU_t::DMP_t::getGyro(mpu_axes_t *axes, uint8_t *packet) {
     uint8_t i;
     if(MPU_ERR_CHECK(getPacketIndex(DMP_FEATURE_SEND_ANY_GYRO, &i)))
         return err;
@@ -960,7 +932,7 @@ esp_err_t DMP_t::getGyro(mpu_axes_t *axes, uint8_t *packet) {
 
 
 #define TAP_INT_BIT (0x01)
-esp_err_t DMP_t::getTap(uint8_t *direction, uint8_t *count, uint8_t *packet) {
+esp_err_t MPU_t::DMP_t::getTap(uint8_t *direction, uint8_t *count, uint8_t *packet) {
     uint8_t i;
     if(MPU_ERR_CHECK(getPacketIndex(DMP_FEATURE_TAP, &i)))
         return err;
@@ -976,7 +948,7 @@ esp_err_t DMP_t::getTap(uint8_t *direction, uint8_t *count, uint8_t *packet) {
 
 
 #define ANDROID_ORIENT_INT_BIT (0x8)
-esp_err_t DMP_t::getAndroidOrientation(uint8_t *orient, uint8_t *packet) {
+esp_err_t MPU_t::DMP_t::getAndroidOrientation(uint8_t *orient, uint8_t *packet) {
     uint8_t i;
     if(MPU_ERR_CHECK(getPacketIndex(DMP_FEATURE_ANDROID_ORIENT, &i)))
         return err;
@@ -987,15 +959,6 @@ esp_err_t DMP_t::getAndroidOrientation(uint8_t *orient, uint8_t *packet) {
 
     return err;
 }
-
-
-
-
-
-
-
-
-
 
 
 
