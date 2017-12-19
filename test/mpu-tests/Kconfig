@@ -1,0 +1,108 @@
+menu "MPU Test config"
+
+comment "MPU Test configuration changes according to MPU Component configuration"
+
+#
+# I2CBUS configuration
+#
+
+config MPU_TEST_I2CBUS_PORT
+    int "Main I2C controller port"
+    range 0 1
+    default 0
+    depends on MPU_I2C
+    help
+        I2C controller port
+        0 -> I2C_NUM_0
+        1 -> I2C_NUM_1
+
+config MPU_TEST_I2CBUS_SDA_PIN
+    int "Main I2C SDA pin"
+    range 0 33
+    default 21
+    depends on MPU_I2C
+
+config MPU_TEST_I2CBUS_SCL_PIN
+    int "Main I2C SCL pin"
+    range 0 33
+    default 22
+    depends on MPU_I2C
+
+config MPU_TEST_I2CBUS_CLOCK_HZ
+    int "Main I2C clock speed (hz)"
+    default 400000
+    depends on MPU_I2C
+
+config MPU_TEST_I2CBUS_ADDR
+    int "I2C Address (AD0 low=0, high=1)"
+    range 0 1
+    default 0
+    depends on MPU_I2C
+
+
+#
+# SPIBUS configuration
+#
+
+config MPU_TEST_SPIBUS_HOST
+    int "SPI host number (HSPI=1, VSPI=2)"
+    range 1 2
+    default 1
+    depends on MPU_SPI
+
+config MPU_TEST_SPIBUS_MOSI_PIN
+    int "SPI MOSI pin"
+    range 0 33
+    default 23
+    depends on MPU_SPI
+
+config MPU_TEST_SPIBUS_MISO_PIN
+    int "SPI MISO pin"
+    range 0 39
+    default 19
+    depends on MPU_SPI
+
+config MPU_TEST_SPIBUS_SCLK_PIN
+    int "SPI SCLK pin"
+    range 0 33
+    default 18
+    depends on MPU_SPI
+
+config MPU_TEST_SPIBUS_CS_PIN
+    int "SPI CS pin"
+    range 0 33
+    default 5
+    depends on MPU_SPI
+
+config MPU_TEST_SPIBUS_CLOCK_HZ
+    int "SPI clock speed (hz)"
+    default 1000000
+    depends on MPU_SPI
+
+
+#
+# MPU Test
+#
+
+config MPU_TEST_INTERRUPT_PIN
+    int "Interrupt pin"
+    range 0 40
+    default 35
+
+config MPU_TEST_AUXI2C_SDA_PIN
+    int "Auxiliary I2C SDA pin"
+    range 0 33
+    default 33
+
+config MPU_TEST_AUXI2C_SCL_PIN
+    int "Auxiliary I2C SCL pin"
+    range 0 33
+    default 26
+
+config MPU_TEST_FSYNC_PIN
+    int "FSYNC pin"
+    range 0 33
+    default 14
+
+
+endmenu

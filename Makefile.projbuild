@@ -1,0 +1,31 @@
+#
+# Top-level component makefile
+#
+
+CPPFLAGS += -DMPU_COMPONENT_TRUE=1
+
+
+## Defines needed for library code implementation
+# MPU9250 is the same as MPU6500 + AK8963
+# MPU9150 is the same as MPU6050 + AK8975
+# MPU6000 code is the same as MPU6050 code
+# MPU6555 equals MPU6500, MPU9255 equals MPU9250
+ifeq ($(CONFIG_MPU_CHIP_MODEL),"MPU9250")
+CPPFLAGS += -DCONFIG_MPU6500
+else
+ifeq ($(CONFIG_MPU_CHIP_MODEL),"MPU9150")
+CPPFLAGS += -DCONFIG_MPU6050
+else
+ifeq ($(CONFIG_MPU_CHIP_MODEL),"MPU6000")
+CPPFLAGS += -DCONFIG_MPU6050
+else
+ifeq ($(CONFIG_MPU_CHIP_MODEL),"MPU6555")
+CPPFLAGS += -DCONFIG_MPU6500
+else
+ifeq ($(CONFIG_MPU_CHIP_MODEL),"MPU9255")
+CPPFLAGS += -DCONFIG_MPU9250 -DCONFIG_MPU6500
+endif
+endif
+endif
+endif
+endif

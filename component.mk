@@ -4,25 +4,6 @@
 
 COMPONENT_SRCDIRS := src .
 
-MPU_COMPONENT_NAME := $(COMPONENT_NAME)
-export MPU_COMPONENT_NAME
 
-CPPFLAGS += -DMPU_COMPONENT_NAME=$(MPU_COMPONENT_NAME)
-
-
-## Defines needed for library code implementation
-# MPU9250 is the same as MPU6500 + AK8963
-# MPU9150 is the same as MPU6050 + AK8975
-ifeq ($(CONFIG_MPU_CHIP_MODEL),"MPU9250")
-CPPFLAGS += \
-	-DCONFIG_MPU6500 \
-	-DAK8963_SECONDARY \
-	-DAK89xx_SECONDARY
-else 
-ifeq ($(CONFIG_MPU_CHIP_MODEL),"MPU9150")
-CPPFLAGS += \
-	-DCONFIG_MPU6050 \
-	-DAK8975_SECONDARY \
-	-DAK89xx_SECONDARY
-endif
-endif
+## Compile DMP code only if enabled in menuconfig
+$(call compile_only_if,$(CONFIG_MPU_ENABLE_DMP),src/MPUdmp.o)

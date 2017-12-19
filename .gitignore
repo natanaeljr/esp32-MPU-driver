@@ -2,8 +2,12 @@
 **/build
 **/sdkconfig
 **/sdkconfig.old
-NOTES
-.test_bak
+tools.mk
+NOTES.md
 
-# -- temporary --
-test
+## this partition table is generated
+test/unit-test-app/partition_table_unit_test_app.csv
+
+## temporarily
+include/mpu/fusion.hpp
+include/mpu/utils.hpp
