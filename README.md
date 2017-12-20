@@ -1,7 +1,6 @@
 # MPU Driver
 
-Note1: Under middle development. See new version [NewDesign]  
-Note2: This version is old and will be replaced soon for the new version [NewDesign].
+Note: This version has been replaced for a new better version on [master][NewDesign].
 
 This repository is a driver/library for the following _TDK Invensense_ MPU's parts:
 
@@ -23,4 +22,4 @@ The library is based on Invensense's Embedded Motion Driver 5.1.3 and 6.12 and i
 
 Copyright © 2017 Natanael Josue Rabello [_natanael.rabello@outlook.com_]
 
-[NewDesign]: https://github.com/natanaeljr/MPU-esp32-driver/tree/NewDesign
+[NewDesign]: https://github.com/natanaeljr/MPU-esp32-driver/tree/master
