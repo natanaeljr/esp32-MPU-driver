@@ -80,26 +80,38 @@ Example:
 #include "MPU.hpp"
 #include "I2Cbus.hpp"
 
+using namespace emd;  // embedded motion driver, contains mpu
+// ...
 // initialize the bus
 i2c0.begin(SDA, SCL, CLOCK);
-
 // MPU object
-emd::mpu::MPU_t MPU;
-// set bus, address and initialize
-MPU.setBus(i2c0);
-MPU.setAddr(emd::mpu::MPU_I2CADDRESS_AD0_LOW);
+MPU_t MPU;
+// setup and initialize
+MPU.setBus(i2c0).setAddr(mpu::MPU_I2CADDRESS_AD0_LOW);
 MPU.initialize();
-// configure
-MPU.setSampleRate(250);
-MPU.setGyroFullScaleRange(emd::mpu::GYRO_FSR_500DPS);
-MPU.setAccelFullScaleRange(emd::mpu::ACCEL_FSR_4G);
-MPU.setDigitalLowPassFilter(emd::mpu::DLPF_42HZ);
-MPU.setInterruptEnabled(emd::mpu::INT_EN_RAWDATA_READY);
-// start using
-emd::mpu::raw_axes_t accel, gyro;
+// configure as needed
+MPU.setSampleRate(250);  // Hz
+MPU.setGyroFullScaleRange(mpu::GYRO_FSR_500DPS);
+MPU.setAccelFullScaleRange(mpu::ACCEL_FSR_4G);
+MPU.setDigitalLowPassFilter(mpu::DLPF_42HZ);  // smother data
+MPU.setInterruptEnabled(mpu::INT_EN_RAWDATA_READY);  // enable INT pin
+// read sensors data
+mpu::raw_axes_t accel;
+mpu::raw_axes_t gyro;
 MPU.motion(&accel, &gyro);
-
-// ...
+// use data ...
+printf("accel: %+d %+d %+d\n", accel.x, accel.y, accel.z);
+printf("gyro: %+d %+d %+d\n", gyro[0], gyro[1], gyro[2]);
+// convert data
+float gyroDPS[3];
+float accelG[3];
+gyroDPS[0] = mpu::gyroDecPerSec(gyro.x, mpu::GYRO_FSR_500DPS);
+gyroDPS[1] = mpu::gyroDecPerSec(gyro.y, mpu::GYRO_FSR_500DPS);
+gyroDPS[2] = mpu::gyroDecPerSec(gyro.z, mpu::GYRO_FSR_500DPS);
+accelG[0] = mpu::accelGravity(accel.x, mpu::ACCEL_FSR_4G);
+accelG[1] = mpu::accelGravity(accel.y, mpu::ACCEL_FSR_4G);
+accelG[2] = mpu::accelGravity(accel.z, mpu::ACCEL_FSR_4G);
+// so on..
 ```
 
 ### Menuconfig
