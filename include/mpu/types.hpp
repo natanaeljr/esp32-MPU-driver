@@ -67,21 +67,21 @@ static constexpr uint16_t SAMPLE_RATE_MAX = 8000;
 static constexpr uint16_t SAMPLE_RATE_MAX = 32000;
 #endif
 
-// Gyro full-scale-range
+// Gyro full-scale range
 typedef enum {
-    GYRO_FSR_250DPS  = 0,
-    GYRO_FSR_500DPS  = 1,
-    GYRO_FSR_1000DPS = 2,
-    GYRO_FSR_2000DPS = 3
-} gyro_fsr_t;
+    GYRO_FS_250DPS  = 0,
+    GYRO_FS_500DPS  = 1,
+    GYRO_FS_1000DPS = 2,
+    GYRO_FS_2000DPS = 3
+} gyro_fs_t;
 
-// Accel full-scale-range
+// Accel full-scale range
 typedef enum {
-    ACCEL_FSR_2G  = 0,
-    ACCEL_FSR_4G  = 1,
-    ACCEL_FSR_8G  = 2,
-    ACCEL_FSR_16G = 3
-} accel_fsr_t;
+    ACCEL_FS_2G  = 0,
+    ACCEL_FS_4G  = 1,
+    ACCEL_FS_8G  = 2,
+    ACCEL_FS_16G = 3
+} accel_fs_t;
 
 // Digital low-pass filter (based on gyro bandwidth)
 typedef enum {

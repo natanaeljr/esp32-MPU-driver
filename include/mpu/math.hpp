@@ -40,36 +40,52 @@ namespace emd {
 namespace mpu {
 
 inline namespace math {
-constexpr uint8_t accelFSRvalue(const accel_fsr_t fsr) {
-    return 2 << fsr;
+constexpr uint8_t accelFSRvalue(const accel_fs_t fs) {
+    return 2 << fs;
 }
 
-constexpr uint8_t gyroFSRvalue(const gyro_fsr_t fsr) {
-    return 250 << fsr;
+constexpr uint8_t gyroFSRvalue(const gyro_fs_t fs) {
+    return 250 << fs;
 }
 
-constexpr uint16_t accelSensitivity(const accel_fsr_t fsr) {
-    return 16384 >> fsr;
+constexpr uint16_t accelSensitivity(const accel_fs_t fs) {
+    return 16384 >> fs;
 }
 
-constexpr float gyroSensitivity(const gyro_fsr_t fsr) {
-    return 131.f / (1 << fsr);
+constexpr float gyroSensitivity(const gyro_fs_t fs) {
+    return 131.f / (1 << fs);
 }
 
-constexpr float accelResolution(const accel_fsr_t fsr) {
-    return static_cast<float>(accelFSRvalue(fsr) / INT16_MAX);
+constexpr float accelResolution(const accel_fs_t fs) {
+    return static_cast<float>(accelFSRvalue(fs) / INT16_MAX);
 }
 
-constexpr float gyroResolution(const gyro_fsr_t fsr) {
-    return static_cast<float>(gyroFSRvalue(fsr) / INT16_MAX);
+constexpr float gyroResolution(const gyro_fs_t fs) {
+    return static_cast<float>(gyroFSRvalue(fs) / INT16_MAX);
 }
 
-inline float accelGravity(const int16_t axis, const accel_fsr_t fsr) {
-    return axis * accelResolution(fsr);
+inline float accelGravity(const int16_t axis, const accel_fs_t fs) {
+    return axis * accelResolution(fs);
 }
 
-inline float gyroDegPerSec(const int16_t axis, const gyro_fsr_t fsr) {
-    return axis * gyroResolution(fsr);
+inline float_axes_t accelGravity(const raw_axes_t& raw_axes, const accel_fs_t fs) {
+    float_axes_t axes;
+    axes.x = raw_axes.x * accelResolution(fs);
+    axes.y = raw_axes.y * accelResolution(fs);
+    axes.z = raw_axes.z * accelResolution(fs);
+    return axes;
+}
+
+inline float gyroDegPerSec(const int16_t axis, const gyro_fs_t fs) {
+    return axis * gyroResolution(fs);
+}
+
+inline float_axes_t gyroDegPerSec(const raw_axes_t& raw_axes, const gyro_fs_t fs) {
+    float_axes_t axes;
+    axes.x = raw_axes.x * gyroResolution(fs);
+    axes.y = raw_axes.y * gyroResolution(fs);
+    axes.z = raw_axes.z * gyroResolution(fs);
+    return axes;
 }
 
 

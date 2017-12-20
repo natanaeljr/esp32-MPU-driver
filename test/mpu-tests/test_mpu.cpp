@@ -165,13 +165,13 @@ TEST_CASE("MPU basic test", "[MPU]")
     TEST_ASSERT_EQUAL_INT(dlpf, mpu.getDigitalLowPassFilter());
     TEST_ESP_OK( mpu.lastError());
     // full scale range
-    mpu::gyro_fsr_t gyro_fsr = mpu::GYRO_FSR_500DPS;
-    TEST_ESP_OK( mpu.setGyroFullScaleRange(gyro_fsr));
-    TEST_ASSERT_EQUAL_INT(gyro_fsr, mpu.getGyroFullScaleRange());
+    mpu::gyro_fs_t gyro_fs = mpu::GYRO_FS_500DPS;
+    TEST_ESP_OK( mpu.setGyroFullScale(gyro_fs));
+    TEST_ASSERT_EQUAL_INT(gyro_fs, mpu.getGyroFullScale());
     TEST_ESP_OK( mpu.lastError());
-    mpu::accel_fsr_t accel_fsr = mpu::ACCEL_FSR_16G;
-    TEST_ESP_OK( mpu.setAccelFullScaleRange(accel_fsr));
-    TEST_ASSERT_EQUAL_INT(accel_fsr, mpu.getAccelFullScaleRange());
+    mpu::accel_fs_t accel_fs = mpu::ACCEL_FS_16G;
+    TEST_ESP_OK( mpu.setAccelFullScale(accel_fs));
+    TEST_ASSERT_EQUAL_INT(accel_fs, mpu.getAccelFullScale());
     TEST_ESP_OK( mpu.lastError());
 }
 

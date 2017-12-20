@@ -91,9 +91,9 @@ esp_err_t MPU::initialize() {
     #endif
 
     // set Full Scale range
-    if (MPU_ERR_CHECK(setGyroFullScaleRange(GYRO_FSR_500DPS)))
+    if (MPU_ERR_CHECK(setGyroFullScale(GYRO_FS_500DPS)))
         return err;
-    if (MPU_ERR_CHECK(setAccelFullScaleRange(ACCEL_FSR_4G)))
+    if (MPU_ERR_CHECK(setAccelFullScale(ACCEL_FS_4G)))
         return err;
     // set Digital Low Pass Filter to get smoother data
     if (MPU_ERR_CHECK(setDigitalLowPassFilter(DLPF_42HZ)))
@@ -476,23 +476,23 @@ fchoice_t MPU::getFchoice() {
 #endif
 
 
-esp_err_t MPU::setGyroFullScaleRange(gyro_fsr_t fsr) {
+esp_err_t MPU::setGyroFullScale(gyro_fs_t fsr) {
     return MPU_ERR_CHECK(writeBits(regs::GYRO_CONFIG, regs::GCONFIG_FS_SEL_BIT, regs::GCONFIG_FS_SEL_LENGTH, fsr));
 }
 
-gyro_fsr_t MPU::getGyroFullScaleRange() {
+gyro_fs_t MPU::getGyroFullScale() {
     MPU_ERR_CHECK(readBits(regs::GYRO_CONFIG, regs::GCONFIG_FS_SEL_BIT, regs::GCONFIG_FS_SEL_LENGTH, buffer));
-    return (gyro_fsr_t) buffer[0];
+    return (gyro_fs_t) buffer[0];
 }
 
 
-esp_err_t MPU::setAccelFullScaleRange(accel_fsr_t fsr) {
+esp_err_t MPU::setAccelFullScale(accel_fs_t fsr) {
     return MPU_ERR_CHECK(writeBits(regs::ACCEL_CONFIG, regs::ACONFIG_FS_SEL_BIT, regs::ACONFIG_FS_SEL_LENGTH, fsr));
 }
 
-accel_fsr_t MPU::getAccelFullScaleRange() {
+accel_fs_t MPU::getAccelFullScale() {
     MPU_ERR_CHECK(readBits(regs::ACCEL_CONFIG, regs::ACONFIG_FS_SEL_BIT, regs::ACONFIG_FS_SEL_LENGTH, buffer));
-    return (accel_fsr_t) buffer[0];
+    return (accel_fs_t) buffer[0];
 }
 
 

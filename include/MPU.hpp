@@ -112,10 +112,10 @@ class MPU {
     stby_en_t getStandbyMode();
     esp_err_t resetSignalPath();
 
-    esp_err_t setGyroFullScaleRange(gyro_fsr_t fsr);
-    esp_err_t setAccelFullScaleRange(accel_fsr_t fsr);
-    gyro_fsr_t getGyroFullScaleRange();
-    accel_fsr_t getAccelFullScaleRange();
+    esp_err_t setGyroFullScale(gyro_fs_t fsr);
+    esp_err_t setAccelFullScale(accel_fs_t fsr);
+    gyro_fs_t getGyroFullScale();
+    accel_fs_t getAccelFullScale();
 
     esp_err_t setInterruptConfig(int_config_t config);
     esp_err_t setInterruptEnabled(int_en_t mask);
