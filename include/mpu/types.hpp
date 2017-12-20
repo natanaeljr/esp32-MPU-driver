@@ -332,6 +332,7 @@ static constexpr fifo_config_t FIFO_CFG_COMPASS       {FIFO_CFG_SLAVE0};  // 8 b
  * mutually exclusive.
  * @note DMP_FEATURE_PEDOMETER is always enabled.
  */
+
 /* typedef uint16_t dmp_features_t;
 static constexpr dmp_features_t DMP_FEATURE_TAP =            {0x001};
 static constexpr dmp_features_t DMP_FEATURE_ANDROID_ORIENT = {0x002};
@@ -350,18 +351,27 @@ static constexpr dmp_tap_axis_t DMP_TAP_Y       {0x0C};
 static constexpr dmp_tap_axis_t DMP_TAP_Z       {0x03};
 static constexpr dmp_tap_axis_t DMP_TAP_XYZ     {0x3F};
  */
-// Axis for gyroscope and accelerometer
-typedef union {
-private:
-    int16_t xyz[3];
-public:
-    struct {
-        int16_t x;
-        int16_t y;
-        int16_t z;
+
+// Generic axes struct to store sensors' data
+template< class type_t>
+struct axes_t {
+    union {
+        type_t xyz[3];
+        struct {
+            type_t x;
+            type_t y;
+            type_t z;
+        };
     };
-    inline int16_t& operator[](int i) { return xyz[i]; }
-} raw_axes_t;
+    type_t& operator[](int i) const {
+        return xyz[i];
+    }
+};
+
+// Axes for gyroscope, accelerometer, magnetometer
+using raw_axes_t = axes_t<int16_t>;
+using float_axes_t = axes_t<float>;
+
 
 // Sensors struct for fast reading all sensors at once
 typedef struct {
