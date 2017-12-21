@@ -10,6 +10,7 @@
 #include "esp_log.h"
 #include "driver/i2c.h"
 #include "driver/gpio.h"
+#include "driver/spi_master.h"
 #include "esp_intr_alloc.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -21,20 +22,26 @@
 #include "mpu/math.hpp"
 
 
-// Define bus type
+// embedded motion driver
+using namespace emd;
+
+
+
+namespace test {
+/**
+ * Bus type
+ * */
 #ifdef CONFIG_MPU_I2C
 I2C_t& i2c = getI2C((i2c_port_t)CONFIG_MPU_TEST_I2CBUS_PORT);
 #elif CONFIG_MPU_SPI
 SPI_t& spi = getSPI((spi_host_device_t)CONFIG_MPU_TEST_SPIBUS_HOST);
+spi_device_handle_t mpuSpiHandle;
 #endif
-
-// embedded motion driver
-using namespace emd;
-
-/* ^^^^^^^^^^^^^^^^^^
- *  MPU test version
- * ^^^^^^^^^^^^^^^^^^ */
-namespace test {
+/**
+ * Hold state of bus init.
+ * If a test fail, isBusInit stays true, so is not initialized again
+ * */
+bool isBusInit = false;
 /**
  * MPU class modified to initialize the bus automaticaly when
  * instantiated, and close when object is destroyed.
@@ -44,20 +51,24 @@ class MPU : public mpu::MPU {
  public:
     MPU() : mpu::MPU() {
         #ifdef CONFIG_MPU_I2C
-        i2c.begin((gpio_num_t)CONFIG_MPU_TEST_I2CBUS_SDA_PIN, (gpio_num_t)CONFIG_MPU_TEST_I2CBUS_SCL_PIN,
-            CONFIG_MPU_TEST_I2CBUS_CLOCK_HZ);
+        if (!isBusInit) {
+            i2c.begin((gpio_num_t)CONFIG_MPU_TEST_I2CBUS_SDA_PIN, (gpio_num_t)CONFIG_MPU_TEST_I2CBUS_SCL_PIN,
+                CONFIG_MPU_TEST_I2CBUS_CLOCK_HZ);
+        }
         this->setBus(i2c);
         this->setAddr((mpu::mpu_i2caddr_t)(CONFIG_MPU_TEST_I2CBUS_ADDR + mpu::MPU_I2CADDRESS_AD0_LOW));
 
         #elif CONFIG_MPU_SPI
-        spi.begin(CONFIG_MPU_TEST_SPIBUS_MOSI_PIN, CONFIG_MPU_TEST_SPIBUS_MISO_PIN,
-            CONFIG_MPU_TEST_SPIBUS_SCLK_PIN);
-        spi_device_handle_t mpuSpiHandle;
-        spi.addDevice(0, CONFIG_MPU_TEST_SPIBUS_CLOCK_HZ, CONFIG_MPU_TEST_SPIBUS_CS_PIN, &mpuSpiHandle);
+        if (!isBusInit) {
+            spi.begin(CONFIG_MPU_TEST_SPIBUS_MOSI_PIN, CONFIG_MPU_TEST_SPIBUS_MISO_PIN,
+                CONFIG_MPU_TEST_SPIBUS_SCLK_PIN);
+            spi.addDevice(0, CONFIG_MPU_TEST_SPIBUS_CLOCK_HZ, CONFIG_MPU_TEST_SPIBUS_CS_PIN, &mpuSpiHandle);
+        }
         this->setBus(spi);
         this->setAddr(mpuSpiHandle);
         #endif
 
+        if (!isBusInit) isBusInit = true;
         this->reset();
     }
 
@@ -69,6 +80,7 @@ class MPU : public mpu::MPU {
         spi.removeDevice(this->getAddr());
         #endif
         this->bus->close();
+        isBusInit = false;
     }
 };
 using MPU_t = MPU;
@@ -136,7 +148,7 @@ static void mpuMeasureSampleRate(test::MPU_t& mpu, uint16_t rate, int numOfSampl
 TEST_CASE("MPU basic test", "[MPU]")
 {
     test::MPU_t mpu;
-    TEST_ESP_OK( mpu.testConnection());
+    TEST_ESP_OK( !mpu.testConnection());
     // sleep
     TEST_ESP_OK( mpu.setSleep(true));
     TEST_ASSERT_TRUE( mpu.getSleep());
