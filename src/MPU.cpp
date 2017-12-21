@@ -233,7 +233,7 @@ esp_err_t MPU::setSampleRate(uint16_t rate) {
     if (MPU_ERR_CHECK(lastError()))
         return err;
     const bool magSlaveChgModeEnabled = getAuxI2CSlaveEnabled(MAG_SLAVE_CHG_MODE);
-    if (magSlaveChgModeEnabled && magSlaveChgModeConf.addr == COMPASS_I2CADDRESS && 
+    if (magSlaveChgModeEnabled && magSlaveChgModeConf.addr == COMPASS_I2CADDRESS &&
             (magSlaveChgModeConf.txdata & 0xF) == MAG_MODE_SINGLE_MEASURE) {
         auxi2c_config_t auxi2cConf = getAuxI2CConfig();
         if (MPU_ERR_CHECK(lastError()))
@@ -243,7 +243,7 @@ esp_err_t MPU::setSampleRate(uint16_t rate) {
             auxi2cConf.sample_delay = 0;
         } else {
             auxi2cConf.wait_for_es = 0;
-            auxi2cConf.sample_delay = ceil((float) finalRate / COMPASS_SAMPLE_RATE_MAX) - 1;
+            auxi2cConf.sample_delay = ceil(static_cast<float>(finalRate) / COMPASS_SAMPLE_RATE_MAX) - 1;
             const uint8_t compassRate = finalRate / (auxi2cConf.sample_delay + 1);
             MPU_LOGW("Compass sample rate constrained to %d, magnetometer's maximum is %d Hz",
                 compassRate, COMPASS_SAMPLE_RATE_MAX);
@@ -875,27 +875,31 @@ bool MPU::getAuxI2CEnabled() {
  * Configures the communication with a Slave connected to Auxiliary I2C bus
  * */
 esp_err_t MPU::setAuxI2CSlaveConfig(const auxi2c_slv_config_t &config) {
-    // slaves' config registers are group in 3 regs each in a row
-    uint8_t regAddr = config.slave * 3 + regs::I2C_SLV0_ADDR;
-    // data for regs::I2C_SLV0_ADDR
+    // slaves' config registers are grouped as 3 regs in a row
+    const uint8_t regAddr = config.slave * 3 + regs::I2C_SLV0_ADDR;
+    // data for regs::I2C_SLVx_ADDR
     buffer[0] = config.rw << regs::I2C_SLV_RNW_BIT;
     buffer[0] |= config.addr;
-    // data for regs::I2C_SLV0_REG
+    // data for regs::I2C_SLVx_REG
     buffer[1] = config.reg_addr;
-    if (MPU_ERR_CHECK(writeBytes(regAddr, 2, buffer)))
-        return err;
-    // data for regs::I2C_SLV0_CTRL
-    if (MPU_ERR_CHECK(writeBit(regAddr+2, regs::I2C_SLV_REG_DIS_BIT, config.reg_dis)))
-        return err;
-    if (config.rw == AUXI2C_READ) {
-        if (MPU_ERR_CHECK(writeBits(regAddr+2, regs::I2C_SLV_LEN_BIT, regs::I2C_SLV_LEN_LENGTH, config.rxlength)))
+    // data for regs::I2C_SLVx_CTRL
+    if (MPU_ERR_CHECK(readByte(regAddr+2, buffer+2)))
             return err;
-    } else {
+    if (config.rw == AUXI2C_READ) {
+        buffer[2] &= 1 << regs::I2C_SLV_EN_BIT;  // keep enable bit, clear the rest
+        buffer[2] |= config.reg_dis << regs::I2C_SLV_REG_DIS_BIT;
+        buffer[2] |= config.swap_en << regs::I2C_SLV_BYTE_SW_BIT;
+        buffer[2] |= config.end_of_word << regs::I2C_SLV_GRP_BIT;
+        buffer[2] |= config.rxlength & 0xF;
+    } else {  // AUXI2C_WRITE
+        buffer[2] &= ~(1 << regs::I2C_SLV_REG_DIS_BIT | 0xF);  // clear length bits and register disable bit
+        buffer[2] |= config.reg_dis << regs::I2C_SLV_REG_DIS_BIT;
+        buffer[2] |= 0x1;  // set length to write 1 byte
         if (MPU_ERR_CHECK(writeByte(regs::I2C_SLV0_DO + config.slave, config.txdata)))
             return err;
-        if (MPU_ERR_CHECK(writeBits(regAddr+2, regs::I2C_SLV_LEN_BIT, regs::I2C_SLV_LEN_LENGTH, 0x1)))
-            return err;
     }
+    if (MPU_ERR_CHECK(writeBytes(regAddr, 3, buffer)))
+        return err;
     // sample_delay enable/disable
     if (MPU_ERR_CHECK(writeBit(regs::I2C_MST_DELAY_CRTL, config.slave, config.sample_delay_en)))
         return err;
@@ -907,21 +911,23 @@ esp_err_t MPU::setAuxI2CSlaveConfig(const auxi2c_slv_config_t &config) {
 
 auxi2c_slv_config_t MPU::getAuxI2CSlaveConfig(auxi2c_slv_t slave) {
     auxi2c_slv_config_t config;
-    uint8_t regAddr = slave * 3 + regs::I2C_SLV0_ADDR;
+    const uint8_t regAddr = slave * 3 + regs::I2C_SLV0_ADDR;
     config.slave = slave;
     MPU_ERR_CHECK(readBytes(regAddr, 3, buffer));
-    config.rw = (auxi2c_rw_t) (buffer[0] >> regs::I2C_SLV_RNW_BIT);
-    config.addr = buffer[0];
+    config.rw = (auxi2c_rw_t) ((buffer[0] >> regs::I2C_SLV_RNW_BIT) & 0x1);
+    config.addr = buffer[0] & 0x7F;
     config.reg_addr = buffer[1];
     config.reg_dis = (buffer[2] >> regs::I2C_SLV_REG_DIS_BIT) & 0x1;
     if (config.rw == AUXI2C_READ) {
-        config.rxlength = buffer[2];
+        config.swap_en = (buffer[2] >> regs::I2C_SLV_BYTE_SW_BIT) & 0x1;
+        config.end_of_word = (auxi2c_eow_t) ((buffer[2] >> regs::I2C_SLV_GRP_BIT) & 0x1);
+        config.rxlength = buffer[2] & 0xF;
     } else {
-        MPU_ERR_CHECK(readByte(regs::I2C_SLV0_DO + slave, buffer+4));
-        config.txdata = buffer[4];
+        MPU_ERR_CHECK(readByte(regs::I2C_SLV0_DO + slave, buffer+3));
+        config.txdata = buffer[3];
     }
-    MPU_ERR_CHECK(readByte(regs::I2C_MST_DELAY_CRTL, buffer+5));
-    config.sample_delay_en = (buffer[5] >> slave) & 0x1;
+    MPU_ERR_CHECK(readByte(regs::I2C_MST_DELAY_CRTL, buffer+4));
+    config.sample_delay_en = (buffer[4] >> slave) & 0x1;
     return config;
 }
 
@@ -1364,7 +1370,13 @@ esp_err_t MPU::compassSetMode(mag_mode_t mode) {
             .reg_addr = regs::mag::STATUS1,
             .reg_dis = 0,
             .sample_delay_en = 1,
-            {.rxlength = 8}
+            {
+                {
+                .swap_en = 0,
+                .end_of_word = (auxi2c_eow_t) 0,
+                .rxlength = 8
+                }
+            }
         };
         if (MPU_ERR_CHECK(setAuxI2CSlaveConfig(kSlaveReadDataConfig)))
             return err;

@@ -346,6 +346,7 @@ TEST_CASE("MPU basic auxiliary I2C configuration", "[MPU]")
     slv0config.rw = mpu::AUXI2C_READ;
     slv0config.reg_addr = 0x07;
     slv0config.reg_dis = 0;
+    slv0config.swap_en = 0;
     slv0config.rxlength = 14;
     slv0config.sample_delay_en = 0;
     TEST_ESP_OK( mpu.setAuxI2CSlaveConfig(slv0config));
@@ -367,6 +368,8 @@ TEST_CASE("MPU basic auxiliary I2C configuration", "[MPU]")
     TEST_ASSERT( slv0config.rw == retSlvconfig.rw);
     TEST_ASSERT( slv0config.reg_addr == retSlvconfig.reg_addr);
     TEST_ASSERT( slv0config.reg_dis == retSlvconfig.reg_dis);
+    TEST_ASSERT( slv0config.swap_en == retSlvconfig.swap_en);
+    TEST_ASSERT( slv0config.end_of_word == retSlvconfig.end_of_word);
     TEST_ASSERT( slv0config.rxlength == retSlvconfig.rxlength);
     TEST_ASSERT( slv0config.sample_delay_en == retSlvconfig.sample_delay_en);
     retSlvconfig = mpu.getAuxI2CSlaveConfig(slv1config.slave);

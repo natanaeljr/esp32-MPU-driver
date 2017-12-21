@@ -199,6 +199,15 @@ typedef enum {
     AUXI2C_READ = 1
 } auxi2c_rw_t;
 
+// Auxiliary I2C, EOW = end of word, use for swap
+// Note: External sensor data typically comes in as groups of two bytes. This bit is used to determine if the groups are from
+//  the slave’s register address 0 and 1, 2 and 3, etc.., or if the groups are address 1 and 2, 3 and 4, etc..
+typedef enum {
+    AUXI2C_EOW_ODD_NUM  = 0,  // indicates slave register addresses 0 and 1 are grouped together (odd numbered register ends the word).
+    AUXI2C_EOW_EVEN_NUM = 1   // indicates slave register addresses 1 and 2 are grouped together (even numbered register ends the word).
+} auxi2c_eow_t;  // This allows byte swapping of registers that are grouped starting at any address.
+
+
 // Auxiliary I2C Master configuration struct
 typedef struct {
     auxi2c_clock_t clock :4;  // clock signal speed
@@ -221,10 +230,30 @@ typedef struct {
     bool reg_dis   :1;   // when set, the transaction does not write the register address, it will only read data, or write data
     bool sample_delay_en :1;  // enable delay specifided in master config, sample_delay, for this slave in specific.
     union {
-        uint8_t rxlength :4;  // number of bytes to read, when set to read, max = 15
-        uint8_t txdata;       // data to transfer when slave is set to write
+        struct {  // when read
+            bool swap_en     :1;  // enable swap of bytes when reading both the low and high byte of a word (see note below)
+            auxi2c_eow_t end_of_word :1;  // define at which register address a word ends, for swap low and high bytes of the word (when swap enabled)
+            uint8_t rxlength :4;  // number of bytes to read, when set to read, max = 15
+        };
+        // when write
+        uint8_t txdata;  // data to transfer when slave is set to write
     };
 } auxi2c_slv_config_t;
+/** 
+ * Note on SWAP:
+ * Swap bytes may be needed when external data is in another order.
+ * The option swap_en, swaps bytes when reading both the low and high byte of a word. 
+ *
+ * For example, if rxlength = 4, and if reg_addr = 0x1, and group = ODD_NUM
+ *  1) The first byte read from address 0x1 will be stored at EXT_SENS_DATA_00.
+ *  2) the second and third bytes will be read and swapped, so the data read from address 0x2
+ *     will be stored at EXT_SENS_DATA_02, and the data read from address 0x3 will be stored at EXT_SENS_DATA_03,
+ *  3) The last byte read from address 0x4 will be stored at EXT_SENS_DATA_04
+ * 
+ * Note there is nothing to swap after reading the first byte if reg_addr[bit 0] = 1,
+ * or if the last byte read has a register address [bit 0] = 0. The opposite is true for 'group' = EVEN_NUM.
+ * */
+
 
 // Auxiliary I2C master status register data
 using auxi2c_stat_t = uint8_t;
@@ -427,7 +456,7 @@ typedef enum {
 } mag_sensy_t;
 #endif
 
-// Auxiliary I2C slaves that operate the Magnetometer
+// Auxiliary I2C slaves that operate the Magnetometer (do not change)
 static constexpr auxi2c_slv_t MAG_SLAVE_READ_DATA = AUXI2C_SLAVE_0;  // read measurement data
 static constexpr auxi2c_slv_t MAG_SLAVE_CHG_MODE  = AUXI2C_SLAVE_1;  // change mode to single measure
 
