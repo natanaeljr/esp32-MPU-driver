@@ -148,7 +148,7 @@ static void mpuMeasureSampleRate(test::MPU_t& mpu, uint16_t rate, int numOfSampl
 TEST_CASE("MPU basic test", "[MPU]")
 {
     test::MPU_t mpu;
-    TEST_ESP_OK( !mpu.testConnection());
+    TEST_ESP_OK( mpu.testConnection());
     // sleep
     TEST_ESP_OK( mpu.setSleep(true));
     TEST_ASSERT_TRUE( mpu.getSleep());
