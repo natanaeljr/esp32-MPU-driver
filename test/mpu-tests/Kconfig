@@ -1,6 +1,6 @@
 menu "MPU Test config"
 
-comment "MPU Test configuration changes according to MPU Component configuration"
+comment "MPU Test configuration depends on MPU Component configuration"
 
 #
 # I2CBUS configuration
