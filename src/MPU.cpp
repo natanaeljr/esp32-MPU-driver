@@ -476,6 +476,9 @@ fchoice_t MPU::getFchoice() {
 #endif
 
 
+/**
+ * Gyroscope Full-scale range
+ * */
 esp_err_t MPU::setGyroFullScale(gyro_fs_t fsr) {
     return MPU_ERR_CHECK(writeBits(regs::GYRO_CONFIG, regs::GCONFIG_FS_SEL_BIT, regs::GCONFIG_FS_SEL_LENGTH, fsr));
 }
@@ -486,6 +489,9 @@ gyro_fs_t MPU::getGyroFullScale() {
 }
 
 
+/**
+ * Accelerometer Full-scale range
+ * */
 esp_err_t MPU::setAccelFullScale(accel_fs_t fsr) {
     return MPU_ERR_CHECK(writeBits(regs::ACCEL_CONFIG, regs::ACONFIG_FS_SEL_BIT, regs::ACONFIG_FS_SEL_LENGTH, fsr));
 }
@@ -493,6 +499,118 @@ esp_err_t MPU::setAccelFullScale(accel_fs_t fsr) {
 accel_fs_t MPU::getAccelFullScale() {
     MPU_ERR_CHECK(readBits(regs::ACCEL_CONFIG, regs::ACONFIG_FS_SEL_BIT, regs::ACONFIG_FS_SEL_LENGTH, buffer));
     return (accel_fs_t) buffer[0];
+}
+
+
+/**
+ * Push biases to the gyro offset registers.
+ * This function expects biases relative to the current sensor output, and
+ * these biases will be added to the factory-supplied values.
+ * 
+ * Note: Bias inputs are LSB in +-1000dps format.
+ * */
+esp_err_t MPU::setGyroOffset(raw_axes_t bias) {
+    buffer[0] = bias.x >> 8;
+    buffer[1] = bias.x;
+    buffer[2] = bias.y >> 8;
+    buffer[3] = bias.y;
+    buffer[4] = bias.z >> 8;
+    buffer[5] = bias.z;
+    return MPU_ERR_CHECK(writeBytes(regs::XG_OFFSET_H, 6, buffer));
+}
+
+/**
+ * Note: Bias output are LSB in +-1000dps format.
+ * */
+raw_axes_t MPU::getGyroOffset() {
+    MPU_ERR_CHECK(readBytes(regs::XG_OFFSET_H, 6, buffer));
+    raw_axes_t bias;
+    bias.x = (buffer[0] << 8) | buffer[1];
+    bias.y = (buffer[2] << 8) | buffer[3];
+    bias.z = (buffer[4] << 8) | buffer[5];
+    return bias;
+}
+
+
+/**
+ * Push biases to the accel offset registers.
+ * This function expects biases relative to the current sensor output, and
+ * these biases will be added to the factory-supplied values.
+ * 
+ * Note: Bias inputs are LSB in +-16G format.
+ * */
+esp_err_t MPU::setAccelOffset(raw_axes_t bias) {
+    raw_axes_t facBias;
+    // first, read OTP values of Accel factory trim
+
+    #if defined CONFIG_MPU6050
+    if (MPU_ERR_CHECK(readBytes(regs::XA_OFFSET_H, 6, buffer)))
+        return err;
+    facBias.x = (buffer[0] << 8) | buffer[1];
+    facBias.y = (buffer[2] << 8) | buffer[3];
+    facBias.z = (buffer[4] << 8) | buffer[5];
+
+    #elif defined CONFIG_MPU6500
+    if (MPU_ERR_CHECK(readBytes(regs::XA_OFFSET_H, 8, buffer)))
+        return err;
+    // note: buffer[2] and buffer[5], stay the same,
+    //  they are read just to keep the burst reading
+    facBias.x = (buffer[0] << 8) | buffer[1];
+    facBias.y = (buffer[3] << 8) | buffer[4];
+    facBias.z = (buffer[6] << 8) | buffer[7];
+    #endif
+
+    // note: preserve bit 0 of factory value (for temperature compensation)
+    facBias.x += (bias.x & ~1);
+    facBias.y += (bias.y & ~1);
+    facBias.z += (bias.z & ~1);
+
+    #if defined CONFIG_MPU6050
+    buffer[0] = facBias.x >> 8;
+    buffer[1] = facBias.x;
+    buffer[2] = facBias.y >> 8;
+    buffer[3] = facBias.y;
+    buffer[4] = facBias.z >> 8;
+    buffer[5] = facBias.z;
+    if (MPU_ERR_CHECK(writeBytes(regs::XA_OFFSET_H, 6, buffer)))
+        return err;
+
+    #elif defined CONFIG_MPU6500
+    buffer[0] = facBias.x >> 8;
+    buffer[1] = facBias.x;
+    buffer[3] = facBias.y >> 8;
+    buffer[4] = facBias.y;
+    buffer[6] = facBias.z >> 8;
+    buffer[7] = facBias.z;
+    return MPU_ERR_CHECK(writeBytes(regs::XA_OFFSET_H, 8, buffer));
+    #endif
+
+    return err;
+}
+
+/**
+ * Note: This returns the biases with OTP values from factory trim added,
+ * so returned values will be different than that ones set with setAccelOffset().
+ * 
+ * Note: Bias output are LSB in +-16G format.
+ * */
+raw_axes_t MPU::getAccelOffset() {
+    raw_axes_t bias;
+
+    #if defined CONFIG_MPU6050
+    MPU_ERR_CHECK(readBytes(regs::XA_OFFSET_H, 6, buffer));
+    bias.x = (buffer[0] << 8) | buffer[1];
+    bias.y = (buffer[2] << 8) | buffer[3];
+    bias.z = (buffer[4] << 8) | buffer[5];
+
+    #elif defined CONFIG_MPU6500
+    MPU_ERR_CHECK(readBytes(regs::XA_OFFSET_H, 8, buffer));
+    bias.x = (buffer[0] << 8) | buffer[1];
+    bias.y = (buffer[3] << 8) | buffer[4];
+    bias.z = (buffer[6] << 8) | buffer[7];
+    #endif
+
+    return bias;
 }
 
 
@@ -608,7 +726,24 @@ esp_err_t MPU::motion(raw_axes_t* accel, raw_axes_t* gyro, raw_axes_t* mag) {
     mag->x   = buffer[20] << 8 | buffer[19];
     return err;
 }
-#endif
+#endif  // AK89xx
+
+
+/**
+ * Read data from all internal sensors
+ * */
+esp_err_t MPU::sensors(raw_axes_t* accel, raw_axes_t* gyro, int16_t* temp) {
+    if (MPU_ERR_CHECK(readBytes(regs::ACCEL_XOUT_H, 14, buffer)))
+        return err;
+    accel->x = buffer[0] << 8 | buffer[1];
+    accel->y = buffer[2] << 8 | buffer[3];
+    accel->z = buffer[4] << 8 | buffer[5];
+    *temp    = buffer[6] << 8 | buffer[7];
+    gyro->x  = buffer[8] << 8 | buffer[9];
+    gyro->y  = buffer[10] << 8 | buffer[11];
+    gyro->z  = buffer[12] << 8 | buffer[13];
+    return err;
+}
 
 
 /**
@@ -643,23 +778,6 @@ esp_err_t MPU::sensors(sensors_t* sensors, size_t extsens_len) {
 }
 
 
-/**
- * Read data from all internal sensors
- * */
-esp_err_t MPU::sensors(raw_axes_t* accel, raw_axes_t* gyro, int16_t* temp) {
-    if (MPU_ERR_CHECK(readBytes(regs::ACCEL_XOUT_H, 14, buffer)))
-        return err;
-    accel->x = buffer[0] << 8 | buffer[1];
-    accel->y = buffer[2] << 8 | buffer[3];
-    accel->z = buffer[4] << 8 | buffer[5];
-    *temp    = buffer[6] << 8 | buffer[7];
-    gyro->x  = buffer[8] << 8 | buffer[9];
-    gyro->y  = buffer[10] << 8 | buffer[11];
-    gyro->z  = buffer[12] << 8 | buffer[13];
-    return err;
-}
-
-
 #if defined CONFIG_MPU6050 && !defined CONFIG_MPU6000
 /**
  * The MPU-6050’s I/O logic levels are set to be either VDD or VLOGIC
@@ -671,11 +789,11 @@ esp_err_t MPU::sensors(raw_axes_t* accel, raw_axes_t* gyro, int16_t* temp) {
  * the microprocessor system bus and VDD is the supply for the auxiliary I2C bus
  * */
 esp_err_t MPU::setAuxVDDIOLevel(auxvddio_lvl_t level) {
-    return MPU_ERR_CHECK(writeBit(regs::YG_OFFSET_TC, regs::TC_PWR_MODE_BIT, level));
+    return MPU_ERR_CHECK(writeBit(regs::YG_OTP_OFFSET_TC, regs::TC_PWR_MODE_BIT, level));
 }
 
 auxvddio_lvl_t MPU::getAuxVDDIOLevel() {
-    MPU_ERR_CHECK(readBit(regs::YG_OFFSET_TC, regs::TC_PWR_MODE_BIT, buffer));
+    MPU_ERR_CHECK(readBit(regs::YG_OTP_OFFSET_TC, regs::TC_PWR_MODE_BIT, buffer));
     return (auxvddio_lvl_t) buffer[0];
 }
 #endif
@@ -1185,6 +1303,27 @@ esp_err_t MPU::setFsyncEnabled(bool enable) {
 bool MPU::getFsyncEnabled() {
     MPU_ERR_CHECK(readBit(regs::INT_PIN_CONFIG, regs::INT_CFG_FSYNC_INT_MODE_EN_BIT, buffer));
     return buffer[0];
+}
+
+
+/**
+ * Register dump
+ * */
+esp_err_t MPU::registerDump(uint8_t start, uint8_t end) {
+    constexpr uint8_t kNumOfRegs = 128;
+    if (end - start < 0 || start >= kNumOfRegs || end >= kNumOfRegs)
+        return err = ESP_FAIL;
+    printf(LOG_COLOR_W ">> " CONFIG_MPU_CHIP_MODEL " register dump:" LOG_RESET_COLOR "\n");
+    uint8_t data;
+    for (int i = start; i <= end; i++) {
+        if (MPU_ERR_CHECK(readByte(i, &data))) {
+            MPU_LOGEMSG("", "Reading Error.");
+            return err;
+        }
+        printf("MPU: reg[ 0x%s%X ]  data( 0x%s%X )\n",
+            i < 0x10 ? "0" : "", i, data < 0x10 ? "0" : "", data);
+    }
+    return err;
 }
 
 

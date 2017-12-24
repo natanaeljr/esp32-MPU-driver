@@ -23,13 +23,14 @@ The library is based on Invensense's Embedded Motion Driver 5.1.3 and 6.12 and i
 ##### Already implemented:
 
 + Support to SPI and I2C protocol
-+ Basic configurations (sample rate _(4Hz~32KHz)_, clock source, full-scale, standby mode, interrupts, DLPF, etc..)
++ Basic configurations (sample rate _(4Hz~32KHz)_, clock source, full-scale, standby mode, offsets, interrupts, DLPF, etc..)
 + Burst reading for all sensors
 + Low Power Accelerometer mode _(various rates, e.g. 8.4μA at 0.98Hz)_
 + FIFO buffer access for all internal and external sensors
 + Complete Auxiliary I2C support for external sensors _(up to 4)_
 + External Frame Synchronization _(FSYNC)_ pass-through interrupt
 + Total access to the Magnetometer _(even when MPU connected by SPI protocol)_ [MPU9150 and MPU9250]
++ Calibration for Gyro and Accel
 
 ##### To be implemented:
 

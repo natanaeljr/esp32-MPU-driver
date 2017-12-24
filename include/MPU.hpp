@@ -117,6 +117,11 @@ class MPU {
     gyro_fs_t getGyroFullScale();
     accel_fs_t getAccelFullScale();
 
+    esp_err_t setGyroOffset(raw_axes_t bias);
+    esp_err_t setAccelOffset(raw_axes_t bias);
+    raw_axes_t getGyroOffset();
+    raw_axes_t getAccelOffset();
+
     esp_err_t setInterruptConfig(int_config_t config);
     esp_err_t setInterruptEnabled(int_en_t mask);
     esp_err_t setInterruptDisableAll();
@@ -165,6 +170,8 @@ class MPU {
     esp_err_t setAuxVDDIOLevel(auxvddio_lvl_t level);
     auxvddio_lvl_t getAuxVDDIOLevel();
     #endif
+
+    esp_err_t registerDump(uint8_t start = 0x0, uint8_t end = 0x7F);
 
     #if defined CONFIG_MPU_AK89xx
     esp_err_t compassInit();

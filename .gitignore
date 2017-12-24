@@ -10,4 +10,3 @@ test/unit-test-app/partition_table_unit_test_app.csv
 
 ## temporarily
 include/mpu/fusion.hpp
-include/mpu/utils.hpp
