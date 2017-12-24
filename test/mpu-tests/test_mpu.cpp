@@ -19,6 +19,7 @@
 #include "MPU.hpp"
 #include "mpu/registers.hpp"
 #include "mpu/types.hpp"
+#include "mpu/utils.hpp"
 #include "mpu/math.hpp"
 
 
@@ -595,9 +596,82 @@ TEST_CASE("MPU FIFO buffer", "[MPU]")
     }
 }
 
-static inline void adjust(int16_t *axis, uint8_t adj) {
-    *axis = *axis * (((((adj - 128)) * 0.5f) / 128) + 1);
+
+
+TEST_CASE("MPU offset test", "MPU")
+{
+    test::MPU_t mpu;
+    TEST_ESP_OK( mpu.testConnection());
+    TEST_ESP_OK( mpu.initialize());
+    TEST_ESP_OK( mpu.setAccelFullScale(mpu::ACCEL_FS_16G));
+    TEST_ESP_OK( mpu.setGyroFullScale(mpu::GYRO_FS_1000DPS));
+    // test
+    printf("This test computes the offsets for a MPU device\n"
+           "For the test to succed, the chip has to remain as horizontal as possible.\n"
+           "Note: All output results are LSB in +-16G and +-1000DPS format\n");
+    for (int i = 1; i < 10; i++) {
+        printf("%d.. ", i);
+        fflush(stdout);
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+    }
+    printf("10\n");
+    fflush(stdout);
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
+    // without offsets
+    mpu::raw_axes_t accelRaw, gyroRaw;
+    printf(">> Sensor data without offsets:\n");
+    for (int i = 0; i < 6; i++) {
+        TEST_ESP_OK( mpu.motion(&accelRaw, &gyroRaw));
+        printf("accel: [ %+d %+d %+d ] \t gyro: [ %+d %+d %+d ]\n",
+            accelRaw.x, accelRaw.y, accelRaw.z, gyroRaw.x, gyroRaw.y, gyroRaw.z);
+        vTaskDelay(50 / portTICK_PERIOD_MS);
+    }
+    // factory offsets
+    mpu::raw_axes_t accelFactoryOffset, gyroFactoryOffset;
+    accelFactoryOffset = mpu.getAccelOffset();
+    TEST_ESP_OK( mpu.lastError());
+    gyroFactoryOffset = mpu.getGyroOffset();
+    TEST_ESP_OK( mpu.lastError());
+    printf(">> Factory offsets:\n");
+    printf("accel: [ %+d %+d %+d ] \t gyro: [ %+d %+d %+d ]\n",
+        accelFactoryOffset.x, accelFactoryOffset.y, accelFactoryOffset.z,
+        gyroFactoryOffset.x, gyroFactoryOffset.y, gyroFactoryOffset.z);
+    // calculate offsets
+    mpu::raw_axes_t accelOffset, gyroOffset;
+    TEST_ESP_OK( mpu::utils::computeOffsets(mpu, &accelOffset, &gyroOffset));
+    printf(">> Computed offsets:\n");
+    printf("accel: [ %+d %+d %+d ] \t gyro: [ %+d %+d %+d ]\n",
+        accelOffset.x, accelOffset.y, accelOffset.z, gyroOffset.x, gyroOffset.y, gyroOffset.z);
+    // set offsets
+    TEST_ESP_OK( mpu.setAccelOffset(accelOffset));
+    TEST_ESP_OK( mpu.setGyroOffset(gyroOffset));
+    mpu::raw_axes_t retAccelOffset, retGyroOffset;
+    retAccelOffset = mpu.getAccelOffset();
+    TEST_ESP_OK( mpu.lastError());
+    retGyroOffset = mpu.getGyroOffset();
+    TEST_ESP_OK( mpu.lastError());
+    printf(">> Offsets returned:\n");
+    printf("accel: [ %+d %+d %+d ] \t gyro: [ %+d %+d %+d ]\n",
+        retAccelOffset.x, retAccelOffset.y, retAccelOffset.z,
+        retGyroOffset.x, retGyroOffset.y, retGyroOffset.z);
+    // assert offsets
+    TEST_ASSERT( (accelFactoryOffset.x + (accelOffset.x & ~1)) == retAccelOffset.x);
+    TEST_ASSERT( (accelFactoryOffset.y + (accelOffset.y & ~1)) == retAccelOffset.y);
+    TEST_ASSERT( (accelFactoryOffset.z + (accelOffset.z & ~1)) == retAccelOffset.z);
+    TEST_ASSERT( gyroOffset.x == retGyroOffset.x);
+    TEST_ASSERT( gyroOffset.y == retGyroOffset.y);
+    TEST_ASSERT( gyroOffset.z == retGyroOffset.z);
+    // show results
+    vTaskDelay(200 / portTICK_PERIOD_MS);  // let sensors stabilize again
+    printf(">> Resulted sensor data with computed offsets:\n");
+    for (int i = 0; i < 6; i++) {
+        TEST_ESP_OK( mpu.motion(&accelRaw, &gyroRaw));
+        printf("accel: [ %+d %+d %+d ] \t gyro: [ %+d %+d %+d ]\n",
+            accelRaw.x, accelRaw.y, accelRaw.z, gyroRaw.x, gyroRaw.y, gyroRaw.z);
+        vTaskDelay(50 / portTICK_PERIOD_MS);
+    }
 }
+
 
 
 #if defined CONFIG_MPU_AK89xx

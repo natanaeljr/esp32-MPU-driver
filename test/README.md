@@ -28,7 +28,8 @@ See [Unit Testing in ESP32] for more information.
 9. sensor data test
 10. standby mode
 11. FIFO buffer
-12. compass configuration
+12. offset test
+13. compass configuration
 
 ---
 

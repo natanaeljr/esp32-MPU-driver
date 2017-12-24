@@ -94,7 +94,6 @@ inline esp_err_t computeOffsets(MPU_t &mpu, raw_axes_t *accel, raw_axes_t *gyro)
     const uint16_t fifoCount = mpu.getFIFOCount();
     if (mpu.lastError()) return mpu.lastError();
     const int packetCount = fifoCount / kPacketSize;
-    printf("fifocount: %d, packetcount: %d\n", fifoCount, packetCount);
     // read overrun bytes, if any
     const int overrunCount = fifoCount - (packetCount * kPacketSize);
     uint8_t buffer[kPacketSize] = {0};
