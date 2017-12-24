@@ -92,25 +92,25 @@ config MPU_TEST_SPIBUS_CLOCK_HZ
 config MPU_TEST_SPIBUS_MOSI_PIN
     int "SPI MOSI pin"
     range 0 33
-    default 23
+    default 5
     depends on MPU_SPI
 
 config MPU_TEST_SPIBUS_MISO_PIN
     int "SPI MISO pin"
     range 0 39
-    default 19
+    default 17
     depends on MPU_SPI
 
 config MPU_TEST_SPIBUS_SCLK_PIN
     int "SPI SCLK pin"
     range 0 33
-    default 18
+    default 23
     depends on MPU_SPI
 
 config MPU_TEST_SPIBUS_CS_PIN
     int "SPI CS pin"
     range 0 33
-    default 5
+    default 16
     depends on MPU_SPI
 
 
