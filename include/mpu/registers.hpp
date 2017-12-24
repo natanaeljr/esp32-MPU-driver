@@ -301,21 +301,21 @@ constexpr uint8_t WHO_AM_I            {0x75};
  * MPU6000, MPU6050 and MPU9150 registers
  ******************************************************************************/
 #if defined CONFIG_MPU6050
-constexpr uint8_t XG_OFFSET_TC        {0x00};  // [7] PWR_MODE, [6:1] XG_OFFS_TC, [0] OTP_BNK_VLD
+constexpr uint8_t XG_OTP_OFFSET_TC        {0x00};  // [7] PWR_MODE, [6:1] XG_OFFS_TC, [0] OTP_BNK_VLD
 //------------------------------------------------------------------------------
-constexpr uint8_t YG_OFFSET_TC        {0x01};  // [7] PWR_MODE, [6:1] YG_OFFS_TC, [0] OTP_BNK_VLD
-constexpr uint8_t TC_PWR_MODE_BIT             {7};
+constexpr uint8_t YG_OTP_OFFSET_TC        {0x01};  // [7] PWR_MODE, [6:1] YG_OFFS_TC, [0] OTP_BNK_VLD
+constexpr uint8_t TC_PWR_MODE_BIT             {7};  // note: TC = temperature compensation, i think
 //------------------------------------------------------------------------------
-constexpr uint8_t ZG_OFFSET_TC        {0x02};  // [7] PWR_MODE, [6:1] ZG_OFFS_TC, [0] OTP_BNK_VLD
+constexpr uint8_t ZG_OTP_OFFSET_TC        {0x02};  // [7] PWR_MODE, [6:1] ZG_OFFS_TC, [0] OTP_BNK_VLD
 constexpr uint8_t X_FINE_GAIN         {0x03};  // [7:0] X_FINE_GAIN
 constexpr uint8_t Y_FINE_GAIN         {0x04};  // [7:0] Y_FINE_GAIN
 constexpr uint8_t Z_FINE_GAIN         {0x05};  // [7:0] Z_FINE_GAIN
-constexpr uint8_t XA_OFFSET_H         {0x06};  // [15:0] XA_OFFS
-constexpr uint8_t XA_OFFSET_L_TC      {0x07};
-constexpr uint8_t YA_OFFSET_H         {0x08};  // [15:0] YA_OFFS
-constexpr uint8_t YA_OFFSET_L_TC      {0x09};
-constexpr uint8_t ZA_OFFSET_H         {0x0A};  // [15:0] ZA_OFFS
-constexpr uint8_t ZA_OFFSET_L_TC      {0x0B};
+constexpr uint8_t XA_OFFSET_H         {0x06};  // [15:1] XA_OFFS
+constexpr uint8_t XA_OFFSET_L         {0x07};  // note: TC: bit [0]
+constexpr uint8_t YA_OFFSET_H         {0x08};  // [15:1] YA_OFFS
+constexpr uint8_t YA_OFFSET_L         {0x09};  // note: TC: bit [0]
+constexpr uint8_t ZA_OFFSET_H         {0x0A};  // [15:1] ZA_OFFS
+constexpr uint8_t ZA_OFFSET_L         {0x0B};  // note: TC: bit [0]
 constexpr uint8_t SELF_TEST_X         {0x0D};
 constexpr uint8_t SELF_TEST_Y         {0x0E};
 constexpr uint8_t SELF_TEST_Z         {0x0F};
@@ -351,7 +351,7 @@ constexpr uint8_t XA_OFFSET_L         {0x78};
 constexpr uint8_t YA_OFFSET_H         {0x7A};
 constexpr uint8_t YA_OFFSET_L         {0x7B};
 constexpr uint8_t ZA_OFFSET_H         {0x7D};
-constexpr uint8_t ZA_OFFSET_L         {0x7C};  // review this ones, might be wrong
+constexpr uint8_t ZA_OFFSET_L         {0x7E};
 #endif
 
 

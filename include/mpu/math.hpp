@@ -44,7 +44,7 @@ constexpr uint8_t accelFSRvalue(const accel_fs_t fs) {
     return 2 << fs;
 }
 
-constexpr uint8_t gyroFSRvalue(const gyro_fs_t fs) {
+constexpr uint16_t gyroFSRvalue(const gyro_fs_t fs) {
     return 250 << fs;
 }
 
@@ -57,11 +57,11 @@ constexpr float gyroSensitivity(const gyro_fs_t fs) {
 }
 
 constexpr float accelResolution(const accel_fs_t fs) {
-    return static_cast<float>(accelFSRvalue(fs) / INT16_MAX);
+    return static_cast<float>(accelFSRvalue(fs)) / INT16_MAX;
 }
 
 constexpr float gyroResolution(const gyro_fs_t fs) {
-    return static_cast<float>(gyroFSRvalue(fs) / INT16_MAX);
+    return static_cast<float>(gyroFSRvalue(fs)) / INT16_MAX;
 }
 
 inline float accelGravity(const int16_t axis, const accel_fs_t fs) {

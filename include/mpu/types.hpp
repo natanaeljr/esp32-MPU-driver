@@ -321,7 +321,7 @@ static constexpr int_en_t INT_EN_ZERO_MOTION     {1 << regs::INT_ENABLE_ZEROMOT_
 #endif
 
 #ifdef CONFIG_MPU6500
-// MPU6500 Fifo size (not tested)
+// MPU6500 Fifo size
 typedef enum {
     FIFO_SIZE_512B = 0,
     FIFO_SIZE_1K   = 1,
@@ -344,6 +344,7 @@ typedef enum {
 
 // FIFO configuration, enable sensors to be written to FIFO
 using fifo_config_t = uint16_t;
+static constexpr fifo_config_t FIFO_CFG_NONE          {0};
 static constexpr fifo_config_t FIFO_CFG_GYRO          {1 << regs::FIFO_XGYRO_EN_BIT | 1 << regs::FIFO_YGYRO_EN_BIT | 1 << regs::FIFO_ZGYRO_EN_BIT};
 static constexpr fifo_config_t FIFO_CFG_ACCEL         {1 << regs::FIFO_ACCEL_EN_BIT};
 static constexpr fifo_config_t FIFO_CFG_TEMPERATURE   {1 << regs::FIFO_TEMP_EN_BIT};
@@ -385,14 +386,14 @@ static constexpr dmp_tap_axis_t DMP_TAP_XYZ     {0x3F};
 template< class type_t>
 struct axes_t {
     union {
-        type_t xyz[3];
+        type_t xyz[3] = {0};
         struct {
             type_t x;
             type_t y;
             type_t z;
         };
     };
-    type_t& operator[](int i) const {
+    type_t& operator[](int i) {
         return xyz[i];
     }
 };
