@@ -84,6 +84,7 @@ static const char AUX_I2C_SLAVE_NACK[]    = "Auxiliary I2C Slave NACK";
 static const char AUX_I2C_LOST_ARB[]      = "Auxiliary I2C Master loose abitraion of the bus";
 static const char COMPASS_DISABLED[]      = "Compass is disabled";
 static const char NOT_SUPPORTED[]         = "Not supported";
+static const char TIMEOUT[]               = "Timeout";
 static const char EMPTY[]                 = "";
 
 }  // namespace msgs

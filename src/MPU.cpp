@@ -1195,17 +1195,23 @@ esp_err_t MPU::auxI2CWriteByte(uint8_t devAddr, uint8_t regAddr, const uint8_t d
     if (MPU_ERR_CHECK(writeBit(regs::I2C_SLV4_CTRL, regs::I2C_SLV4_EN_BIT, 1)))
         return err;
     // check status until transfer is done
+    TickType_t startTick = xTaskGetTickCount();
+    TickType_t endTick = startTick + pdMS_TO_TICKS(1000);
     auxi2c_stat_t status;
     do {
         if (MPU_ERR_CHECK(readByte(regs::I2C_MST_STATUS, &status)))
             return err;
         if (status & (1 << regs::I2CMST_STAT_SLV4_NACK_BIT)) {
-            MPU_LOGIMSG(msgs::AUX_I2C_SLAVE_NACK, "");
+            MPU_LOGWMSG(msgs::AUX_I2C_SLAVE_NACK, "");
             return err = ESP_ERR_NOT_FOUND;
         }
         if (status & (1 << regs::I2CMST_STAT_LOST_ARB_BIT)) {
-            MPU_LOGIMSG(msgs::AUX_I2C_LOST_ARB, "");
+            MPU_LOGWMSG(msgs::AUX_I2C_LOST_ARB, "");
             return err = ESP_FAIL;
+        }
+        if (xTaskGetTickCount() >= endTick) {
+            MPU_LOGEMSG(msgs::TIMEOUT, ". Aux I2C might've hung. Restart it.");
+            return err = ESP_ERR_TIMEOUT;
         }
     } while (!(status & (1 << regs::I2C_SLV4_DONE_INT_BIT)));
 
@@ -1251,17 +1257,23 @@ esp_err_t MPU::auxI2CReadByte(uint8_t devAddr, uint8_t regAddr, uint8_t *data) {
     if (MPU_ERR_CHECK(writeBit(regs::I2C_SLV4_CTRL, regs::I2C_SLV4_EN_BIT, 1)))
         return err;
     // check status until transfer is done
+    TickType_t startTick = xTaskGetTickCount();
+    TickType_t endTick = startTick + pdMS_TO_TICKS(1000);
     auxi2c_stat_t status;
     do {
         if (MPU_ERR_CHECK(readByte(regs::I2C_MST_STATUS, &status)))
             return err;
         if (status & (1 << regs::I2CMST_STAT_SLV4_NACK_BIT)) {
-            MPU_LOGIMSG(msgs::AUX_I2C_SLAVE_NACK, "");
+            MPU_LOGWMSG(msgs::AUX_I2C_SLAVE_NACK, "");
             return err = ESP_ERR_NOT_FOUND;
         }
         if (status & (1 << regs::I2CMST_STAT_LOST_ARB_BIT)) {
-            MPU_LOGIMSG(msgs::AUX_I2C_LOST_ARB, "");
+            MPU_LOGWMSG(msgs::AUX_I2C_LOST_ARB, "");
             return err = ESP_FAIL;
+        }
+        if (xTaskGetTickCount() >= endTick) {
+            MPU_LOGEMSG(msgs::TIMEOUT, ". Aux I2C might've hung. Restart it.");
+            return err = ESP_ERR_TIMEOUT;
         }
     } while (!(status & (1 << regs::I2C_SLV4_DONE_INT_BIT)));
     // get read value
