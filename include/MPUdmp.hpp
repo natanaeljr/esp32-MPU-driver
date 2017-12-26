@@ -43,9 +43,9 @@ namespace emd {
  * ^^^^^^^^^^^^^^^^^^^^^ */
 namespace mpu {
 
-/* ^^^^^^^^^^^^^^^^^^^^^^^^
- * Digital Motion Processor
- * ^^^^^^^^^^^^^^^^^^^^^^^^ */
+/* ^^^^^^^^^^^^^^^^^^^^^^^^^
+ * Digital Motion Processing
+ * ^^^^^^^^^^^^^^^^^^^^^^^^^ */
 namespace dmp {
 
 class MPU : public mpu::MPU {

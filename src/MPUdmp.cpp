@@ -35,9 +35,9 @@ namespace emd {
  * ^^^^^^^^^^^^^^^^^^^^^ */
 namespace mpu {
 
-/* ^^^^^^^^^^^^^^^^^^^^^^^^
- * Digital Motion Processor
- * ^^^^^^^^^^^^^^^^^^^^^^^^ */
+/* ^^^^^^^^^^^^^^^^^^^^^^^^^
+ * Digital Motion Processing
+ * ^^^^^^^^^^^^^^^^^^^^^^^^^ */
 namespace dmp {
 
 
