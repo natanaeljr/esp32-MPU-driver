@@ -153,7 +153,7 @@ typedef enum {
     ACCEL_DHPF_HOLD   = 7,  // The filter holds the present sample. The output will be the difference between the input sample and the held sample.
 } accel_dhpf_t;
 
-// Motion detection counter decrement rate
+// Motion Detection counter decrement rate (Motion and FreeFall)
 #if defined CONFIG_MPU6000 || defined CONFIG_MPU6050 || defined CONFIG_MPU9150
 typedef enum {
     MOT_COUNTER_RESET = 0,  // when set, any non-qualifying sample will reset the corresponding counter to 0
@@ -163,20 +163,42 @@ typedef enum {
 } mot_counter_t;
 #endif
 
-// Low Power Wake-on-Motion configuration
+// Motion Detection configuration
 typedef struct {
-    lp_accel_rate_t rate;  // Specifies the frequency of wake-ups during this Low Power Mode.
     uint8_t threshold;     // Motion threshold in LSB.
                            //  For MPU6000 / MPU6050 / MPU9150: 1LSB = 32mg, 255LSB = 8160mg
                            //  For MPU6500 / MPU9250: 1LSB = 4mg, 255LSB = 1020mg
 #if defined CONFIG_MPU6000 || defined CONFIG_MPU6050 || defined CONFIG_MPU9150
-    uint8_t time;          // Duration in milliseconds that the accel data must exceed the threshold before motion is reported. MAX = 255ms
+    uint8_t time;          // Duration in milliseconds that the accel data must exceed
+                           //  the threshold before motion is reported. MAX = 255ms
     uint8_t accel_on_delay :2;  // Specifies in milliseconds the additional power-on delay applied to accelerometer data path modules. MAX = 3ms
                                 //  More: The signal path contains filters which must be flushed on wake-up with new samples before
                                 //  the detection modules begin operations. There is already a default built-in 4ms delay.
     mot_counter_t counter  :2;  // Configures the detection counter decrement rate.
 #endif
-} wom_config_t;
+} mot_config_t;
+
+// Zero-motion configuration
+#if defined CONFIG_MPU6000 || defined CONFIG_MPU6050 || defined CONFIG_MPU9150
+typedef struct {
+    uint8_t threshold;     // Motion threshold in LSB. 1LSB = 1mg, 255LSB = 1020mg
+    uint8_t time;          // Duration in milliseconds that the accel data must exceed
+                           //  the threshold before motion is reported. MAX = 255ms
+} zrmot_config_t;
+#endif
+
+// Free-fall configuration
+#if defined CONFIG_MPU6000 || defined CONFIG_MPU6050 || defined CONFIG_MPU9150
+typedef struct {
+    uint8_t threshold;     // Motion threshold in LSB. 1LSB = 1mg, 255LSB = 1020mg
+    uint8_t time;          // Duration in milliseconds that the accel data must exceed
+                           //  the threshold before motion is reported. MAX = 255ms
+    uint8_t accel_on_delay :2;  // Specifies in milliseconds the additional power-on delay applied to accelerometer data path modules. MAX = 3ms
+                                //  More: The signal path contains filters which must be flushed on wake-up with new samples before
+                                //  the detection modules begin operations. There is already a default built-in 4ms delay.
+    mot_counter_t counter  :2;  // Configures the detection counter decrement rate.
+} ff_config_t;
+#endif
 
 // Motion Detection Status (MPU6000, MPU6050, MPU9150)
 #if defined CONFIG_MPU6000 || defined CONFIG_MPU6050 || defined CONFIG_MPU9150
@@ -357,7 +379,7 @@ typedef struct {
 // Enable features to generate signal at Interrupt pin
 using int_en_t = uint8_t;
 static constexpr int_en_t INT_EN_NONE            {0x0};
-static constexpr int_en_t INT_EN_WAKE_ON_MOTION  {1 << regs::INT_ENABLE_WOM_BIT};
+static constexpr int_en_t INT_EN_MOTION_DETECT   {1 << regs::INT_ENABLE_MOTION_BIT};
 static constexpr int_en_t INT_EN_FIFO_OVERFLOW   {1 << regs::INT_ENABLE_FIFO_OFLOW_BIT};
 static constexpr int_en_t INT_EN_I2C_MST_FSYNC   {1 << regs::INT_ENABLE_I2C_MST_FSYNC_BIT};  // interrupts from I2C_MST_STATUS
 static constexpr int_en_t INT_EN_PLL_READY       {1 << regs::INT_ENABLE_PLL_RDY_BIT};

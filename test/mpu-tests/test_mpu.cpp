@@ -291,74 +291,6 @@ TEST_CASE("MPU low power accelerometer mode", "[MPU]")
 
 
 
-TEST_CASE("MPU low power wake-on-motion mode", "[MPU]")
-{
-    test::MPU_t mpu;
-    TEST_ESP_OK( mpu.testConnection());
-    TEST_ESP_OK( mpu.initialize());
-    /* assert possible configuration */
-    mpu::wom_config_t womConfig;
-    #if defined CONFIG_MPU6050
-    womConfig.threshold = 10;
-    womConfig.rate = mpu::LP_ACCEL_40HZ;
-    womConfig.time = 2;
-    womConfig.accel_on_delay = 1;
-    womConfig.counter = mpu::MOT_COUNTER_DEC_1;
-    #elif defined CONFIG_MPU6500
-    womConfig.threshold = 100;
-    womConfig.rate = mpu::LP_ACCEL_125HZ;
-    #endif
-    TEST_ESP_OK( mpu.setWakeOnMotionConfig(womConfig));
-    TEST_ESP_OK( mpu.setWakeOnMotionMode(true));
-    TEST_ASSERT_TRUE( mpu.getWakeOnMotionMode());
-    TEST_ESP_OK( mpu.lastError());
-    mpu::wom_config_t retWomConfig;
-    retWomConfig = mpu.getWakeOnMotionConfig();
-    TEST_ASSERT( womConfig.rate == retWomConfig.rate);
-    TEST_ASSERT( womConfig.threshold == retWomConfig.threshold);
-    #if defined CONFIG_MPU6050
-    TEST_ASSERT( womConfig.time == retWomConfig.time);
-    TEST_ASSERT( womConfig.accel_on_delay == retWomConfig.accel_on_delay);
-    TEST_ASSERT( womConfig.counter == womConfig.counter);
-    #endif
-    /* test wom interrupt */
-    #if defined CONFIG_MPU6050
-    uint16_t thresholdMg = womConfig.threshold * 32;
-    uint16_t rate = 40;
-    printf(">> Wake-on-motion Config:: threshold: %d mg, rate: %d Hz, time: %d ms\n", thresholdMg, rate, womConfig.time);
-    #elif defined CONFIG_MPU6500
-    uint16_t thresholdMg = womConfig.threshold * 4;
-    uint16_t rate = 125;
-    printf(">> Wake-on-motion Config:: threshold: %d mg, rate: %d Hz\n", thresholdMg, rate);
-    #endif
-    // configure interrupt
-    TEST_ESP_OK( mpu.setInterruptEnabled(mpu::INT_EN_WAKE_ON_MOTION));
-    TEST_ESP_OK( mpuConfigInterrupt(mpuTaskNotifier, xTaskGetCurrentTaskHandle()));
-    // check interrupt for a period
-    TickType_t startTick = xTaskGetTickCount();
-    TickType_t endTick = startTick + (pdMS_TO_TICKS(10000));  // 10 seconds of test
-    printf(">> Waiting for Wake-on-motion interrupt. Shake it to generate. (10 secs..)!\n");
-    while (xTaskGetTickCount() < endTick) {
-        uint32_t cnt = ulTaskNotifyTake(pdTRUE, endTick - xTaskGetTickCount());
-        if (cnt) {
-            printf(">>> WOM interrupt detected!");
-            #if defined CONFIG_MPU6050
-            uint8_t status = mpu.getMotionDetectStatus();
-            TEST_ESP_OK( mpu.lastError());
-            printf(" Status reg: 0x%X", status);
-            #endif
-            printf("\n");
-        }
-    }
-    TEST_ESP_OK( mpu.setWakeOnMotionMode(false));
-    TEST_ASSERT_FALSE( mpu.getWakeOnMotionMode());
-    TEST_ESP_OK( mpu.lastError());
-    // free interrupt
-    TEST_ESP_OK( mpuRemoveInterrupt());
-}
-
-
-
 TEST_CASE("MPU interrupt configuration", "[MPU]")
 {
     test::MPU_t mpu;
@@ -674,7 +606,7 @@ TEST_CASE("MPU FIFO buffer", "[MPU]")
 
 
 
-TEST_CASE("MPU offset test", "MPU")
+TEST_CASE("MPU offset test", "[MPU]")
 {
     test::MPU_t mpu;
     TEST_ESP_OK( mpu.testConnection());
@@ -747,6 +679,170 @@ TEST_CASE("MPU offset test", "MPU")
         vTaskDelay(50 / portTICK_PERIOD_MS);
     }
 }
+
+
+
+TEST_CASE("MPU motion detection and wake-on-motion mode", "[MPU]")
+{
+    test::MPU_t mpu;
+    TEST_ESP_OK( mpu.testConnection());
+    TEST_ESP_OK( mpu.initialize());
+    /* assert possible configuration */
+    mpu::mot_config_t motConfig;
+    #if defined CONFIG_MPU6050
+    motConfig.threshold = 20;
+    motConfig.time = 2;
+    motConfig.accel_on_delay = 1;
+    motConfig.counter = mpu::MOT_COUNTER_DEC_1;
+    #elif defined CONFIG_MPU6500
+    motConfig.threshold = 150;
+    #endif
+    TEST_ESP_OK( mpu.setMotionDetectConfig(motConfig));
+    TEST_ESP_OK( mpu.setMotionFeatureEnabled(true));
+    TEST_ASSERT_TRUE( mpu.getMotionFeatureEnabled());
+    TEST_ESP_OK( mpu.lastError());
+    mpu::mot_config_t retmotConfig;
+    retmotConfig = mpu.getMotionDetectConfig();
+    TEST_ASSERT( motConfig.threshold == retmotConfig.threshold);
+    #if defined CONFIG_MPU6050
+    TEST_ASSERT( motConfig.time == retmotConfig.time);
+    TEST_ASSERT( motConfig.accel_on_delay == retmotConfig.accel_on_delay);
+    TEST_ASSERT( motConfig.counter == motConfig.counter);
+    #endif
+    /* enter low power mode */
+    TEST_ESP_OK( mpu.setLowPowerAccelMode(true));
+    #if defined CONFIG_MPU6050
+    TEST_ESP_OK( mpu.setLowPowerAccelRate(mpu::LP_ACCEL_20HZ));
+    #elif defined CONFIG_MPU6500
+    TEST_ESP_OK( mpu.setLowPowerAccelRate(mpu::LP_ACCEL_250HZ));
+    #endif
+    /* test motion interrupt */
+    #if defined CONFIG_MPU6050
+    uint16_t thresholdMg = motConfig.threshold * 32;
+    uint16_t rate = 20;
+    printf(">> Motion-Detect Config:: threshold: %d mg, rate: %d Hz, time: %d ms\n", thresholdMg, rate, motConfig.time);
+    #elif defined CONFIG_MPU6500
+    uint16_t thresholdMg = motConfig.threshold * 4;
+    uint16_t rate = 250;
+    printf(">> Motion-Detect Config:: threshold: %d mg, rate: %d Hz\n", thresholdMg, rate);
+    #endif
+    // configure interrupt
+    TEST_ESP_OK( mpu.setInterruptEnabled(mpu::INT_EN_MOTION_DETECT));
+    TEST_ESP_OK( mpuConfigInterrupt(mpuTaskNotifier, xTaskGetCurrentTaskHandle()));
+    // check interrupt for a period
+    TickType_t startTick = xTaskGetTickCount();
+    TickType_t endTick = startTick + (pdMS_TO_TICKS(10000));  // 10 seconds of test
+    printf(">> Waiting for Motion interrupt. Shake it to generate. (10 secs..)!\n");
+    while (xTaskGetTickCount() < endTick) {
+        uint32_t cnt = ulTaskNotifyTake(pdTRUE, endTick - xTaskGetTickCount());
+        if (cnt) {
+            printf(">>> WOM interrupt detected!");
+            #if defined CONFIG_MPU6050
+            uint8_t status = mpu.getMotionDetectStatus();
+            TEST_ESP_OK( mpu.lastError());
+            printf(" Status reg: 0x%X", status);
+            #endif
+            printf("\n");
+        }
+    }
+    TEST_ESP_OK( mpu.setLowPowerAccelMode(false));
+    TEST_ESP_OK( mpu.setMotionFeatureEnabled(false));
+    TEST_ASSERT_FALSE( mpu.getMotionFeatureEnabled());
+    TEST_ESP_OK( mpu.lastError());
+    // free interrupt
+    TEST_ESP_OK( mpuRemoveInterrupt());
+}
+
+
+#if defined CONFIG_MPU6050
+TEST_CASE("MPU free-fall detection", "[MPU]")
+{
+    test::MPU_t mpu;
+    TEST_ESP_OK( mpu.testConnection());
+    TEST_ESP_OK( mpu.initialize());
+    /* assert possible configs */
+    mpu::ff_config_t FFConfig;
+    FFConfig.threshold = 160;
+    FFConfig.time = 100;
+    FFConfig.accel_on_delay = 0;
+    FFConfig.counter = mpu::MOT_COUNTER_DEC_2;
+    TEST_ESP_OK( mpu.setFreeFallConfig(FFConfig));
+    TEST_ESP_OK( mpu.setMotionFeatureEnabled(true));
+    TEST_ASSERT_TRUE( mpu.getMotionFeatureEnabled());
+    TEST_ESP_OK( mpu.lastError());
+    mpu::ff_config_t retFFConfig;
+    retFFConfig = mpu.getFreeFallConfig();
+    TEST_ASSERT( FFConfig.threshold == retFFConfig.threshold);
+    TEST_ASSERT( FFConfig.time == retFFConfig.time);
+    TEST_ASSERT( FFConfig.accel_on_delay == retFFConfig.accel_on_delay);
+    TEST_ASSERT( FFConfig.counter == FFConfig.counter);
+    /* test motion interrupt */
+    uint16_t thresholdMg = FFConfig.threshold * 4;
+    printf(">> Free-Fall Config:: threshold: %d mg, time: %d ms\n", thresholdMg, FFConfig.time);
+    // configure interrupt
+    TEST_ESP_OK( mpu.setInterruptEnabled(mpu::INT_EN_FREE_FALL));
+    TEST_ESP_OK( mpuConfigInterrupt(mpuTaskNotifier, xTaskGetCurrentTaskHandle()));
+    // check interrupt for a period
+    TickType_t startTick = xTaskGetTickCount();
+    TickType_t endTick = startTick + (pdMS_TO_TICKS(10000));  // 10 seconds of test
+    printf(">> Waiting for Free-Fall interrupt. Drop it to generate. (10 secs..)!\n");
+    while (xTaskGetTickCount() < endTick) {
+        uint32_t cnt = ulTaskNotifyTake(pdTRUE, endTick - xTaskGetTickCount());
+        if (cnt) {
+            printf(">>> FF interrupt detected!\n");
+        }
+    }
+    TEST_ESP_OK( mpu.setMotionFeatureEnabled(false));
+    TEST_ASSERT_FALSE( mpu.getMotionFeatureEnabled());
+    TEST_ESP_OK( mpu.lastError());
+    // free interrupt
+    TEST_ESP_OK( mpuRemoveInterrupt());
+}
+#endif
+
+
+
+#if defined CONFIG_MPU6050
+TEST_CASE("MPU zero-motion detection", "[MPU]")
+{
+    test::MPU_t mpu;
+    TEST_ESP_OK( mpu.testConnection());
+    TEST_ESP_OK( mpu.initialize());
+    /* assert possible configs */
+    mpu::zrmot_config_t ZRMotConfig;
+    ZRMotConfig.threshold = 200;
+    ZRMotConfig.time = 20;
+    TEST_ESP_OK( mpu.setZeroMotionConfig(ZRMotConfig));
+    TEST_ESP_OK( mpu.setMotionFeatureEnabled(true));
+    TEST_ASSERT_TRUE( mpu.getMotionFeatureEnabled());
+    TEST_ESP_OK( mpu.lastError());
+    mpu::zrmot_config_t retZRMotConfig;
+    retZRMotConfig = mpu.getZeroMotionConfig();
+    TEST_ASSERT( ZRMotConfig.threshold == retZRMotConfig.threshold);
+    TEST_ASSERT( ZRMotConfig.time == retZRMotConfig.time);
+    /* test motion interrupt */
+    uint16_t thresholdMg = ZRMotConfig.threshold * 4;
+    printf(">> Zero-Motion Config:: threshold: %d mg, time: %d ms\n", thresholdMg, ZRMotConfig.time);
+    // configure interrupt
+    TEST_ESP_OK( mpu.setInterruptEnabled(mpu::INT_EN_ZERO_MOTION));
+    TEST_ESP_OK( mpuConfigInterrupt(mpuTaskNotifier, xTaskGetCurrentTaskHandle()));
+    // check interrupt for a period
+    TickType_t startTick = xTaskGetTickCount();
+    TickType_t endTick = startTick + (pdMS_TO_TICKS(10000));  // 10 seconds of test
+    printf(">> Waiting for Zero-Motion interrupt. Generate it. (10 secs..)!\n");
+    while (xTaskGetTickCount() < endTick) {
+        uint32_t cnt = ulTaskNotifyTake(pdTRUE, endTick - xTaskGetTickCount());
+        if (cnt) {
+            printf(">>> ZRMOT interrupt detected!");
+        }
+    }
+    TEST_ESP_OK( mpu.setMotionFeatureEnabled(false));
+    TEST_ASSERT_FALSE( mpu.getMotionFeatureEnabled());
+    TEST_ESP_OK( mpu.lastError());
+    // free interrupt
+    TEST_ESP_OK( mpuRemoveInterrupt());
+}
+#endif
 
 
 

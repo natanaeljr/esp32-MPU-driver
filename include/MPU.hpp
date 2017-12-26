@@ -108,15 +108,6 @@ class MPU {
     lp_accel_rate_t getLowPowerAccelRate();
     bool getLowPowerAccelMode();
 
-    esp_err_t setWakeOnMotionMode(bool enable);
-    esp_err_t setWakeOnMotionConfig(wom_config_t& config);
-    wom_config_t getWakeOnMotionConfig();
-    bool getWakeOnMotionMode();
-    
-    #if defined CONFIG_MPU6000 || defined CONFIG_MPU6050 || defined CONFIG_MPU9150
-    mot_stat_t getMotionDetectStatus();
-    #endif
-
     esp_err_t setStandbyMode(stby_en_t mask);
     stby_en_t getStandbyMode();
     esp_err_t resetSignalPath();
@@ -178,6 +169,19 @@ class MPU {
     #if defined CONFIG_MPU9150 || (defined CONFIG_MPU6050 && !defined CONFIG_MPU6000)
     esp_err_t setAuxVDDIOLevel(auxvddio_lvl_t level);
     auxvddio_lvl_t getAuxVDDIOLevel();
+    #endif
+
+    esp_err_t setMotionDetectConfig(mot_config_t& config);
+    mot_config_t getMotionDetectConfig();
+    esp_err_t setMotionFeatureEnabled(bool enable);
+    bool getMotionFeatureEnabled();
+
+    #if defined CONFIG_MPU6000 || defined CONFIG_MPU6050 || defined CONFIG_MPU9150
+    esp_err_t setZeroMotionConfig(zrmot_config_t& config);
+    zrmot_config_t getZeroMotionConfig();
+    esp_err_t setFreeFallConfig(ff_config_t& config);
+    ff_config_t getFreeFallConfig();
+    mot_stat_t getMotionDetectStatus();
     #endif
 
     esp_err_t registerDump(uint8_t start = 0x0, uint8_t end = 0x7F);

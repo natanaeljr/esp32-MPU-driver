@@ -21,7 +21,6 @@ See [Unit Testing in ESP32] for more information.
 1. sample rate measurement
 1. max sample rate test
 1. low power accelerometer mode
-1. low power wake-on-motion mode
 1. interrupt configuration
 1. basic auxiliary I2C configuration
 1. slave 4 transfers
@@ -30,6 +29,9 @@ See [Unit Testing in ESP32] for more information.
 1. standby mode
 1. FIFO buffer
 1. offset test
+1. motion detection and wake-on-motion mode
+1. free-fall detection
+1. zero-motion detection
 1. compass configuration
 
 ---

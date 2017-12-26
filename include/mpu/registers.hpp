@@ -163,7 +163,7 @@ constexpr uint8_t INT_CFG_CLOCKOUT_EN_BIT     {0};
 //------------------------------------------------------------------------------
 constexpr uint8_t INT_ENABLE          {0x38};
 constexpr uint8_t INT_ENABLE_FREEFALL_BIT     {7};
-constexpr uint8_t INT_ENABLE_WOM_BIT          {6};
+constexpr uint8_t INT_ENABLE_MOTION_BIT       {6};
 constexpr uint8_t INT_ENABLE_ZEROMOT_BIT      {5};
 constexpr uint8_t INT_ENABLE_FIFO_OFLOW_BIT   {4};
 constexpr uint8_t INT_ENABLE_I2C_MST_FSYNC_BIT{3};
