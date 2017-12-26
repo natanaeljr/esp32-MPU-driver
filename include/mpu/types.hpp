@@ -143,17 +143,65 @@ typedef enum {
 #endif
 } lp_accel_rate_t;
 
+// Accelerometer Digital High Pass Filter (only for motion detectors modules)
+typedef enum {
+    ACCEL_DHPF_RESET  = 0,  // This effectively disables the high pass filter. This mode may be toggled to quickly settle the filter.
+    ACCEL_DHPF_5HZ    = 1,  // ON :
+    ACCEL_DHPF_2_5HZ  = 2,  // ON :
+    ACCEL_DHPF_1_25HZ = 3,  // ON :
+    ACCEL_DHPF_0_63HZ = 4,  // ON state, the high pass filter will pass signals above the cut off frequency.
+    ACCEL_DHPF_HOLD   = 7,  // The filter holds the present sample. The output will be the difference between the input sample and the held sample.
+} accel_dhpf_t;
+
+// Motion detection counter decrement rate
+#if defined CONFIG_MPU6000 || defined CONFIG_MPU6050 || defined CONFIG_MPU9150
+typedef enum {
+    MOT_COUNTER_RESET = 0,  // when set, any non-qualifying sample will reset the corresponding counter to 0
+    MOT_COUNTER_DEC_1 = 1,  // decrement counter in 1
+    MOT_COUNTER_DEC_2 = 2,  // decrement counter in 2
+    MOT_COUNTER_DEC_4 = 3   // decrement counter in 4
+} mot_counter_t;
+#endif
+
+// Low Power Wake-on-Motion configuration
+typedef struct {
+    lp_accel_rate_t rate;  // Specifies the frequency of wake-ups during this Low Power Mode.
+    uint8_t threshold;     // Motion threshold in LSB.
+                           //  For MPU6000 / MPU6050 / MPU9150: 1LSB = 32mg, 255LSB = 8160mg
+                           //  For MPU6500 / MPU9250: 1LSB = 4mg, 255LSB = 1020mg
+#if defined CONFIG_MPU6000 || defined CONFIG_MPU6050 || defined CONFIG_MPU9150
+    uint8_t time;          // Duration in milliseconds that the accel data must exceed the threshold before motion is reported. MAX = 255ms
+    uint8_t accel_on_delay :2;  // Specifies in milliseconds the additional power-on delay applied to accelerometer data path modules. MAX = 3ms
+                                //  More: The signal path contains filters which must be flushed on wake-up with new samples before
+                                //  the detection modules begin operations. There is already a default built-in 4ms delay.
+    mot_counter_t counter  :2;  // Configures the detection counter decrement rate.
+#endif
+} wom_config_t;
+
+// Motion Detection Status (MPU6000, MPU6050, MPU9150)
+#if defined CONFIG_MPU6000 || defined CONFIG_MPU6050 || defined CONFIG_MPU9150
+using mot_stat_t = uint8_t;
+static constexpr mot_stat_t MOT_STAT_XNEG           {1 << regs::MOT_STATUS_X_NEG_BIT};
+static constexpr mot_stat_t MOT_STAT_XPOS           {1 << regs::MOT_STATUS_X_POS_BIT};
+static constexpr mot_stat_t MOT_STAT_YNEG           {1 << regs::MOT_STATUS_Y_NEG_BIT};
+static constexpr mot_stat_t MOT_STAT_YPOS           {1 << regs::MOT_STATUS_Y_POS_BIT};
+static constexpr mot_stat_t MOT_STAT_ZNEG           {1 << regs::MOT_STATUS_Z_NEG_BIT};
+static constexpr mot_stat_t MOT_STAT_ZPOS           {1 << regs::MOT_STATUS_Z_POS_BIT};
+static constexpr mot_stat_t MOT_STAT_ZEROMOTION     {1 << regs::MOT_STATUS_ZRMOT_BIT};
+#endif
+
 // Standby mode
 using stby_en_t = uint8_t;
-static constexpr stby_en_t STBY_EN_ACCEL_X    {1 << regs::PWR2_STBY_XA_BIT};
-static constexpr stby_en_t STBY_EN_ACCEL_Y    {1 << regs::PWR2_STBY_YA_BIT};
-static constexpr stby_en_t STBY_EN_ACCEL_Z    {1 << regs::PWR2_STBY_ZA_BIT};
-static constexpr stby_en_t STBY_EN_ACCEL      {STBY_EN_ACCEL_X | STBY_EN_ACCEL_Y | STBY_EN_ACCEL_Z};
-static constexpr stby_en_t STBY_EN_GYRO_X     {1 << regs::PWR2_STBY_XG_BIT};
-static constexpr stby_en_t STBY_EN_GYRO_Y     {1 << regs::PWR2_STBY_YG_BIT};
-static constexpr stby_en_t STBY_EN_GYRO_Z     {1 << regs::PWR2_STBY_ZG_BIT};
-static constexpr stby_en_t STBY_EN_GYRO       {STBY_EN_GYRO_X | STBY_EN_GYRO_Y | STBY_EN_GYRO_Z};
-static constexpr stby_en_t STBY_EN_TEMP       {1 << 6};
+static constexpr stby_en_t STBY_EN_NONE             {0x0};
+static constexpr stby_en_t STBY_EN_ACCEL_X          {1 << regs::PWR2_STBY_XA_BIT};
+static constexpr stby_en_t STBY_EN_ACCEL_Y          {1 << regs::PWR2_STBY_YA_BIT};
+static constexpr stby_en_t STBY_EN_ACCEL_Z          {1 << regs::PWR2_STBY_ZA_BIT};
+static constexpr stby_en_t STBY_EN_ACCEL            {STBY_EN_ACCEL_X | STBY_EN_ACCEL_Y | STBY_EN_ACCEL_Z};
+static constexpr stby_en_t STBY_EN_GYRO_X           {1 << regs::PWR2_STBY_XG_BIT};
+static constexpr stby_en_t STBY_EN_GYRO_Y           {1 << regs::PWR2_STBY_YG_BIT};
+static constexpr stby_en_t STBY_EN_GYRO_Z           {1 << regs::PWR2_STBY_ZG_BIT};
+static constexpr stby_en_t STBY_EN_GYRO             {STBY_EN_GYRO_X | STBY_EN_GYRO_Y | STBY_EN_GYRO_Z};
+static constexpr stby_en_t STBY_EN_TEMP             {1 << 6};
 // This is a low power mode that allows quick enabling of the gyros.
 // note: when set, the gyro drive and pll circuitry are enabled, but the sense paths are disabled.
 static constexpr stby_en_t STBY_EN_LOWPWR_GYRO_PLL_ON  {1 << 7};
@@ -308,14 +356,15 @@ typedef struct {
 
 // Enable features to generate signal at Interrupt pin
 using int_en_t = uint8_t;
+static constexpr int_en_t INT_EN_NONE            {0x0};
 static constexpr int_en_t INT_EN_WAKE_ON_MOTION  {1 << regs::INT_ENABLE_WOM_BIT};
 static constexpr int_en_t INT_EN_FIFO_OVERFLOW   {1 << regs::INT_ENABLE_FIFO_OFLOW_BIT};
 static constexpr int_en_t INT_EN_I2C_MST_FSYNC   {1 << regs::INT_ENABLE_I2C_MST_FSYNC_BIT};  // interrupts from I2C_MST_STATUS
 static constexpr int_en_t INT_EN_PLL_READY       {1 << regs::INT_ENABLE_PLL_RDY_BIT};
 static constexpr int_en_t INT_EN_DMP_READY       {1 << regs::INT_ENABLE_DMP_RDY_BIT};
 static constexpr int_en_t INT_EN_RAWDATA_READY   {1 << regs::INT_ENABLE_RAW_DATA_RDY_BIT};
-// freefall and zero motion only available to MPU6000 / MPU6050
-#if defined CONFIG_MPU6000 || defined CONFIG_MPU6050
+// freefall and zero motion only available to MPU6000 / MPU6050 / MPU9150
+#if defined CONFIG_MPU6000 || defined CONFIG_MPU6050 || defined CONFIG_MPU9150
 static constexpr int_en_t INT_EN_FREE_FALL       {1 << regs::INT_ENABLE_FREEFALL_BIT};
 static constexpr int_en_t INT_EN_ZERO_MOTION     {1 << regs::INT_ENABLE_ZEROMOT_BIT};
 #endif
@@ -344,7 +393,7 @@ typedef enum {
 
 // FIFO configuration, enable sensors to be written to FIFO
 using fifo_config_t = uint16_t;
-static constexpr fifo_config_t FIFO_CFG_NONE          {0};
+static constexpr fifo_config_t FIFO_CFG_NONE          {0x0};
 static constexpr fifo_config_t FIFO_CFG_GYRO          {1 << regs::FIFO_XGYRO_EN_BIT | 1 << regs::FIFO_YGYRO_EN_BIT | 1 << regs::FIFO_ZGYRO_EN_BIT};
 static constexpr fifo_config_t FIFO_CFG_ACCEL         {1 << regs::FIFO_ACCEL_EN_BIT};
 static constexpr fifo_config_t FIFO_CFG_TEMPERATURE   {1 << regs::FIFO_TEMP_EN_BIT};

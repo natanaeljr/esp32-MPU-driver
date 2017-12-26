@@ -18,18 +18,19 @@ See [Unit Testing in ESP32] for more information.
 **Current tests:**
 
 1. basic test
-2. sample rate measurement
-3. max sample rate test
-4. low power accelerometer mode test
-5. interrupt configuration
-6. basic auxiliary I2C configuration
-7. slave 4 transfers
-8. external frame synchronization (FSYNC pin)
-9. sensor data test
-10. standby mode
-11. FIFO buffer
-12. offset test
-13. compass configuration
+1. sample rate measurement
+1. max sample rate test
+1. low power accelerometer mode
+1. low power wake-on-motion mode
+1. interrupt configuration
+1. basic auxiliary I2C configuration
+1. slave 4 transfers
+1. external frame synchronization (FSYNC pin)
+1. sensor data test
+1. standby mode
+1. FIFO buffer
+1. offset test
+1. compass configuration
 
 ---
 

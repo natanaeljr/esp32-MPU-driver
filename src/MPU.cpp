@@ -439,6 +439,152 @@ lp_accel_rate_t MPU::getLowPowerAccelRate() {
 }
 
 
+/**
+ * Enable/disable Wake-on-Motion mode
+ * Important: The configurations must've already been set with setWakeOnMotionConfig() before enabling WOM mode!
+ * Note: call getMotionDetectStatus() to find out which axis generated motion interrupt. [MPU6000, MPU6050, MPU9150]
+ * Note: It's recommended to make the WOM interrupt to propagate to the INT pin.
+ *  You may configure using setInterruptEnabled().
+ * 
+ * Note: On enable, this function modifies the DLPF, puts gyro and temperature
+ *  sensors in standby mode, and disable I2C master I/F.
+ * Note: On disable, this function sets back DLPF to 42Hz and disable
+ *  standby mode for all sensors, enable I2C master I/F.
+ * */
+esp_err_t MPU::setWakeOnMotionMode(bool enable) {
+    stby_en_t stbyMask;
+    if (enable) {
+        // make sure accel is running and set other sensors to stanby
+        stbyMask = STBY_EN_GYRO | STBY_EN_TEMP;
+    } else {
+        stbyMask = STBY_EN_NONE;
+    }
+    if (MPU_ERR_CHECK(setStandbyMode(stbyMask)))
+        return err;
+    if (enable) {
+        #if defined CONFIG_MPU6050
+        if (MPU_ERR_CHECK(writeBits(regs::ACCEL_CONFIG, regs::ACONFIG_HPF_BIT, regs::ACONFIG_HPF_LENGTH, ACCEL_DHPF_RESET)))
+            return err;
+        constexpr dlpf_t kDLPF = DLPF_256HZ_NOLPF;
+        #elif defined CONFIG_MPU6500
+        if (MPU_ERR_CHECK(setFchoice(FCHOICE_3)))
+            return err;
+        constexpr dlpf_t kDLPF = DLPF_188HZ;
+        #endif
+        if (MPU_ERR_CHECK(setDigitalLowPassFilter(kDLPF)))
+            return err;
+        #if defined CONFIG_MPU6050
+        // give a time for accumulation of samples
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+        if (MPU_ERR_CHECK(writeBits(regs::ACCEL_CONFIG, regs::ACONFIG_HPF_BIT, regs::ACONFIG_HPF_LENGTH, ACCEL_DHPF_HOLD)))
+            return err;
+        #elif defined CONFIG_MPU6500
+        if (MPU_ERR_CHECK(writeByte(regs::ACCEL_INTEL_CTRL, (1 << regs::ACCEL_INTEL_EN_BIT) | (1 << regs::ACCEL_INTEL_MODE_BIT))))
+            return err;
+        #endif
+    } else {  /* disable */
+        #if defined CONFIG_MPU6500
+        if (MPU_ERR_CHECK(writeByte(regs::ACCEL_INTEL_CTRL, 0x0)))
+            return err;
+        #endif
+        constexpr dlpf_t kDLPF = DLPF_42HZ;
+        if (MPU_ERR_CHECK(setDigitalLowPassFilter(kDLPF)))
+            return err;
+    }
+    // disable Auxiliary I2C Master I/F in case it was active
+    if (MPU_ERR_CHECK(setAuxI2CEnabled(!enable)))
+        return err;
+    // enable cycling through sleep/wake
+    return MPU_ERR_CHECK(writeBit(regs::PWR_MGMT1, regs::PWR1_CYCLE_BIT, enable));
+}
+
+bool MPU::getWakeOnMotionMode() {
+    stby_en_t stbyMask = getStandbyMode();
+    MPU_ERR_CHECK(lastError());
+    if (((stbyMask & STBY_EN_ACCEL) != 0) &&
+        ((stbyMask & (STBY_EN_GYRO | STBY_EN_TEMP)) != (STBY_EN_GYRO | STBY_EN_TEMP))) {
+        return false;
+    }
+    uint8_t data;
+    MPU_ERR_CHECK(readBit(regs::PWR_MGMT1, regs::PWR1_CYCLE_BIT, &data));
+    if (!data)
+        return false;
+    #if defined CONFIG_MPU6500
+    MPU_ERR_CHECK(readByte(regs::ACCEL_INTEL_CTRL, &data));
+    if (data != ((1 << regs::ACCEL_INTEL_EN_BIT) | (1 << regs::ACCEL_INTEL_MODE_BIT)))
+        return false;
+    #endif
+    return true;
+}
+
+
+/**
+ * Configure Wake-on-Motion feature
+ * 
+ * The behaviour of this feature is very different between the MPU6050 (MPU9150) and the
+ * MPU6500 (MPU9250). Each chip's version of this feature is explained below.
+ * 
+ * [MPU6050, MPU6000, MPU9150]:
+ * Accelerometer measurements are passed through a configurable digital high pass filter (DHPF)
+ * in order to eliminate bias due to gravity. A qualifying motion sample is one where the high passed sample
+ * from any axis has an absolute value exceeding a user-programmable threshold.
+ * A counter increments for each qualifying sample, and decrements for each non-qualifying sample.
+ * Once the counter reaches a user-programmable counter threshold, a motion interrupt is triggered.
+ * The axis and polarity which caused the interrupt to be triggered is flagged in the MOT_DETECT_STATUS register.
+ * 
+ * [MPU6500, MPU9250]:
+ * Unlike the MPU6050 version, the hardware does not "lock in" a reference sample.
+ * The hardware monitors the accel data and detects any large change over a short period of time.
+ * A qualifying motion sample is one where the high passed sample from any axis has
+ * an absolute value exceeding the threshold.
+ * The hardware motion threshold can be between 4mg and 1020mg in 4mg increments.
+ * */
+esp_err_t MPU::setWakeOnMotionConfig(wom_config_t& config) {
+    #if defined CONFIG_MPU6050
+    if (MPU_ERR_CHECK(writeByte(regs::MOTION_DUR, config.time)))
+        return err;
+    if (MPU_ERR_CHECK(writeBits(regs::MOTION_DETECT_CTRL, regs::MOTCTRL_ACCEL_ON_DELAY_BIT,
+        regs::MOTCTRL_ACCEL_ON_DELAY_LENGTH, config.accel_on_delay)))
+        return err;
+    if (MPU_ERR_CHECK(writeBits(regs::MOTION_DETECT_CTRL, regs::MOTCTRL_MOT_COUNT_BIT,
+        regs::MOTCTRL_MOT_COUNT_LENGTH, config.counter)))
+        return err;
+    #endif
+    if (MPU_ERR_CHECK(writeByte(regs::MOTION_THR, config.threshold)))
+        return err;
+    return MPU_ERR_CHECK(setLowPowerAccelRate(config.rate));
+}
+
+wom_config_t MPU::getWakeOnMotionConfig() {
+    wom_config_t config;
+    #if defined CONFIG_MPU6050
+    MPU_ERR_CHECK(readByte(regs::MOTION_DUR, &config.time));
+    MPU_ERR_CHECK(readByte(regs::MOTION_DETECT_CTRL, buffer));
+    config.accel_on_delay = 0x3 & (buffer[0] >> (regs::MOTCTRL_ACCEL_ON_DELAY_BIT - regs::MOTCTRL_ACCEL_ON_DELAY_LENGTH + 1));
+    config.counter = (mot_counter_t) (0x3 & (buffer[0] >> (regs::MOTCTRL_MOT_COUNT_BIT - regs::MOTCTRL_MOT_COUNT_LENGTH + 1)));
+    #endif
+    MPU_ERR_CHECK(readByte(regs::MOTION_THR, &config.threshold));
+    config.rate = getLowPowerAccelRate();
+    MPU_ERR_CHECK(lastError());
+    return config;
+}
+
+
+#if defined CONFIG_MPU6050
+/**
+ * Return Motion Detection Status
+ * Note: Reading this register clears all motion detection status bits.
+ * */
+mot_stat_t MPU::getMotionDetectStatus() {
+    MPU_ERR_CHECK(readByte(regs::MOTION_DETECT_STATUS, buffer));
+    return (mot_stat_t) buffer[0];
+}
+#endif
+
+
+/**
+ * Standby mode
+ * */
 esp_err_t MPU::setStandbyMode(stby_en_t mask) {
     const uint8_t kPwr1StbyBits = mask >> 6;
     if (MPU_ERR_CHECK(writeBits(regs::PWR_MGMT1, regs::PWR1_GYRO_STANDBY_BIT, 2, kPwr1StbyBits)))

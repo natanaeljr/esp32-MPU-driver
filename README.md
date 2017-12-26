@@ -30,11 +30,11 @@ The library is based on Invensense's Embedded Motion Driver 5.1.3 and 6.12 and i
 + Complete Auxiliary I2C support for external sensors _(up to 4)_
 + External Frame Synchronization _(FSYNC)_ pass-through interrupt
 + Total access to the Magnetometer _(even when MPU connected by SPI protocol)_ [MPU9150 and MPU9250]
++ Low Power Wake-on-motion mode _(motion detection interrupt)_
 + Calibration for Gyro and Accel
 
 ##### To be implemented:
 
-+ Wake-on-motion interrupt for low power operation
 + Free-Fall and Zero-motion detection [MPU6000, MPU6050 and MPU9150]
 + Self-Test
 + DMP (Digital Motion Processor) interface

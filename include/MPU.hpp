@@ -105,8 +105,17 @@ class MPU {
 
     esp_err_t setLowPowerAccelMode(bool enable);
     esp_err_t setLowPowerAccelRate(lp_accel_rate_t rate);
-    bool getLowPowerAccelMode();
     lp_accel_rate_t getLowPowerAccelRate();
+    bool getLowPowerAccelMode();
+
+    esp_err_t setWakeOnMotionMode(bool enable);
+    esp_err_t setWakeOnMotionConfig(wom_config_t& config);
+    wom_config_t getWakeOnMotionConfig();
+    bool getWakeOnMotionMode();
+    
+    #if defined CONFIG_MPU6000 || defined CONFIG_MPU6050 || defined CONFIG_MPU9150
+    mot_stat_t getMotionDetectStatus();
+    #endif
 
     esp_err_t setStandbyMode(stby_en_t mask);
     stby_en_t getStandbyMode();

@@ -76,6 +76,8 @@ constexpr uint8_t ACONFIG_YA_ST_BIT           {6};
 constexpr uint8_t ACONFIG_ZA_ST_BIT           {5};
 constexpr uint8_t ACONFIG_FS_SEL_BIT          {4};  // [4:3]
 constexpr uint8_t ACONFIG_FS_SEL_LENGTH       {2};
+constexpr uint8_t ACONFIG_HPF_BIT             {2};  // [2:0]
+constexpr uint8_t ACONFIG_HPF_LENGTH          {3};
 //------------------------------------------------------------------------------
 constexpr uint8_t FF_THR              {0x1D};
 constexpr uint8_t FF_DUR              {0x1E};
@@ -225,7 +227,6 @@ constexpr uint8_t EXT_SENS_DATA_20    {0x5D};
 constexpr uint8_t EXT_SENS_DATA_21    {0x5E};
 constexpr uint8_t EXT_SENS_DATA_22    {0x5F};
 constexpr uint8_t EXT_SENS_DATA_23    {0x60};
-constexpr uint8_t MOT_DETECT_STATUS   {0x61};
 constexpr uint8_t I2C_SLV0_DO         {0x63};
 constexpr uint8_t I2C_SLV1_DO         {0x64};
 constexpr uint8_t I2C_SLV2_DO         {0x65};
@@ -243,10 +244,6 @@ constexpr uint8_t SIGNAL_PATH_RESET   {0x68};
 constexpr uint8_t SPATH_GYRO_RST_BIT          {2};
 constexpr uint8_t SPATH_ACCEL_RST_BIT         {1};
 constexpr uint8_t SPATH_TEMP_RST_BIT          {0};
-//------------------------------------------------------------------------------
-constexpr uint8_t MOT_DETECT_CTRL     {0x69};  // ACCEL_INTEL_CTRL
-constexpr uint8_t DETECT_ACCEL_INTEL_EN_BIT   {7};
-constexpr uint8_t DETECT_ACCEL_INTEL_MODE_BIT {6};
 //------------------------------------------------------------------------------
 constexpr uint8_t USER_CTRL           {0x6A};
 constexpr uint8_t USERCTRL_DMP_EN_BIT         {7};
@@ -320,6 +317,24 @@ constexpr uint8_t SELF_TEST_X         {0x0D};
 constexpr uint8_t SELF_TEST_Y         {0x0E};
 constexpr uint8_t SELF_TEST_Z         {0x0F};
 constexpr uint8_t SELF_TEST_A         {0x10};
+//------------------------------------------------------------------------------
+constexpr uint8_t MOTION_DETECT_STATUS{0x61};
+constexpr uint8_t MOT_STATUS_X_NEG_BIT             {7};
+constexpr uint8_t MOT_STATUS_X_POS_BIT             {6};
+constexpr uint8_t MOT_STATUS_Y_NEG_BIT             {5};
+constexpr uint8_t MOT_STATUS_Y_POS_BIT             {4};
+constexpr uint8_t MOT_STATUS_Z_NEG_BIT             {3};
+constexpr uint8_t MOT_STATUS_Z_POS_BIT             {2};
+constexpr uint8_t MOT_STATUS_ZRMOT_BIT             {0};
+//------------------------------------------------------------------------------
+constexpr uint8_t MOTION_DETECT_CTRL  {0x69};
+constexpr uint8_t MOTCTRL_ACCEL_ON_DELAY_BIT {5};  // [5:4]
+constexpr uint8_t MOTCTRL_ACCEL_ON_DELAY_LENGTH{2};
+constexpr uint8_t MOTCTRL_FF_COUNT_BIT       {3};  // [3:2]
+constexpr uint8_t MOTCTRL_FF_COUNT_LENGTH    {2};
+constexpr uint8_t MOTCTRL_MOT_COUNT_BIT      {1};  // [1:0]
+constexpr uint8_t MOTCTRL_MOT_COUNT_LENGTH   {2};
+//------------------------------------------------------------------------------
 #endif
 
 
@@ -345,6 +360,10 @@ constexpr uint8_t ACONFIG2_A_DLPF_CFG_LENGTH  {3};
 constexpr uint8_t LP_ACCEL_ODR        {0x1E};
 constexpr uint8_t LPA_ODR_CLKSEL_BIT          {3};  // [3:0]
 constexpr uint8_t LPA_ODR_CLKSEL_LENGTH       {4};
+//------------------------------------------------------------------------------
+constexpr uint8_t ACCEL_INTEL_CTRL     {0x69};
+constexpr uint8_t ACCEL_INTEL_EN_BIT   {7};
+constexpr uint8_t ACCEL_INTEL_MODE_BIT {6};
 //------------------------------------------------------------------------------
 constexpr uint8_t XA_OFFSET_H         {0x77};
 constexpr uint8_t XA_OFFSET_L         {0x78};
