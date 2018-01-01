@@ -24,6 +24,7 @@ IN THE SOFTWARE.
 #ifndef _MPU_MATH_HPP_
 #define _MPU_MATH_HPP_
 
+#include <math.h>
 #include <stdint.h>
 #include "sdkconfig.h"
 #include "mpu/types.hpp"
@@ -85,6 +86,18 @@ inline float_axes_t gyroDegPerSec(const raw_axes_t& raw_axes, const gyro_fs_t fs
     axes.x = raw_axes.x * gyroResolution(fs);
     axes.y = raw_axes.y * gyroResolution(fs);
     axes.z = raw_axes.z * gyroResolution(fs);
+    return axes;
+}
+
+inline float gyroRadPerSec(const int16_t axis, const gyro_fs_t fs) {
+    return (M_PI / 180) * gyroDegPerSec(axis, fs);
+}
+
+inline float_axes_t gyroRadPerSec(const raw_axes_t& raw_axes, const gyro_fs_t fs) {
+    float_axes_t axes;
+    axes.x = (M_PI / 180) * gyroDegPerSec(raw_axes.x, fs);
+    axes.y = (M_PI / 180) * gyroDegPerSec(raw_axes.y, fs);
+    axes.z = (M_PI / 180) * gyroDegPerSec(raw_axes.z, fs);
     return axes;
 }
 
