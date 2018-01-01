@@ -124,10 +124,9 @@ class MPU {
 
     esp_err_t setInterruptConfig(int_config_t config);
     esp_err_t setInterruptEnabled(int_en_t mask);
-    esp_err_t setInterruptDisableAll();
+    int_en_t getInterruptStatus();
     int_config_t getInterruptConfig();
     int_en_t getInterruptEnabled();
-    int_en_t getInterruptStatus();
 
     esp_err_t setFIFOMode(fifo_mode_t mode);
     esp_err_t setFIFOConfig(fifo_config_t config);
