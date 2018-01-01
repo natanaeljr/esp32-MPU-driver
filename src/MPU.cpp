@@ -1050,9 +1050,9 @@ int_en_t MPU::getInterruptEnabled() {
 }
 
 
-int_en_t MPU::getInterruptStatus() {
+int_stat_t MPU::getInterruptStatus() {
     MPU_ERR_CHECK(readByte(regs::INT_STATUS, buffer));
-    return (int_en_t) buffer[0];
+    return (int_stat_t) buffer[0];
 }
 
 

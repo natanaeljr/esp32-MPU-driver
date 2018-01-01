@@ -181,7 +181,7 @@ constexpr uint8_t DMP_INT_STATUS_5            {5};
 //------------------------------------------------------------------------------
 constexpr uint8_t INT_STATUS          {0x3A};
 constexpr uint8_t INT_STATUS_FREEFALL_BIT     {7};
-constexpr uint8_t INT_STATUS_WOM_BIT          {6};
+constexpr uint8_t INT_STATUS_MOTION_BIT       {6};
 constexpr uint8_t INT_STATUS_ZEROMOT_BIT      {5};
 constexpr uint8_t INT_STATUS_FIFO_OFLOW_BIT   {4};
 constexpr uint8_t INT_STATUS_I2C_MST_BIT      {3};

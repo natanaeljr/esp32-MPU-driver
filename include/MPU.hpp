@@ -124,7 +124,7 @@ class MPU {
 
     esp_err_t setInterruptConfig(int_config_t config);
     esp_err_t setInterruptEnabled(int_en_t mask);
-    int_en_t getInterruptStatus();
+    int_stat_t getInterruptStatus();
     int_config_t getInterruptConfig();
     int_en_t getInterruptEnabled();
 

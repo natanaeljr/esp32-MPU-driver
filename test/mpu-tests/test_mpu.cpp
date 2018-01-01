@@ -267,16 +267,16 @@ TEST_CASE("MPU low power accelerometer mode", "[MPU]")
     /* assert sample rate */
     #if defined CONFIG_MPU6050
     constexpr mpu::lp_accel_rate_t lp_accel_rates[] = {
-        mpu::LP_ACCEL_5HZ,
-        mpu::LP_ACCEL_20HZ,
-        mpu::LP_ACCEL_40HZ
+        mpu::LP_ACCEL_RATE_5HZ,
+        mpu::LP_ACCEL_RATE_20HZ,
+        mpu::LP_ACCEL_RATE_40HZ
     };
     constexpr uint16_t rates[] = {5, 20, 40};
     #elif defined CONFIG_MPU6500
     constexpr mpu::lp_accel_rate_t lp_accel_rates[] = {
-        mpu::LP_ACCEL_1_95HZ,
-        mpu::LP_ACCEL_31_25HZ,
-        mpu::LP_ACCEL_125HZ
+        mpu::LP_ACCEL_RATE_1_95HZ,
+        mpu::LP_ACCEL_RATE_31_25HZ,
+        mpu::LP_ACCEL_RATE_125HZ
     };
     constexpr uint16_t rates[] = {2, 31, 125};
     #endif
@@ -488,7 +488,7 @@ TEST_CASE("MPU external frame synchronization (FSYNC pin)", "[MPU]")
     // Output a FSYNC signal, then
     // check for the interrupt in INT_STATUS and I2C_MST_STATUS
     mpu::auxi2c_stat_t auxI2Cstatus = 0;
-    mpu::int_en_t intStatus = 0;
+    mpu::int_stat_t intStatus = 0;
     for (size_t i = 0; i < 10; i++) {
         gpio_set_level((gpio_num_t)CONFIG_MPU_TEST_FSYNC_PIN, 1);
         auxI2Cstatus = mpu.getAuxI2CStatus();
@@ -597,7 +597,7 @@ TEST_CASE("MPU FIFO buffer", "[MPU]")
         // check count
         TEST_ESP_OK( mpu.resetFIFO());  // zero count first
         mpu.getInterruptStatus();  // clear status first
-        while(!(mpu.getInterruptStatus() & mpu::INT_EN_RAWDATA_READY) && !mpu.lastError()) {}
+        while(!(mpu.getInterruptStatus() & mpu::INT_STAT_RAWDATA_READY) && !mpu.lastError()) {}
         uint16_t count = mpu.getFIFOCount();
         printf("FIFO config: 0x%X, real packet count: %d\n", fifoConfigs[i], count);
         TEST_ASSERT( countArray[i] == count);
@@ -712,9 +712,9 @@ TEST_CASE("MPU motion detection and wake-on-motion mode", "[MPU]")
     /* enter low power mode */
     TEST_ESP_OK( mpu.setLowPowerAccelMode(true));
     #if defined CONFIG_MPU6050
-    TEST_ESP_OK( mpu.setLowPowerAccelRate(mpu::LP_ACCEL_20HZ));
+    TEST_ESP_OK( mpu.setLowPowerAccelRate(mpu::LP_ACCEL_RATE_20HZ));
     #elif defined CONFIG_MPU6500
-    TEST_ESP_OK( mpu.setLowPowerAccelRate(mpu::LP_ACCEL_250HZ));
+    TEST_ESP_OK( mpu.setLowPowerAccelRate(mpu::LP_ACCEL_RATE_250HZ));
     #endif
     /* test motion interrupt */
     #if defined CONFIG_MPU6050

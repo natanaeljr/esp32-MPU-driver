@@ -123,23 +123,23 @@ typedef enum {
 // Low-power accelerometer wake-up rates
 typedef enum {
 #if defined CONFIG_MPU6000 || defined CONFIG_MPU6050 || defined CONFIG_MPU9150
-    LP_ACCEL_1_25HZ = 0,
-    LP_ACCEL_5HZ    = 1,
-    LP_ACCEL_20HZ   = 2,
-    LP_ACCEL_40HZ   = 3
+    LP_ACCEL_RATE_1_25HZ = 0,
+    LP_ACCEL_RATE_5HZ    = 1,
+    LP_ACCEL_RATE_20HZ   = 2,
+    LP_ACCEL_RATE_40HZ   = 3
 #elif defined CONFIG_MPU6500 || defined CONFIG_MPU9250
-    LP_ACCEL_0_24HZ  = 0,
-    LP_ACCEL_0_49HZ  = 1,
-    LP_ACCEL_0_98HZ  = 2,
-    LP_ACCEL_1_95HZ  = 3,
-    LP_ACCEL_3_91HZ  = 4,
-    LP_ACCEL_7_81HZ  = 5,
-    LP_ACCEL_15_63HZ = 6,
-    LP_ACCEL_31_25HZ = 7,
-    LP_ACCEL_62_50HZ = 8,
-    LP_ACCEL_125HZ   = 9,
-    LP_ACCEL_250HZ   = 10,
-    LP_ACCEL_500HZ   = 11
+    LP_ACCEL_RATE_0_24HZ  = 0,
+    LP_ACCEL_RATE_0_49HZ  = 1,
+    LP_ACCEL_RATE_0_98HZ  = 2,
+    LP_ACCEL_RATE_1_95HZ  = 3,
+    LP_ACCEL_RATE_3_91HZ  = 4,
+    LP_ACCEL_RATE_7_81HZ  = 5,
+    LP_ACCEL_RATE_15_63HZ = 6,
+    LP_ACCEL_RATE_31_25HZ = 7,
+    LP_ACCEL_RATE_62_50HZ = 8,
+    LP_ACCEL_RATE_125HZ   = 9,
+    LP_ACCEL_RATE_250HZ   = 10,
+    LP_ACCEL_RATE_500HZ   = 11
 #endif
 } lp_accel_rate_t;
 
@@ -389,6 +389,20 @@ static constexpr int_en_t INT_EN_RAWDATA_READY   {1 << regs::INT_ENABLE_RAW_DATA
 #if defined CONFIG_MPU6000 || defined CONFIG_MPU6050 || defined CONFIG_MPU9150
 static constexpr int_en_t INT_EN_FREE_FALL       {1 << regs::INT_ENABLE_FREEFALL_BIT};
 static constexpr int_en_t INT_EN_ZERO_MOTION     {1 << regs::INT_ENABLE_ZEROMOT_BIT};
+#endif
+
+// Interrupt Status
+using int_stat_t = uint8_t;
+static constexpr int_stat_t INT_STAT_MOTION_DETECT   {1 << regs::INT_STATUS_MOTION_BIT};
+static constexpr int_stat_t INT_STAT_FIFO_OVERFLOW   {1 << regs::INT_STATUS_FIFO_OFLOW_BIT};
+static constexpr int_stat_t INT_STAT_I2C_MST_FSYNC   {1 << regs::INT_STATUS_I2C_MST_BIT};  // interrupts from I2C_MST_STATUS
+static constexpr int_stat_t INT_STAT_PLL_READY       {1 << regs::INT_STATUS_PLL_RDY_BIT};
+static constexpr int_stat_t INT_STAT_DMP_READY       {1 << regs::INT_STATUS_DMP_RDY_BIT};
+static constexpr int_stat_t INT_STAT_RAWDATA_READY   {1 << regs::INT_STATUS_RAW_DATA_RDY_BIT};
+// freefall and zero motion only available to MPU6000 / MPU6050 / MPU9150
+#if defined CONFIG_MPU6000 || defined CONFIG_MPU6050 || defined CONFIG_MPU9150
+static constexpr int_stat_t INT_STAT_FREE_FALL       {1 << regs::INT_STATUS_FREEFALL_BIT};
+static constexpr int_stat_t INT_STAT_ZERO_MOTION     {1 << regs::INT_STATUS_ZEROMOT_BIT};
 #endif
 
 #ifdef CONFIG_MPU6500
