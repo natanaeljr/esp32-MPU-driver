@@ -174,6 +174,7 @@ uint8_t MPU::whoAmI() {
     return buffer[0];
 }
 
+
 /**
  * Sample Rate = Internal Output Rate / (1 + SMPLRT_DIV)
  * @param   rate: 4Hz ~ 1KHz
@@ -1840,7 +1841,6 @@ bool MPU::compassSelfTest(raw_axes_t *result) {
         return err;
     uint8_t adjValue[3];
     MPU_ERR_CHECK(compassGetAdjustment(adjValue, adjValue+1, adjValue+2));
-    // MPU_LOGD("adjValue: %d %d %d", adjValue[0], adjValue[1], adjValue[2]);
     MPU_ERR_CHECK(compassSetMode(MAG_MODE_POWER_DOWN));
     // read all data to reset status for any case, start clean
     for (int i = 0; i < 8; i++)
@@ -1851,7 +1851,7 @@ bool MPU::compassSelfTest(raw_axes_t *result) {
     uint8_t status1;
     do {
         MPU_ERR_CHECK(compassReadByte(regs::mag::STATUS1, &status1));
-    } while (!((status1 >> regs::mag::STATUS1_DATA_RDY_BIT) & 0x1));
+    } while (!(status1 & regs::mag::STATUS1_DATA_RDY_BIT));
     MPU_LOGD("status1: %#X", status1);
     for (int i = 0; i < 7; i++)
         MPU_ERR_CHECK(compassReadByte(regs::mag::HXL + i, buffer + i));
@@ -1949,6 +1949,420 @@ esp_err_t MPU::compassReset() {
 
 #endif  // ak8963 stuff
 #endif  // compass methods
+
+
+/**
+ * Self-Test
+ * Trigger gyro and accel hardware self-test.
+ * @param result: Should be ZERO if gyro and accel passed.
+ * */
+esp_err_t MPU::selfTest(selftest_t *result) {
+    #ifdef CONFIG_MPU6050
+    constexpr accel_fs_t kAccelFS = ACCEL_FS_16G;
+    constexpr gyro_fs_t kGyroFS = GYRO_FS_250DPS;
+    #elif CONFIG_MPU6500
+    constexpr accel_fs_t kAccelFS = ACCEL_FS_2G;
+    constexpr gyro_fs_t kGyroFS = GYRO_FS_250DPS;
+    #endif
+    raw_axes_t gyroRegBias, accelRegBias;
+    raw_axes_t gyroSTBias, accelSTBias;
+    // get regular biases
+    if (MPU_ERR_CHECK(getBiases(kAccelFS, kGyroFS, &accelRegBias, &gyroRegBias, false)))
+        return err;
+    // get self-test biases
+    if (MPU_ERR_CHECK(getBiases(kAccelFS, kGyroFS, &accelSTBias, &gyroSTBias, true)))
+        return err;
+    // perform self-tests
+    uint8_t accelST, gyroST;
+    if (MPU_ERR_CHECK(accelSelfTest(accelRegBias, accelSTBias, &accelST)))
+        return err;
+    if (MPU_ERR_CHECK(gyroSelfTest(gyroRegBias, gyroSTBias, &gyroST)))
+        return err;
+    // check results
+    *result = 0;
+    if (accelST != 0)
+        *result |= SELF_TEST_ACCEL_FAIL;
+    if (gyroST != 0)
+        *result |= SELF_TEST_GYRO_FAIL;
+    return err;    
+}
+
+#if defined CONFIG_MPU6050
+/**
+ * Accel Self-test [MPU6050 based models]
+ * result: self-test error for each axis (X=bit0, Y=bit1, Z=bit2). Zero is a pass.
+ * */
+esp_err_t MPU::accelSelfTest(raw_axes_t& regularBias, raw_axes_t& selfTestBias, uint8_t *result) {
+    // Criteria A: must be within 14% variation
+    constexpr float kMaxVariation = .14f;
+    // Criteria B: must be between 300 mg and 950 mg
+    constexpr float kMinGravity = .3f, kMaxGravity = .95f;
+    // get production shift code
+    if (MPU_ERR_CHECK(readBytes(regs::SELF_TEST_X, 4, buffer)))
+        return err;
+    uint8_t shiftCode[3];
+    shiftCode[0] = ((buffer[0] & 0xE0) >> 3) | ((buffer[3] & 0x30) >> 4);
+    shiftCode[1] = ((buffer[1] & 0xE0) >> 3) | ((buffer[3] & 0x0C) >> 2);
+    shiftCode[2] = ((buffer[2] & 0xE0) >> 3) | (buffer[3] & 0x03);
+    // calulate shift value
+    float shiftValue[3] = {0};
+    for (int i = 0; i < 3; i++) {
+        if (shiftCode[i] != 0) {
+            // Equivalent to..
+            // shiftValue[i] = 0.34f * powf(0.92f/0.34f, (shiftCode[i]-1) / 30.f)
+            shiftValue[i] = 0.34f;
+            while (--shiftCode[i])
+                shiftValue[i] *= 1.034f;
+        }
+    }
+    // convert biases
+    float_axes_t regularBiasGravity = math::accelGravity(regularBias, ACCEL_FS_16G);
+    float_axes_t selfTestBiasGravity = math::accelGravity(selfTestBias, ACCEL_FS_16G);
+    MPU_LOGVMSG(msgs::EMPTY, "regularBias: %+d %+d %+d | regularBiasGravity: %+.2f %+.2f %+.2f",
+        regularBias.x, regularBias.y, regularBias.z,
+        regularBiasGravity.x, regularBiasGravity.y, regularBiasGravity.z);
+    MPU_LOGVMSG(msgs::EMPTY, "selfTestBias: %+d %+d %+d | selfTestBiasGravity: %+.2f %+.2f %+.2f",
+        selfTestBias.x, selfTestBias.y, selfTestBias.z,
+        selfTestBiasGravity.x, selfTestBiasGravity.y, selfTestBiasGravity.z);
+    // evaluate criterias
+    *result = 0;
+    float shiftResponse[3] = {0};
+    float shiftVariation[3] = {0};
+    for (int i = 0; i < 3; i++) {
+        shiftResponse[i] = fabs(selfTestBiasGravity[i] - regularBiasGravity[i]);
+        // criteria A
+        if (shiftValue[i] != 0) {
+            shiftVariation[i] = shiftResponse[i] / shiftValue[i] - 1;
+            if (fabs(shiftVariation[i]) > kMaxVariation)
+                *result |= 1 << i;
+        // criteria B
+        } else if (shiftResponse[i] < kMinGravity || shiftResponse[i] > kMaxGravity) {
+            *result |= 1 << i;
+        }
+    }
+    MPU_LOGVMSG(msgs::EMPTY, "shiftResponse: %+.2f %+.2f %+.2f", shiftResponse[0], shiftResponse[1], shiftResponse[2]);
+    MPU_LOGVMSG(msgs::EMPTY, "shiftVariation: %+.2f %+.2f %+.2f", shiftVariation[0], shiftVariation[1], shiftVariation[2]);
+    MPU_LOGD("Accel self-test: [X=%s] [Y=%s] [Z=%s]",
+        ((*result & 0x1) ? "FAIL" : "OK"),
+        ((*result & 0x2) ? "FAIL" : "OK"),
+        ((*result & 0x4) ? "FAIL" : "OK"));
+    return err;
+}
+
+/**
+ * Gyro Self-test [MPU6500 based models]
+ * result: self-test error for each axis (X=bit0, Y=bit1, Z=bit2). Zero is a pass.
+ * */
+esp_err_t MPU::gyroSelfTest(raw_axes_t& regularBias, raw_axes_t& selfTestBias, uint8_t *result) {
+    // Criteria A: must not exceed +14% variation
+    constexpr float kMaxVariation = .14f;
+    // Criteria B: must be between 10 dps and 105 dps
+    constexpr float kMinDPS = 10.f, kMaxDPS = 105.f;
+    // get production shift code
+    if (MPU_ERR_CHECK(readBytes(regs::SELF_TEST_X, 3, buffer)))
+        return err;
+    uint8_t shiftCode[3];
+    shiftCode[0] = buffer[0] & 0x1F;
+    shiftCode[1] = buffer[1] & 0x1F;
+    shiftCode[2] = buffer[2] & 0x1F;
+    float stShift[3] = {0};
+    for (int i = 0; i < 3; i++) {
+        if (shiftCode[i] != 0) {
+            stShift[i] = 25.f; // stShift[i] = 3275.f / math::gyroSensitivity(GYRO_FS_250DPS);
+            while (--shiftCode[i])
+                stShift[i] *= 1.046f;
+        }
+    }
+    // convert biases
+    float_axes_t regularBiasDPS = math::gyroDegPerSec(regularBias, GYRO_FS_250DPS);
+    float_axes_t selfTestBiasDPS = math::gyroDegPerSec(selfTestBias, GYRO_FS_250DPS);
+    MPU_LOGVMSG(msgs::EMPTY, "regularBias: %+d %+d %+d | regularBiasDPS: %+.2f %+.2f %+.2f",
+        regularBias.x, regularBias.y, regularBias.z,
+        regularBiasDPS.x, regularBiasDPS.y, regularBiasDPS.z);
+    MPU_LOGVMSG(msgs::EMPTY, "selfTestBias: %+d %+d %+d | selfTestBiasDPS: %+.2f %+.2f %+.2f",
+        selfTestBias.x, selfTestBias.y, selfTestBias.z,
+        selfTestBiasDPS.x, selfTestBiasDPS.y, selfTestBiasDPS.z);
+    // evaluate criterias
+    *result = 0;
+    float shiftResponse[3] = {0};
+    float shiftVariation[3] = {0};
+    for (int i = 0; i < 3; i++) {
+        shiftResponse[i] = fabs(selfTestBiasDPS[i] - regularBiasDPS[i]);
+        // criteria A
+        if (stShift[i] != 0) {
+            shiftVariation[i] = shiftResponse[i] / stShift[i] - 1;
+            if (fabs(shiftVariation[i]) > kMaxVariation)
+                *result |= 1 << i;
+        // criteria B
+        } else if (shiftResponse[i] < kMinDPS || shiftResponse[i] > kMaxDPS) {
+            *result |= 1 << i;
+        }
+    }
+    MPU_LOGVMSG(msgs::EMPTY, "shiftResponse: %+.2f %+.2f %+.2f", shiftResponse[0], shiftResponse[1], shiftResponse[2]);
+    MPU_LOGVMSG(msgs::EMPTY, "shiftVariation: %+.2f %+.2f %+.2f", shiftVariation[0], shiftVariation[1], shiftVariation[2]);
+    MPU_LOGD("Gyro self-test: [X=%s] [Y=%s] [Z=%s]",
+        ((*result & 0x1) ? "FAIL" : "OK"),
+        ((*result & 0x2) ? "FAIL" : "OK"),
+        ((*result & 0x4) ? "FAIL" : "OK"));
+    return err;
+}
+
+// #elif defined CONFIG_MPU6500
+// static const uint16_t kSelfTestTable[256] = {
+// 	2620,2646,2672,2699,2726,2753,2781,2808, //7
+// 	2837,2865,2894,2923,2952,2981,3011,3041, //15
+// 	3072,3102,3133,3165,3196,3228,3261,3293, //23
+// 	3326,3359,3393,3427,3461,3496,3531,3566, //31
+// 	3602,3638,3674,3711,3748,3786,3823,3862, //39
+// 	3900,3939,3979,4019,4059,4099,4140,4182, //47
+// 	4224,4266,4308,4352,4395,4439,4483,4528, //55
+// 	4574,4619,4665,4712,4759,4807,4855,4903, //63
+// 	4953,5002,5052,5103,5154,5205,5257,5310, //71
+// 	5363,5417,5471,5525,5581,5636,5693,5750, //79
+// 	5807,5865,5924,5983,6043,6104,6165,6226, //87
+// 	6289,6351,6415,6479,6544,6609,6675,6742, //95
+// 	6810,6878,6946,7016,7086,7157,7229,7301, //103
+// 	7374,7448,7522,7597,7673,7750,7828,7906, //111
+// 	7985,8065,8145,8227,8309,8392,8476,8561, //119
+// 	8647,8733,8820,8909,8998,9088,9178,9270,
+// 	9363,9457,9551,9647,9743,9841,9939,10038,
+// 	10139,10240,10343,10446,10550,10656,10763,10870,
+// 	10979,11089,11200,11312,11425,11539,11654,11771,
+// 	11889,12008,12128,12249,12371,12495,12620,12746,
+// 	12874,13002,13132,13264,13396,13530,13666,13802,
+// 	13940,14080,14221,14363,14506,14652,14798,14946,
+// 	15096,15247,15399,15553,15709,15866,16024,16184,
+// 	16346,16510,16675,16842,17010,17180,17352,17526,
+// 	17701,17878,18057,18237,18420,18604,18790,18978,
+// 	19167,19359,19553,19748,19946,20145,20347,20550,
+// 	20756,20963,21173,21385,21598,21814,22033,22253,
+// 	22475,22700,22927,23156,23388,23622,23858,24097,
+// 	24338,24581,24827,25075,25326,25579,25835,26093,
+// 	26354,26618,26884,27153,27424,27699,27976,28255,
+// 	28538,28823,29112,29403,29697,29994,30294,30597,
+// 	30903,31212,31524,31839,32157,32479,32804,33132
+// };
+
+// /**
+//  * Accel Self-test [MPU6500 based models]
+//  * result: self-test error for each axis (X=bit0, Y=bit1, Z=bit2). Zero is a pass.
+//  * */
+// esp_err_t MPU::accelSelfTest(raw_axes_t& regularBias, raw_axes_t& selfTestBias, uint8_t *result) {
+//     // Criteria A: must be within 50% variation
+//     constexpr float kMaxVariation = .5f;
+//     // Criteria B: must be between 255 mg and 675 mg
+//     constexpr float kMinGravity = .225f, kMaxGravity = .675f;
+//     // Criteria C: 500 mg for accel
+//     constexpr float kMaxGravityOffset = .5f;
+//     // vars
+//     float_axes_t regularBiasGravity = math::accelGravity(regularBias, ACCEL_FS_2G);
+//     float_axes_t selfTestBiasGravity = math::accelGravity(selfTestBias, ACCEL_FS_2G);
+//     bool OTPValueZero = false;
+//     float ctShiftProd[3] = {0};
+//     float stShiftCust[3] = {0};
+//     *result = 0;
+//     MPU_LOGDMSG(msgs::EMPTY, "regularBias: %+d %+d %+d", regularBias.x, regularBias.y, regularBias.z);
+//     MPU_LOGDMSG(msgs::EMPTY, "selfTestBias: %+d %+d %+d", selfTestBias.x, selfTestBias.y, selfTestBias.z);
+//     MPU_LOGDMSG(msgs::EMPTY, "regularBiasGravity: %+.2f %+.2f %+.2f", regularBiasGravity.x, regularBiasGravity.y, regularBiasGravity.z);
+//     MPU_LOGDMSG(msgs::EMPTY, "selfTestBiasGravity: %+.2f %+.2f %+.2f", selfTestBiasGravity.x, selfTestBiasGravity.y, selfTestBiasGravity.z);
+//     // read OTP self-test data
+//     if (MPU_ERR_CHECK(readBytes(regs::SELF_TEST_X_ACCEL, 3, buffer)))
+//         return err;
+//     MPU_LOGDMSG(msgs::EMPTY, "selfTestRegs: %d %d %d", buffer[0], buffer[1], buffer[2]);
+//     for (int i = 0; i < 3; i++) {
+//         if (buffer[i] != 0) {
+//             ctShiftProd[i] = kSelfTestTable[buffer[i] - 1];
+//             ctShiftProd[i] /= math::accelSensitivity(ACCEL_FS_2G);
+//             // ctShiftProd[i] *= UINT16_MAX+1;
+//             // ctShiftProd[i] /= (INT16_MAX+1) / math::accelFSRvalue(ACCEL_FS_2G);
+//         } else {
+//             OTPValueZero = true;
+//         }
+//     }
+//     // Evaluate Criteria A
+//     if (OTPValueZero) {
+//         for (int i = 0; i < 3; i++) {
+//             stShiftCust[i] = selfTestBiasGravity[i] - regularBiasGravity[i];
+//             float stShiftRatio = stShiftCust[i] / ctShiftProd[i] - 1;
+//             if (fabs(stShiftRatio) > kMaxVariation)
+//                 *result |= 1 << i;
+//         }
+//     } else {  // Evaluate Criteria B
+//         // float stALMin = kMinGravity * (UINT16_MAX+1);
+//         // float stALMax = kMaxGravity * (UINT16_MAX+1);
+//         for (int i = 0; i < 3; i++) {
+//             stShiftCust[i] = selfTestBiasGravity[i] - regularBiasGravity[i];
+//             if (stShiftCust[i] < kMinGravity || stShiftCust[i] > kMaxGravity)
+//                 *result |= 1 << i;
+//         }
+//     }
+//     // Evaluate Criteria C
+//     if (*result == 0) {
+//         // float offsetMax = kMaxGravityOffset * (UINT16_MAX+1);
+//         for (int i = 0; i < 3; i++) {
+//             if (fabs(regularBiasGravity[i] > kMaxGravityOffset))
+//                 *result |= 1 << i;
+//         }
+//     }
+//     return err;
+// }
+
+// /**
+//  * Gyro Self-test [MPU6500 based models]
+//  * result: self-test error for each axis (X=bit0, Y=bit1, Z=bit2). Zero is a pass.
+//  * */
+// esp_err_t MPU::gyroSelfTest(raw_axes_t& regularBias, raw_axes_t& selfTestBias, uint8_t *result) {
+//     // Criteria A: must exceed +50% variation
+//     constexpr float kMinVariation = .5f;
+//     // Criteria B: must excced 60 dps threshold
+//     constexpr float kMaxDPS = 60.f;
+//     // Criteria C: 20 dps for gyro
+//     constexpr float kMinDPS = 20.f;
+//     // vars
+//     float_axes_t regularBiasDPS = math::gyroDegPerSec(regularBias, GYRO_FS_250DPS);
+//     float_axes_t selfTestBiasDPS = math::gyroDegPerSec(selfTestBias, GYRO_FS_250DPS);
+//     bool OTPValueZero = false;
+//     float ctShiftProd[3] = {0};
+//     float stShiftCust[3] = {0};
+//     *result = 0;
+//     // read OTP self-test data
+//     if (MPU_ERR_CHECK(readBytes(regs::SELF_TEST_X_GYRO, 3, buffer)))
+//         return err;
+//     for (int i = 0; i < 3; i++) {
+//         if (buffer[i] != 0) {
+//             ctShiftProd[i] = kSelfTestTable[buffer[i] - 1];
+//             ctShiftProd[i] /= math::gyroSensitivity(GYRO_FS_250DPS);
+//             // ctShiftProd[i] *= UINT16_MAX+1;
+//             // ctShiftProd[i] /= (INT16_MAX+1) / math::gyroFSRvalue(GYRO_FS_250DPS);
+//         } else {
+//             OTPValueZero = true;
+//         }
+//     }
+//     // Evaluate Criteria A
+//     if (OTPValueZero) {
+//         for (int i = 0; i < 3; i++) {
+//             stShiftCust[i] = selfTestBiasDPS[i] - regularBiasDPS[i];
+//             float stShiftRatio = stShiftCust[i] / ctShiftProd[i] - 1;
+//             if (fabs(stShiftRatio) < kMinVariation)
+//                 *result |= 1 << i;
+//         }
+//     } else {  // Evaluate Criteria B
+//         // float stALMax = kMaxDPS * (UINT16_MAX+1);
+//         for (int i = 0; i < 3; i++) {
+//             stShiftCust[i] = selfTestBiasDPS[i] - regularBiasDPS[i];
+//             if (stShiftCust[i] > kMaxDPS)
+//                 *result |= 1 << i;
+//         }
+//     }
+//     // Evaluate Criteria C
+//     if (*result == 0) {
+//         // float offsetMax = kMinDPS * (UINT16_MAX+1);
+//         for (int i = 0; i < 3; i++) {
+//             if (fabs(regularBiasDPS[i] > kMinDPS))
+//                 *result |= 1 << i;
+//         }
+//     }
+//     return err;
+// }
+#endif
+
+/**
+ * Compute the Biases in regular mode and self-test mode
+ * 
+ * Note: This algorithm takes about ~400ms to compute offsets.
+ * Note: When calculating the biases the MPU must remain as horizontal as possible (0 degrees).
+ * */
+esp_err_t MPU::getBiases(accel_fs_t accelFS, gyro_fs_t gyroFS, raw_axes_t *accelBias, raw_axes_t *gyroBias, bool selftest) {
+    // configurations to compute offsets
+    constexpr uint16_t kSampleRate = 1000;
+    constexpr dlpf_t kDLPF = DLPF_188HZ;
+    constexpr fifo_config_t kFIFOConfig = FIFO_CFG_ACCEL | FIFO_CFG_GYRO;
+    constexpr size_t kPacketSize = 12;
+     // backup previous configuration
+    const uint16_t prevSampleRate = getSampleRate();
+    const dlpf_t prevDLPF = getDigitalLowPassFilter();
+    const accel_fs_t prevAccelFS = getAccelFullScale();
+    const gyro_fs_t prevGyroFS = getGyroFullScale();
+    const fifo_config_t prevFIFOConfig = getFIFOConfig();
+    const bool prevFIFOState = getFIFOEnabled();
+    // setup
+    if (MPU_ERR_CHECK(setSampleRate(kSampleRate))) return err;
+    if (MPU_ERR_CHECK(setDigitalLowPassFilter(kDLPF))) return err;
+    if (MPU_ERR_CHECK(setAccelFullScale(accelFS))) return err;
+    if (MPU_ERR_CHECK(setGyroFullScale(gyroFS))) return err;
+    if (MPU_ERR_CHECK(setFIFOConfig(kFIFOConfig))) return err;
+    if (MPU_ERR_CHECK(setFIFOEnabled(true))) return err;
+    if (selftest) {
+        if (MPU_ERR_CHECK(writeBits(regs::ACCEL_CONFIG, regs::ACONFIG_XA_ST_BIT, 3, 0x7)))
+            return err;
+        if (MPU_ERR_CHECK(writeBits(regs::GYRO_CONFIG, regs::GCONFIG_XG_ST_BIT, 3, 0x7)))
+            return err;
+    }
+    // wait for 200ms for sensors to stabilize
+    vTaskDelay(200 / portTICK_PERIOD_MS);
+    // fill FIFO for 100ms
+    if (MPU_ERR_CHECK(resetFIFO()))
+        return err;
+    vTaskDelay(100 / portTICK_PERIOD_MS);
+    if (MPU_ERR_CHECK(setFIFOConfig(FIFO_CFG_NONE)))
+        return err;
+    // get FIFO count
+    const uint16_t fifoCount = getFIFOCount();
+    if (MPU_ERR_CHECK(lastError()))
+        return err;
+    const int packetCount = fifoCount / kPacketSize;
+    // read overrun bytes, if any
+    const int overrunCount = fifoCount - (packetCount * kPacketSize);
+    uint8_t buffer[kPacketSize] = {0};
+    if (overrunCount > 0)
+        if (MPU_ERR_CHECK(readFIFO(overrunCount, buffer)))
+            return err;
+    // fetch data and add up
+    axes_t<int> accelAvg, gyroAvg;
+    for (int i = 0; i < packetCount; i++) {
+        if (MPU_ERR_CHECK(readFIFO(kPacketSize, buffer)))
+            return err;
+        // retrieve data
+        raw_axes_t accelCur, gyroCur;
+        accelCur.x = (buffer[0] << 8) | buffer[1];
+        accelCur.y = (buffer[2] << 8) | buffer[3];
+        accelCur.z = (buffer[4] << 8) | buffer[5];
+        gyroCur.x  = (buffer[6] << 8) | buffer[7];
+        gyroCur.y  = (buffer[8] << 8) | buffer[9];
+        gyroCur.z  = (buffer[10] << 8) | buffer[11];
+        // add up
+        accelAvg.x += accelCur.x;
+        accelAvg.y += accelCur.y;
+        accelAvg.z += accelCur.z;
+        gyroAvg.x += gyroCur.x;
+        gyroAvg.y += gyroCur.y;
+        gyroAvg.z += gyroCur.z;
+    }
+    // calculate average
+    accelAvg.x /= packetCount;
+    accelAvg.y /= packetCount;
+    accelAvg.z /= packetCount;
+    gyroAvg.x /= packetCount;
+    gyroAvg.y /= packetCount;
+    gyroAvg.z /= packetCount;
+    // remove gravity from Accel Z axis
+    const uint16_t gravityLSB = INT16_MAX >> (accelFS + 1);
+    accelAvg.z -= gravityLSB;
+    // save biases
+    for (int i = 0; i < 3; i++) {
+        (*accelBias)[i] = accelAvg[i];
+        (*gyroBias)[i] = gyroAvg[i];
+    }
+    // set back previous configs
+    if (MPU_ERR_CHECK(setSampleRate(prevSampleRate))) return err;
+    if (MPU_ERR_CHECK(setDigitalLowPassFilter(prevDLPF))) return err;
+    if (MPU_ERR_CHECK(setAccelFullScale(prevAccelFS))) return err;
+    if (MPU_ERR_CHECK(setGyroFullScale(prevGyroFS))) return err;
+    if (MPU_ERR_CHECK(setFIFOConfig(prevFIFOConfig))) return err;
+    if (MPU_ERR_CHECK(setFIFOEnabled(prevFIFOState))) return err;
+    return err;
+}
+
 
 
 

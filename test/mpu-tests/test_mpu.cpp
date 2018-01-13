@@ -682,6 +682,21 @@ TEST_CASE("MPU offset test", "[MPU]")
 
 
 
+TEST_CASE("MPU self-test check", "[MPU]")
+{
+    test::MPU_t mpu;
+    TEST_ESP_OK( mpu.testConnection());
+    TEST_ESP_OK( mpu.initialize());
+    /* test */
+    mpu::selftest_t selfTestResult;
+    TEST_ESP_OK( mpu.selfTest(&selfTestResult));
+    printf("[%s] SELF-TEST result: 0x%X\n",
+        (selfTestResult == mpu::SELF_TEST_PASS) ? (LOG_COLOR_I " OK " LOG_RESET_COLOR) : (LOG_COLOR_E "FAIL" LOG_RESET_COLOR),
+        selfTestResult);
+}
+
+
+
 TEST_CASE("MPU motion detection and wake-on-motion mode", "[MPU]")
 {
     test::MPU_t mpu;
@@ -752,6 +767,7 @@ TEST_CASE("MPU motion detection and wake-on-motion mode", "[MPU]")
     // free interrupt
     TEST_ESP_OK( mpuRemoveInterrupt());
 }
+
 
 
 #if defined CONFIG_MPU6050
@@ -833,7 +849,7 @@ TEST_CASE("MPU zero-motion detection", "[MPU]")
     while (xTaskGetTickCount() < endTick) {
         uint32_t cnt = ulTaskNotifyTake(pdTRUE, endTick - xTaskGetTickCount());
         if (cnt) {
-            printf(">>> ZRMOT interrupt detected!");
+            printf(">>> ZRMOT interrupt detected!\n");
         }
     }
     TEST_ESP_OK( mpu.setMotionFeatureEnabled(false));

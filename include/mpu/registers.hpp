@@ -298,12 +298,12 @@ constexpr uint8_t WHO_AM_I            {0x75};
  * MPU6000, MPU6050 and MPU9150 registers
  ******************************************************************************/
 #if defined CONFIG_MPU6050
-constexpr uint8_t XG_OTP_OFFSET_TC        {0x00};  // [7] PWR_MODE, [6:1] XG_OFFS_TC, [0] OTP_BNK_VLD
+constexpr uint8_t XG_OTP_OFFSET_TC    {0x00};  // [7] PWR_MODE, [6:1] XG_OFFS_TC, [0] OTP_BNK_VLD
 //------------------------------------------------------------------------------
-constexpr uint8_t YG_OTP_OFFSET_TC        {0x01};  // [7] PWR_MODE, [6:1] YG_OFFS_TC, [0] OTP_BNK_VLD
+constexpr uint8_t YG_OTP_OFFSET_TC    {0x01};  // [7] PWR_MODE, [6:1] YG_OFFS_TC, [0] OTP_BNK_VLD
 constexpr uint8_t TC_PWR_MODE_BIT             {7};  // note: TC = temperature compensation, i think
 //------------------------------------------------------------------------------
-constexpr uint8_t ZG_OTP_OFFSET_TC        {0x02};  // [7] PWR_MODE, [6:1] ZG_OFFS_TC, [0] OTP_BNK_VLD
+constexpr uint8_t ZG_OTP_OFFSET_TC    {0x02};  // [7] PWR_MODE, [6:1] ZG_OFFS_TC, [0] OTP_BNK_VLD
 constexpr uint8_t X_FINE_GAIN         {0x03};  // [7:0] X_FINE_GAIN
 constexpr uint8_t Y_FINE_GAIN         {0x04};  // [7:0] Y_FINE_GAIN
 constexpr uint8_t Z_FINE_GAIN         {0x05};  // [7:0] Z_FINE_GAIN
@@ -319,13 +319,13 @@ constexpr uint8_t SELF_TEST_Z         {0x0F};
 constexpr uint8_t SELF_TEST_A         {0x10};
 //------------------------------------------------------------------------------
 constexpr uint8_t MOTION_DETECT_STATUS{0x61};
-constexpr uint8_t MOT_STATUS_X_NEG_BIT             {7};
-constexpr uint8_t MOT_STATUS_X_POS_BIT             {6};
-constexpr uint8_t MOT_STATUS_Y_NEG_BIT             {5};
-constexpr uint8_t MOT_STATUS_Y_POS_BIT             {4};
-constexpr uint8_t MOT_STATUS_Z_NEG_BIT             {3};
-constexpr uint8_t MOT_STATUS_Z_POS_BIT             {2};
-constexpr uint8_t MOT_STATUS_ZRMOT_BIT             {0};
+constexpr uint8_t MOT_STATUS_X_NEG_BIT       {7};
+constexpr uint8_t MOT_STATUS_X_POS_BIT       {6};
+constexpr uint8_t MOT_STATUS_Y_NEG_BIT       {5};
+constexpr uint8_t MOT_STATUS_Y_POS_BIT       {4};
+constexpr uint8_t MOT_STATUS_Z_NEG_BIT       {3};
+constexpr uint8_t MOT_STATUS_Z_POS_BIT       {2};
+constexpr uint8_t MOT_STATUS_ZRMOT_BIT       {0};
 //------------------------------------------------------------------------------
 constexpr uint8_t MOTION_DETECT_CTRL  {0x69};
 constexpr uint8_t MOTCTRL_ACCEL_ON_DELAY_BIT {5};  // [5:4]

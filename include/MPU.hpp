@@ -93,6 +93,7 @@ class MPU {
     esp_err_t reset();
     esp_err_t setSleep(bool enable);
     esp_err_t testConnection();
+    esp_err_t selfTest(selftest_t *result);
     uint8_t whoAmI();
     bool getSleep();
 
@@ -228,6 +229,9 @@ class MPU {
     esp_err_t sensors(sensors_t* sensors, size_t extsens_len = 0);
 
  protected:
+    esp_err_t accelSelfTest(raw_axes_t& regularBias, raw_axes_t& selfTestBias, uint8_t *result);
+    esp_err_t gyroSelfTest(raw_axes_t& regularBias, raw_axes_t& selfTestBias, uint8_t *result);
+    esp_err_t getBiases(accel_fs_t accelFS, gyro_fs_t gyroFS, raw_axes_t *accelBias, raw_axes_t *gyroBias, bool selftest);
     mpu_bus_t* bus;
     mpu_addr_handle_t addr;
     uint8_t buffer[16];

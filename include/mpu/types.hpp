@@ -550,32 +550,11 @@ static constexpr uint8_t MAG_DATA_LENGTH = 8;  // bytes
 
 #endif  // Magnetometer stuff
 
+typedef uint8_t selftest_t;
+static constexpr selftest_t SELF_TEST_PASS          {0x0};
+static constexpr selftest_t SELF_TEST_GYRO_FAIL     {1 << 0};  // 0x1
+static constexpr selftest_t SELF_TEST_ACCEL_FAIL    {1 << 1};  // 0x2
 
-// // MPU configuration cache
-// typedef struct mpu_config_s {
-//     gyro_fsr_t gyro_fsr;
-//     accel_fsr_t accel_fsr;
-//     uint8_t sensors;
-//     dlpf_t dlpf;
-//     clock_src_t clock_src;
-//     uint16_t sample_rate;
-//     uint8_t fifo_en_reg;
-//     uint8_t int_en_reg;
-//     bool bypass_mode;
-//     bool accel_half;
-//     bool lp_accel_mode;
-//     bool int_motion_only;
-//     // struct motion_int_cache_s cache;
-//     int_lvl_t int_level;
-//     int_mode_t int_mode;
-//     bool dmp_on;
-//     bool dmp_loaded;
-//     uint16_t dmp_sample_rate;
-// #ifdef AK89xx_SECONDARY
-//     uint16_t mag_sample_rate;
-//     // int8_t mag_sens_adj[3];
-// #endif
-// } config_t;
 
 // // Information for self-test.
 // typedef struct mpu_test_s {

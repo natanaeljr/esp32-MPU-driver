@@ -29,6 +29,7 @@ See [Unit Testing in ESP32] for more information.
 1. standby mode
 1. FIFO buffer
 1. offset test
+1. self-test check
 1. motion detection and wake-on-motion mode
 1. free-fall detection
 1. zero-motion detection
