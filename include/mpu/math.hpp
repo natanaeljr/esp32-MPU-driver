@@ -41,27 +41,27 @@ namespace emd {
 namespace mpu {
 
 inline namespace math {
-constexpr uint8_t accelFSRvalue(const accel_fs_t fs) {
+inline uint8_t accelFSRvalue(const accel_fs_t fs) {
     return 2 << fs;
 }
 
-constexpr uint16_t gyroFSRvalue(const gyro_fs_t fs) {
+inline uint16_t gyroFSRvalue(const gyro_fs_t fs) {
     return 250 << fs;
 }
 
-constexpr uint16_t accelSensitivity(const accel_fs_t fs) {
+inline uint16_t accelSensitivity(const accel_fs_t fs) {
     return 16384 >> fs;
 }
 
-constexpr float gyroSensitivity(const gyro_fs_t fs) {
+inline float gyroSensitivity(const gyro_fs_t fs) {
     return 131.f / (1 << fs);
 }
 
-constexpr float accelResolution(const accel_fs_t fs) {
+inline float accelResolution(const accel_fs_t fs) {
     return static_cast<float>(accelFSRvalue(fs)) / INT16_MAX;
 }
 
-constexpr float gyroResolution(const gyro_fs_t fs) {
+inline float gyroResolution(const gyro_fs_t fs) {
     return static_cast<float>(gyroFSRvalue(fs)) / INT16_MAX;
 }
 
