@@ -33,10 +33,10 @@ The library is based on Invensense's Embedded Motion Driver 5.1.3 and 6.12 and i
 + Motion, Zero-motion and Free-Fall detection _(as motion detection interrupt)_
 + Total access to the Magnetometer _(even when MPU connected by SPI protocol)_
 + Calibration for Gyro and Accel
++ Self-Test _(implementation from MotionApps)_
 
 ##### To be implemented:
 
-+ Self-Test
 + DMP (Digital Motion Processor) interface
 
 #### DMP Features
