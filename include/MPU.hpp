@@ -122,6 +122,7 @@ class MPU {
     esp_err_t setAccelOffset(raw_axes_t bias);
     raw_axes_t getGyroOffset();
     raw_axes_t getAccelOffset();
+    esp_err_t computeOffsets(raw_axes_t *accel, raw_axes_t *gyro);
 
     esp_err_t setInterruptConfig(int_config_t config);
     esp_err_t setInterruptEnabled(int_en_t mask);

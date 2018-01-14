@@ -627,7 +627,7 @@ TEST_CASE("MPU offset test", "[MPU]")
     vTaskDelay(1000 / portTICK_PERIOD_MS);
     // without offsets
     mpu::raw_axes_t accelRaw, gyroRaw;
-    printf(">> Sensor data without offsets:\n");
+    printf(">> Sensor data without offsets cancellation:\n");
     for (int i = 0; i < 6; i++) {
         TEST_ESP_OK( mpu.motion(&accelRaw, &gyroRaw));
         printf("accel: [ %+d %+d %+d ] \t gyro: [ %+d %+d %+d ]\n",
@@ -646,7 +646,7 @@ TEST_CASE("MPU offset test", "[MPU]")
         gyroFactoryOffset.x, gyroFactoryOffset.y, gyroFactoryOffset.z);
     // calculate offsets
     mpu::raw_axes_t accelOffset, gyroOffset;
-    TEST_ESP_OK( mpu::utils::computeOffsets(mpu, &accelOffset, &gyroOffset));
+    TEST_ESP_OK( mpu.computeOffsets(&accelOffset, &gyroOffset));
     printf(">> Computed offsets:\n");
     printf("accel: [ %+d %+d %+d ] \t gyro: [ %+d %+d %+d ]\n",
         accelOffset.x, accelOffset.y, accelOffset.z, gyroOffset.x, gyroOffset.y, gyroOffset.z);
@@ -671,7 +671,7 @@ TEST_CASE("MPU offset test", "[MPU]")
     TEST_ASSERT( gyroOffset.z == retGyroOffset.z);
     // show results
     vTaskDelay(200 / portTICK_PERIOD_MS);  // let sensors stabilize again
-    printf(">> Resulted sensor data with computed offsets:\n");
+    printf(">> Resulted sensor data with computed offsets cancellation:\n");
     for (int i = 0; i < 6; i++) {
         TEST_ESP_OK( mpu.motion(&accelRaw, &gyroRaw));
         printf("accel: [ %+d %+d %+d ] \t gyro: [ %+d %+d %+d ]\n",

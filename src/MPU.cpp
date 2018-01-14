@@ -830,6 +830,30 @@ raw_axes_t MPU::getAccelOffset() {
 
 
 /**
+ * @brief: Compute Accelerometer and Gyroscope offsets.
+ * 
+ * This takes about ~400ms to compute offsets.
+ * When calculating the offsets the MPU must remain as horizontal as possible (0 degrees), facing up.
+ * It is better to call computeOffsets() before any configuration is done (better right after initialize()).
+ * 
+ * Note: Gyro offset output are LSB in 1000DPS format.
+ * Note: Accel offset output are LSB in 16G format.
+ * */
+esp_err_t MPU::computeOffsets(raw_axes_t *accel, raw_axes_t *gyro) {
+    constexpr accel_fs_t kAccelFS = ACCEL_FS_2G;  // most sensitive
+    constexpr gyro_fs_t kGyroFS = GYRO_FS_250DPS;  // most sensitive
+    if (MPU_ERR_CHECK(getBiases(kAccelFS, kGyroFS, accel, gyro, false)))
+        return err;
+    // convert offsets to 16G and 1000DPS format and invert values
+    for (int i = 0; i < 3; i++) {
+        (*accel)[i] = - ((*accel)[i] >> (types::ACCEL_FS_16G - kAccelFS));
+        (*gyro)[i] = - ((*gyro)[i] >> (types::GYRO_FS_1000DPS - kGyroFS));
+    }
+    return err;
+}
+
+
+/**
  * Read accelerometer data
  * */
 esp_err_t MPU::acceleration(raw_axes_t* accel) {
@@ -2226,10 +2250,10 @@ esp_err_t MPU::gyroSelfTest(raw_axes_t& regularBias, raw_axes_t& selfTestBias, u
  * Compute the Biases in regular mode and self-test mode
  * 
  * Note: This algorithm takes about ~400ms to compute offsets.
- * Note: When calculating the biases the MPU must remain as horizontal as possible (0 degrees).
+ * Note: When calculating the biases the MPU must remain as horizontal as possible (0 degrees), facing up.
  * */
 esp_err_t MPU::getBiases(accel_fs_t accelFS, gyro_fs_t gyroFS, raw_axes_t *accelBias, raw_axes_t *gyroBias, bool selftest) {
-    // configurations to compute offsets
+    // configurations to compute biases
     constexpr uint16_t kSampleRate = 1000;
     constexpr dlpf_t kDLPF = DLPF_188HZ;
     constexpr fifo_config_t kFIFOConfig = FIFO_CFG_ACCEL | FIFO_CFG_GYRO;
