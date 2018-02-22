@@ -150,7 +150,7 @@ config MPU_LOG_LEVEL
 
 
 config MPU_ENABLE_DMP
-    bool "Enable DMP (Digital Motion Processor)"
+    bool "Digital Motion Processor (DMP)"
     default "y"
     help
         Enable DMP (Digital Motion Processor) code to be compiled.

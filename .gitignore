@@ -1,12 +1,24 @@
-.vscode/
-**/build
+### ESP-IDF
+**/build/
 **/sdkconfig
 **/sdkconfig.old
-tools.mk
-NOTES.md
 
-## this partition table is generated
+## This partition table is generated
 test/unit-test-app/partition_table_unit_test_app.csv
 
-## temporarily
+### Miscellaneous
+NOTES.md
+tools.mk
+.clang-format
+
+### Visual Studio Code
+.vscode/
+
+### CLion
+.idea/
+CMakeLists.txt
+cmake-build-debug/
+
+
+### temporarily
 include/mpu/fusion.hpp
