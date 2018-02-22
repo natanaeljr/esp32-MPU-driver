@@ -1,7 +1,5 @@
 ![MPU Driver][Banner]
 
-Note: Under middle development.
-
 This repository is a driver/library for the following _TDK Invensense_ MPU's parts:
 
 + **MPU6000** - Gyro/Accel - [_SPI_ & _I2C_]
@@ -20,42 +18,34 @@ The library is based on Invensense's Embedded Motion Driver 5.1.3 and 6.12 and i
 
 ## Features
 
-##### Already implemented:
+- [x] Support to SPI and I2C protocol (with selectable port)
+- [x] Basic configurations (sample rate _(4Hz~32KHz)_, clock source, full-scale, standby mode, offsets, interrupts, DLPF, etc..)
+- [x] Burst reading for all sensors
+- [x] Low Power Accelerometer mode _(various rates, e.g. 8.4μA at 0.98Hz)_
+- [x] Low Power Wake-on-motion mode _(with motion detection interrupt)_
+- [x] FIFO buffer access for all internal and external sensors
+- [x] Complete Auxiliary I2C support for external sensors _(up to 4)_
+- [x] External Frame Synchronization _(FSYNC)_ pass-through interrupt
+- [x] Motion, Zero-motion and Free-Fall detection _(as motion detection interrupt)_
+- [x] Total access to the Magnetometer _(even when MPU connected by SPI protocol)_
+- [x] Calibration for Gyro and Accel
+- [x] Self-Test _(true implementation from MotionApps)_
 
-+ Support to SPI and I2C protocol
-+ Basic configurations (sample rate _(4Hz~32KHz)_, clock source, full-scale, standby mode, offsets, interrupts, DLPF, etc..)
-+ Burst reading for all sensors
-+ Low Power Accelerometer mode _(various rates, e.g. 8.4μA at 0.98Hz)_
-+ Low Power Wake-on-motion mode _(with motion detection interrupt)_
-+ FIFO buffer access for all internal and external sensors
-+ Complete Auxiliary I2C support for external sensors _(up to 4)_
-+ External Frame Synchronization _(FSYNC)_ pass-through interrupt
-+ Motion, Zero-motion and Free-Fall detection _(as motion detection interrupt)_
-+ Total access to the Magnetometer _(even when MPU connected by SPI protocol)_
-+ Calibration for Gyro and Accel
-+ Self-Test _(true implementation from MotionApps)_
+#### DMP
 
-##### To be implemented:
-
-+ DMP (Digital Motion Processor) interface
-
-#### DMP Features
-
-##### Future implementation:
-
-+ Quaternion (3-axis Gyroscope)
-+ Quaternion (6-axis Gyroscope and Accelerometer)
-+ Screen Orientation (Android's screen rotation algorithm)
-+ Tap Detection
-+ Pedometer
-+ Gyroscope calibrated data
+- [ ] Quaternion (3-axis Gyroscope)
+- [ ] Quaternion (6-axis Gyroscope and Accelerometer)
+- [ ] Screen Orientation (Android's screen rotation algorithm)
+- [ ] Tap Detection
+- [ ] Pedometer
+- [ ] Gyroscope calibrated data
 
 ## Instalation
 
 You can download the repository, or clone it right into your project components directory.
 
 ```git
-git clone https://github.com/natanaeljr/MPU-esp32-driver.git MPU
+git clone https://github.com/natanaeljr/esp32-MPU-driver.git MPU
 ```
 
 **Dependencies:** MPU driver depends on the following protocol libraries to communicate with the chip with ease. Download the one according to the protocol you'll use and place within your components directory as well.
@@ -105,15 +95,12 @@ printf("gyro: %+.2f %+.2f %+.2f\n", gyroDPS.x, gyroDPS.y, gyroDPS.z);
 
 ### Menuconfig
 
-TODO..
 
 ## Struture
 
-TODO..
 
 ## Tests
 
-TODO..
 Almost all methods and features already implemented have been unit-tested.
 
 ---
