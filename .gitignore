@@ -6,6 +6,11 @@
 ## This partition table is generated
 test/unit-test-app/partition_table_unit_test_app.csv
 
+### Documentation build artifacts
+docs/build/
+docs/source/xml/
+docs/source/man/
+
 ### Miscellaneous
 NOTES.md
 tools.mk
