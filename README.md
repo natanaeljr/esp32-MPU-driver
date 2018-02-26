@@ -121,6 +121,7 @@ Create a MPU object, setup and initialize it.
 MPU_t MPU;         // create an object
 MPU.setBus(i2c0);  // set communication bus, for SPI -> pass 'hspi'
 MPU.setAddr(mpud::MPU_I2CADDRESS_AD0_LOW);  // set address or handle, for SPI -> pass 'mpu_spi_handle'
+MPU.testConnection()  // test connection with the chip, return is a error code
 MPU.initialize();  // this will initialize the chip and set default configurations
 ```
 
