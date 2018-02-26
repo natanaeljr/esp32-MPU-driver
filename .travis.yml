@@ -1,0 +1,38 @@
+sudo: false
+
+# Environment variables
+env:
+  global:
+    - GH_REPO_NAME: esp32-MPU-driver
+    - GH_REPO_REF: github.com/natanaeljr/esp32-MPU-driver.git
+    - DOXYFILE_PATH: docs/doxygen
+    - DOXYFILE: Doxyfile
+
+# Install dependencies
+addons:
+  apt:
+    packages:
+      - doxygen
+      - doxygen-doc
+      - doxygen-latex
+      - doxygen-gui
+      - graphviz
+
+# Build your code e.g. by calling make
+script:
+  - make --help
+
+# Generate Doxygen documentation
+after_success:
+  - cd $TRAVIS_BUILD_DIR/tools/ci
+  - chmod +x gen_doxygen_docs.sh
+  - ./gen_doxygen_docs.sh
+
+# Deploy to gh-pages
+deploy:
+  provider: pages
+  skip-cleanup: true
+  github-token: $GITHUB_TOKEN
+  keep-history: true
+  target-branch: gh-pages
+  local-dir: gh-pages
