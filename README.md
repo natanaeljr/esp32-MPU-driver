@@ -1,5 +1,5 @@
-[![Documentation](https://readthedocs.org/projects/esp32-mpu-driver/badge/?version=dev "Documentation Status")](https://esp32-mpu-driver.readthedocs.io/en/dev)
-[![Build Status](https://travis-ci.org/natanaeljr/esp32-MPU-driver.svg?branch=dev)](https://travis-ci.org/natanaeljr/esp32-MPU-driver)
+[![Documentation](https://readthedocs.org/projects/esp32-mpu-driver/badge/?version=latest "Documentation Status")](https://esp32-mpu-driver.readthedocs.io/en/latest)
+[![Build Status](https://travis-ci.org/natanaeljr/esp32-MPU-driver.svg?branch=master)](https://travis-ci.org/natanaeljr/esp32-MPU-driver)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ![MPU Driver][Banner]
@@ -74,7 +74,7 @@ SPIbus:  git clone https://github.com/natanaeljr/esp32-SPIbus.git SPIbus
 
 ## Installation
 
-Download the repository [here](https://github.com/natanaeljr/esp32-MPU-driver/archive/dev.zip),
+Download the repository [here](https://github.com/natanaeljr/esp32-MPU-driver/archive/master.zip),
 or clone it right into your project components directory with the following command.
 
 ```
