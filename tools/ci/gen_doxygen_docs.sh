@@ -6,7 +6,7 @@ set -e
 
 # Get the current gh-pages branch
 cd $TRAVIS_BUILD_DIR
-git clone -b gh-pages https://$GIT_REPO_REF gh-pages
+git clone --recursive -b gh-pages https://$GH_REPO_REF gh-pages
 cd gh-pages
 
 # Need to create a .nojekyll file to allow filenames starting with an underscore
