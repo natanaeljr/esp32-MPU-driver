@@ -78,7 +78,7 @@ Download the repository [here](https://github.com/natanaeljr/esp32-MPU-driver/ar
 or clone it right into your project components directory with the following command.
 
 ```
-git clone https://github.com/natanaeljr/esp32-MPU-driver.git MPU-driver
+git clone https://github.com/natanaeljr/esp32-MPU-driver.git MPUdriver
 ```
 
 This way you can easily update the library with `git pull` whenever a update is available.
