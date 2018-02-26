@@ -1,25 +1,13 @@
-/* =========================================================================
-This library is placed under the MIT License
-Copyright 2017 Natanael Josue Rabello. All rights reserved.
+// =========================================================================
+// This library is placed under the MIT License
+// Copyright 2017-2018 Natanael Josue Rabello. All rights reserved.
+// For the license information refer to LICENSE file in root directory.
+// =========================================================================
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to
-deal in the Software without restriction, including without limitation the
-rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-sell copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-IN THE SOFTWARE.
- ========================================================================= */
+/**
+ * @file mpu/math.hpp
+ * @brief MPU Math helper file
+ */
 
 #ifndef _MPU_MATH_HPP_
 #define _MPU_MATH_HPP_
@@ -30,17 +18,12 @@ IN THE SOFTWARE.
 #include "mpu/types.hpp"
 
 
-/* ^^^^^^^^^^^^^^^^^^^^^^
- * Embedded Motion Driver
- * ^^^^^^^^^^^^^^^^^^^^^^ */
-namespace emd {
+/*! MPU Driver namespace */
+namespace mpud {
 
-/* ^^^^^^^^^^^^^^^^^^^^^
- * Motion Processor Unit
- * ^^^^^^^^^^^^^^^^^^^^^ */
-namespace mpu {
-
+/*! Math namespace */
 inline namespace math {
+
 inline uint8_t accelFSRvalue(const accel_fs_t fs) {
     return 2 << fs;
 }
@@ -134,12 +117,9 @@ inline int16_t magAdjust(const int16_t axis, const uint8_t adjValue) {
     return axis * ((adjValue - 128) * factor + 1);
 }
 #endif
+
 }  // namespace math
 
-}  // namespace mpu
-
-}  // namespace emd
-
-
+}  // namespace mpud
 
 #endif  /* end of include guard: _MPU_MATH_HPP_ */

@@ -1,0 +1,24 @@
+/*!
+\mainpage MPU Drive - API Reference
+
+
+
+<div style="font-size: 1.2em; line-height: 1.8em">
+
+MPU Driver is a C++ library developed for <a href="https://www.espressif.com/en/products/hardware/esp32/overview" target="_blank">ESP32 Microcontroller</a>.
+It is meant to provide a complete interface for working with <i>Invensense MPU</i> chips.
+
+All classes, types, enums and functions are involved within the namespace `mpud` which stands for mpu-driver.
+
+The MPU class from `MPU.hpp` file contains lots of useful information. **See** mpud::MPU first, then mpud::types.
+
+</div>
+
+<hr>
+
+<b>Main Documentation</b> can be acessed <a href="https://esp32-mpu-driver.readthedocs.io/en/latest" target="_blank">here</a>
+and <b>GitHub repository</b> <a href="https://github.com/natanaeljr/esp32-mpu-driver" target="_blank">here</a>.
+
+_Created by Natanael Josue Rabello. Copyright © 2017-2018._
+
+*/

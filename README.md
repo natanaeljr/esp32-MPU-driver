@@ -1,20 +1,35 @@
+[![Documentation](https://readthedocs.org/projects/esp32-mpu-driver/badge/?version=dev "Documentation Status")](https://esp32-mpu-driver.readthedocs.io/en/dev)
+[![Build Status](https://travis-ci.org/natanaeljr/esp32-MPU-driver.svg?branch=dev)](https://travis-ci.org/natanaeljr/esp32-MPU-driver)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 ![MPU Driver][Banner]
 
-This repository is a driver/library for the following _TDK Invensense_ MPU's parts:
+[Banner]: docs/source/_static/MPUdriver.jpg
 
-+ **MPU6000** - Gyro/Accel - [_SPI_ & _I2C_]
-+ **MPU6050** - Gyro/Accel - [_I2C_]
-+ **MPU6500** - Gyro/Accel - [_SPI_ & _I2C_]
-+ **MPU6555** - Gyro/Accel - [_SPI_ & _I2C_]
-+ **MPU9150** - Gyro/Accel/Compass - [_I2C_]
-+ **MPU9250** - Gyro/Accel/Compass - [_SPI_ & _I2C_]
-+ **MPU9255** - Gyro/Accel/Compass - [_SPI_ & _I2C_]
+A library for _Invensense_ MPU chips.
+It is written in C++ and designed for working with **[ESP32]** microcontroller _[esp-idf]_ framework.
+Supports both SPI and I2C protocols interchangeably, selectable bus port, and even multiple connected MPUs.
 
-Yes! Supports all these models and both SPI and I2C protocols.
-The objective here is to make a very complete library for these awesome chips and unlock all of their features.
+[ESP32]: https://www.espressif.com/en/products/hardware/esp32/overview
+[esp-idf]: https://github.com/espressif/esp-idf/
 
-The library is written in C++ and designed for working with **ESP32 IoT Development Framework _(esp-idf)_**.
-The library is based on Invensense's Embedded Motion Driver 5.1.3 and 6.12 and inherits a bit of style from Jeff Rowberg's MPU6050 library for Arduino.
+## Models
+
+|     part      |      sensors       |   protocol   |
+| ------------: | :----------------: | :----------- |
+| **[MPU6000]** | Gyro/Accel         | _I2C_, _SPI_ |
+| **[MPU6050]** | Gyro/Accel         | _I2C_        |
+| **[MPU6500]** | Gyro/Accel         | _I2C_, _SPI_ |
+|  **MPU6555**  | Gyro/Accel         | _I2C_, _SPI_ |
+| **[MPU9150]** | Gyro/Accel/Compass | _I2C_        |
+| **[MPU9250]** | Gyro/Accel/Compass | _I2C_, _SPI_ |
+|  **MPU9255**  | Gyro/Accel/Compass | _I2C_, _SPI_ |
+
+[MPU6000]: https://www.invensense.com/products/motion-tracking/6-axis/mpu-6050/
+[MPU6050]: https://www.invensense.com/products/motion-tracking/6-axis/mpu-6050/
+[MPU6500]: https://www.invensense.com/products/motion-tracking/6-axis/mpu-6500/
+[MPU9150]: https://www.invensense.com/products/motion-tracking/9-axis/mpu-9150/
+[MPU9250]: https://www.invensense.com/products/motion-tracking/9-axis/mpu-9250/
 
 ## Features
 
@@ -40,73 +55,121 @@ The library is based on Invensense's Embedded Motion Driver 5.1.3 and 6.12 and i
 - [ ] Pedometer
 - [ ] Gyroscope calibrated data
 
-## Instalation
+# Getting Started
 
-You can download the repository, or clone it right into your project components directory.
+## Prerequisites
 
-```git
-git clone https://github.com/natanaeljr/esp32-MPU-driver.git MPU
+MPU driver depends on the following protocol libraries to communicate with the chip with ease: [ [I2Cbus] | [SPIbus] ].  
+You must download the one according to the protocol you'll use and place within your components directory as well.
+
+```
+I2Cbus:  git clone https://github.com/natanaeljr/esp32-I2Cbus.git I2Cbus
+SPIbus:  git clone https://github.com/natanaeljr/esp32-SPIbus.git SPIbus
 ```
 
-**Dependencies:** MPU driver depends on the following protocol libraries to communicate with the chip with ease. Download the one according to the protocol you'll use and place within your components directory as well.
+**_Note:_** At least one of these libraries must be installed as components for the MPU library to work. It won't work otherwise.
 
-+ Communication libs:  [I2Cbus] | [SPIbus]
+[I2Cbus]: https://github.com/natanaeljr/esp32-I2Cbus
+[SPIbus]: https://github.com/natanaeljr/esp32-SPIbus
 
-_NOTE:_ Either one of these libraries must be installed as components in your project for the MPU library to work. It won't work otherwise.
+## Installation
+
+Download the repository [here](https://github.com/natanaeljr/esp32-MPU-driver/archive/dev.zip),
+or clone it right into your project components directory with the following command.
+
+```
+git clone https://github.com/natanaeljr/esp32-MPU-driver.git MPUdriver
+```
+
+This way you can easily update the library with `git pull` whenever a update is available.
 
 ## Usage
 
-Example:
+First of all, make sure MPU Driver is a component in you project, then run `make menuconfig`, select your chip model and communication protocol you'll use browsing through to `Component config` -> `MPU Driver`.
+
+![Menuconfig](docs/source/_static/menuconfig_mpu-driver.png "Menuconfig -> MPU Driver")
+
+Now, in your source code, include the mpu main header `MPU.hpp`, the communication library `I2Cbus.hpp` or `SPIbus.hpp` and any other mpu headers that you'll use. Then get the bus ready as shown below.
 
 ```C++
+#include "MPU.hpp"        // main file, provides the class itself
+#include "mpu/math.hpp"   // math helper for dealing with MPU data
+#include "mpu/types.hpp"  // MPU data types and definitions
 #include "I2Cbus.hpp"
-#include "MPU.hpp"
-#include "mpu/math.hpp"
-#include "mpu/types.hpp"
-
-using namespace emd;  // embedded motion driver, contains mpu
 // ...
-// initialize communication bus
-i2c0.begin(SDA, SCL, CLOCK);
-// MPU object
-MPU_t MPU;
-// setup and initialize
-MPU.setBus(i2c0).setAddr(mpu::MPU_I2CADDRESS_AD0_LOW);
-MPU.initialize();
-// configure as needed
-MPU.setSampleRate(250);  // Hz
-MPU.setAccelFullScale(mpu::ACCEL_FS_4G);
-MPU.setGyroFullScale(mpu::GYRO_FS_500DPS);
-MPU.setDigitalLowPassFilter(mpu::DLPF_42HZ);  // smother data
-MPU.setInterruptEnabled(mpu::INT_EN_RAWDATA_READY);  // enable INT pin
-// read sensors data
-mpu::raw_axes_t accelRaw;
-mpu::raw_axes_t gyroRaw;
-MPU.motion(&accelRaw, &gyroRaw);
-printf("accel: %+d %+d %+d\n", accelRaw.x, accelRaw.y, accelRaw.z);
-printf("gyro: %+d %+d %+d\n", gyroRaw[0], gyroRaw[1], gyroRaw[2]);
-// convert data
-mpu::float_axes_t accelG = mpu::accelGravity(accelRaw, mpu::ACCEL_FS_4G);
-mpu::float_axes_t gyroDPS = mpu::gyroDecPerSec(gyroRaw, mpu::GYRO_FS_500DPS);
-printf("accel: %+.2f %+.2f %+.2f\n", accelG[0], accelG[1], accelG[2]);
-printf("gyro: %+.2f %+.2f %+.2f\n", gyroDPS.x, gyroDPS.y, gyroDPS.z);
-// so on..
+i2c0.begin(SDA, SCL, CLOCK);  // initialize the I2C bus
 ```
 
-### Menuconfig
+And for SPI:
 
+```C++
+#include "MPU.hpp"        // main file, provides the class itself
+#include "mpu/math.hpp"   // math helper for dealing with MPU data
+#include "mpu/types.hpp"  // MPU data types and definitions
+#include "SPIbus.hpp"
+// ...
+hspi.begin(MOSI, MISO, SCLK);  // initialize the SPI bus
+spi_device_handle_t mpu_spi_handle;
+hspi.addDevice(SPIMODE, CLOCK, CS_PIN, &mpu_spi_handle);
+```
 
-## Struture
+**Note**: You can initialize/configure the bus through the _esp-idf_ API normally, it should work just fine too.
 
+Create a MPU object, setup and initialize it.
+
+```C++
+MPU_t MPU;         // create an object
+MPU.setBus(i2c0);  // set communication bus, for SPI -> pass 'hspi'
+MPU.setAddr(mpud::MPU_I2CADDRESS_AD0_LOW);  // set address or handle, for SPI -> pass 'mpu_spi_handle'
+MPU.testConnection()  // test connection with the chip, return is a error code
+MPU.initialize();  // this will initialize the chip and set default configurations
+```
+
+Call `set` functions to configure the chip as needed.
+
+```C++
+MPU.setSampleRate(250);  // in (Hz)
+MPU.setAccelFullScale(mpud::ACCEL_FS_4G);
+MPU.setGyroFullScale(mpud::GYRO_FS_500DPS);
+MPU.setDigitalLowPassFilter(mpud::DLPF_42HZ);  // smoother data
+MPU.setInterruptEnabled(mpud::INT_EN_RAWDATA_READY);  // enable INT pin
+```
+
+Read sensor data:
+
+```C++
+mpud::raw_axes_t accelRaw;     // holds x, y, z axes as int16
+mpud::raw_axes_t gyroRaw;      // holds x, y, z axes as int16
+MPU.acceleration(&accelRaw);  // fetch raw data from the registers
+MPU.rotation(&gyroRaw);       // fetch raw data from the registers
+printf("accel: %+d %+d %+d\n", accelRaw.x, accelRaw.y, accelRaw.z);
+printf("gyro: %+d %+d %+d\n", gyroRaw[0], gyroRaw[1], gyroRaw[2]);
+```
+
+Convert to more readable formats.
+
+```C++
+mpud::float_axes_t accelG = mpud::accelGravity(accelRaw, mpud::ACCEL_FS_4G);  // raw data to gravity
+mpud::float_axes_t gyroDPS = mpud::gyroDecPerSec(gyroRaw, mpud::GYRO_FS_500DPS);  // raw data to º/s
+printf("accel: %+.2f %+.2f %+.2f\n", accelG[0], accelG[1], accelG[2]);
+printf("gyro: %+.2f %+.2f %+.2f\n", gyroDPS.x, gyroDPS.y, gyroDPS.z);
+```
+
+The API provides many other functions to manage and operate the sensor in its full potencial. See 
+<a href="https://natanaeljr.github.io/esp32-MPU-driver" target="_blank">
+<b>API Reference</b>
+</a>.
 
 ## Tests
 
-Almost all methods and features already implemented have been unit-tested.
+See [MPU Unit Test] for more information.
+
+[MPU Unit Test]: test/README.md
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+Copyright © 2017-2018, Natanael Josue Rabello [_natanael.rabello@outlook.com_]
 
 ---
-
-Copyright © 2017 Natanael Josue Rabello [_natanael.rabello@outlook.com_]
-
-[Banner]: MPUdriver.jpg
-[I2Cbus]: https://github.com/natanaeljr/I2Cbus-esp32
-[SPIbus]: https://github.com/natanaeljr/SPIbus-esp32
