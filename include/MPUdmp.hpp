@@ -26,6 +26,7 @@ namespace mpud {
 /*! DMP namespace */
 namespace dmp {
 
+/*! MPU with DMP interface */
 class MPUdmp : public mpud::MPU {
 };
 

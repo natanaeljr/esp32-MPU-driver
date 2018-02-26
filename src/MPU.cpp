@@ -38,7 +38,7 @@ namespace mpud {
  *  - DLPF: 42Hz
  *  - INT pin: disabled
  *  - FIFO: disabled
- *  - Clock source: gyro PLL
+ *  - Clock source: gyro PLL \n
  *  For MPU9150 and MPU9250:
  *  - Aux I2C Master: enabled, clock: 400KHz
  *  - Compass: enabled on Aux I2C's Slave 0 and Slave 1
