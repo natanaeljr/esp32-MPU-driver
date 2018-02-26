@@ -1,5 +1,6 @@
-/*
- * Test for the MPU driver
+/**
+ * @file test_mpu.cpp
+ * Test file for MPU Driver
  */
 
 #include "stdio.h"
@@ -22,12 +23,6 @@
 #include "mpu/utils.hpp"
 #include "mpu/math.hpp"
 
-
-// embedded motion driver
-using namespace emd;
-
-
-
 namespace test {
 /**
  * Bus type
@@ -48,16 +43,16 @@ bool isBusInit = false;
  * instantiated, and close when object is destroyed.
  * Also, resets MPU on construction and destruction.
  * */
-class MPU : public mpu::MPU {
+class MPU : public mpud::MPU {
  public:
-    MPU() : mpu::MPU() {
+    MPU() : mpud::MPU() {
         #ifdef CONFIG_MPU_I2C
         if (!isBusInit) {
             i2c.begin((gpio_num_t)CONFIG_MPU_TEST_I2CBUS_SDA_PIN, (gpio_num_t)CONFIG_MPU_TEST_I2CBUS_SCL_PIN,
                 CONFIG_MPU_TEST_I2CBUS_CLOCK_HZ);
         }
         this->setBus(i2c);
-        this->setAddr((mpu::mpu_i2caddr_t)(CONFIG_MPU_TEST_I2CBUS_ADDR + mpu::MPU_I2CADDRESS_AD0_LOW));
+        this->setAddr((mpud::mpu_i2caddr_t)(CONFIG_MPU_TEST_I2CBUS_ADDR + mpud::MPU_I2CADDRESS_AD0_LOW));
 
         #elif CONFIG_MPU_SPI
         if (!isBusInit) {
@@ -92,7 +87,7 @@ using MPU_t = MPU;
 /** Setup gpio and ISR for interrupt pin (ISR must IRAM_ATTR)*/
 static esp_err_t mpuConfigInterrupt(void (*isr)(void*), void * arg) {
     esp_err_t ret = ESP_OK;
-    gpio_config_t io_config;
+    gpio_config_t io_config{};
     io_config.pin_bit_mask = ((uint64_t) 1 << CONFIG_MPU_TEST_INTERRUPT_PIN);
     io_config.mode = GPIO_MODE_INPUT;
     io_config.pull_up_en = GPIO_PULLUP_DISABLE;
@@ -137,7 +132,7 @@ static void mpuMeasureSampleRate(test::MPU_t& mpu, uint16_t rate, int numOfSampl
     printf("> Now measuring true interrupt rate... wait %d secs\n", numOfSamples);
     TEST_ESP_OK( mpuConfigInterrupt(mpuInterruptCounterISR, (void*) &count));
     // enable raw-sensor-data-ready interrupt to propagate to interrupt pin.
-    TEST_ESP_OK( mpu.writeByte(mpu::regs::INT_ENABLE, (1 << mpu::regs::INT_ENABLE_RAW_DATA_RDY_BIT)));
+    TEST_ESP_OK( mpu.writeByte(mpud::regs::INT_ENABLE, (1 << mpud::regs::INT_ENABLE_RAW_DATA_RDY_BIT)));
     vTaskDelay((numOfSamples * 1000) / portTICK_PERIOD_MS);
     TEST_ESP_OK( mpuRemoveInterrupt());
     uint16_t finalRate = count / numOfSamples;
@@ -168,29 +163,29 @@ TEST_CASE("MPU basic test", "[MPU]")
     // initialize
     TEST_ESP_OK( mpu.initialize());
     // clock source
-    mpu::clock_src_t clock_src = mpu::CLOCK_INTERNAL;
+    mpud::clock_src_t clock_src = mpud::CLOCK_INTERNAL;
     TEST_ESP_OK( mpu.setClockSource(clock_src));
     TEST_ASSERT_EQUAL_INT(clock_src, mpu.getClockSource());
     TEST_ESP_OK( mpu.lastError());
-    clock_src = mpu::CLOCK_PLL;
+    clock_src = mpud::CLOCK_PLL;
     TEST_ESP_OK( mpu.setClockSource(clock_src));
     TEST_ASSERT_EQUAL_INT(clock_src, mpu.getClockSource());
     TEST_ESP_OK( mpu.lastError());
     // digital low pass filter
-    mpu::dlpf_t dlpf = mpu::DLPF_10HZ;
+    mpud::dlpf_t dlpf = mpud::DLPF_10HZ;
     TEST_ESP_OK( mpu.setDigitalLowPassFilter(dlpf));
     TEST_ASSERT_EQUAL_INT(dlpf, mpu.getDigitalLowPassFilter());
     TEST_ESP_OK( mpu.lastError());
-    dlpf = mpu::DLPF_188HZ;
+    dlpf = mpud::DLPF_188HZ;
     TEST_ESP_OK( mpu.setDigitalLowPassFilter(dlpf));
     TEST_ASSERT_EQUAL_INT(dlpf, mpu.getDigitalLowPassFilter());
     TEST_ESP_OK( mpu.lastError());
     // full scale range
-    mpu::gyro_fs_t gyro_fs = mpu::GYRO_FS_500DPS;
+    mpud::gyro_fs_t gyro_fs = mpud::GYRO_FS_500DPS;
     TEST_ESP_OK( mpu.setGyroFullScale(gyro_fs));
     TEST_ASSERT_EQUAL_INT(gyro_fs, mpu.getGyroFullScale());
     TEST_ESP_OK( mpu.lastError());
-    mpu::accel_fs_t accel_fs = mpu::ACCEL_FS_16G;
+    mpud::accel_fs_t accel_fs = mpud::ACCEL_FS_16G;
     TEST_ESP_OK( mpu.setAccelFullScale(accel_fs));
     TEST_ASSERT_EQUAL_INT(accel_fs, mpu.getAccelFullScale());
     TEST_ESP_OK( mpu.lastError());
@@ -211,14 +206,14 @@ TEST_CASE("MPU sample rate measurement", "[MPU]")
     TEST_ESP_OK( mpu.setSampleRate(512));
     TEST_ESP_OK( mpu.setSampleRate(258));
     #ifdef CONFIG_MPU6500
-    TEST_ESP_OK( mpu.setFchoice(mpu::FCHOICE_2));
-    TEST_ASSERT_EQUAL_INT( mpu::FCHOICE_2, mpu.getFchoice());
+    TEST_ESP_OK( mpu.setFchoice(mpud::FCHOICE_2));
+    TEST_ASSERT_EQUAL_INT( mpud::FCHOICE_2, mpu.getFchoice());
     TEST_ESP_OK( mpu.lastError());
     TEST_ESP_OK( mpu.setSampleRate(25));
     TEST_ASSERT_NOT_EQUAL( 25, mpu.getSampleRate());
     TEST_ESP_OK( mpu.lastError());
-    TEST_ESP_OK( mpu.setFchoice(mpu::FCHOICE_3));
-    TEST_ASSERT_EQUAL_INT( mpu::FCHOICE_3, mpu.getFchoice());
+    TEST_ESP_OK( mpu.setFchoice(mpud::FCHOICE_3));
+    TEST_ASSERT_EQUAL_INT( mpud::FCHOICE_3, mpu.getFchoice());
     TEST_ESP_OK( mpu.lastError());
     #endif
     /** rate measurement */
@@ -238,12 +233,12 @@ TEST_CASE("MPU max sample rate test", "[MPU]")
     TEST_ESP_OK( mpu.testConnection());
     TEST_ESP_OK( mpu.setSleep(false));
     #ifdef CONFIG_MPU6500
-    TEST_ESP_OK( mpu.setFchoice(mpu::FCHOICE_0));
-    TEST_ASSERT_EQUAL_INT( mpu::FCHOICE_0, mpu.getFchoice());
+    TEST_ESP_OK( mpu.setFchoice(mpud::FCHOICE_0));
+    TEST_ASSERT_EQUAL_INT( mpud::FCHOICE_0, mpu.getFchoice());
     TEST_ESP_OK( mpu.lastError());
     #endif
     /* measure maximum sample rate consistency */
-    uint16_t rate = mpu::SAMPLE_RATE_MAX;
+    uint16_t rate = mpud::SAMPLE_RATE_MAX;
     constexpr int numOfSamples = 5;
     mpuMeasureSampleRate(mpu, rate, numOfSamples);
 }
@@ -266,17 +261,17 @@ TEST_CASE("MPU low power accelerometer mode", "[MPU]")
     TEST_ESP_OK( mpu.lastError());
     /* assert sample rate */
     #if defined CONFIG_MPU6050
-    constexpr mpu::lp_accel_rate_t lp_accel_rates[] = {
-        mpu::LP_ACCEL_RATE_5HZ,
-        mpu::LP_ACCEL_RATE_20HZ,
-        mpu::LP_ACCEL_RATE_40HZ
+    constexpr mpud::lp_accel_rate_t lp_accel_rates[] = {
+        mpud::LP_ACCEL_RATE_5HZ,
+        mpud::LP_ACCEL_RATE_20HZ,
+        mpud::LP_ACCEL_RATE_40HZ
     };
     constexpr uint16_t rates[] = {5, 20, 40};
     #elif defined CONFIG_MPU6500
-    constexpr mpu::lp_accel_rate_t lp_accel_rates[] = {
-        mpu::LP_ACCEL_RATE_1_95HZ,
-        mpu::LP_ACCEL_RATE_31_25HZ,
-        mpu::LP_ACCEL_RATE_125HZ
+    constexpr mpud::lp_accel_rate_t lp_accel_rates[] = {
+        mpud::LP_ACCEL_RATE_1_95HZ,
+        mpud::LP_ACCEL_RATE_31_25HZ,
+        mpud::LP_ACCEL_RATE_125HZ
     };
     constexpr uint16_t rates[] = {2, 31, 125};
     #endif
@@ -297,14 +292,14 @@ TEST_CASE("MPU interrupt configuration", "[MPU]")
     TEST_ESP_OK( mpu.testConnection());
     TEST_ESP_OK( mpu.initialize());
     // configurations
-    mpu::int_config_t intconfig = {
-        .level = mpu::INT_LVL_ACTIVE_LOW,
-        .drive = mpu::INT_DRV_PUSHPULL,
-        .mode = mpu::INT_MODE_LATCH,
-        .clear = mpu::INT_CLEAR_STATUS_REG
+    mpud::int_config_t intconfig = {
+        .level = mpud::INT_LVL_ACTIVE_LOW,
+        .drive = mpud::INT_DRV_PUSHPULL,
+        .mode = mpud::INT_MODE_LATCH,
+        .clear = mpud::INT_CLEAR_STATUS_REG
     };
     TEST_ESP_OK( mpu.setInterruptConfig(intconfig));
-    mpu::int_config_t retIntconfig = mpu.getInterruptConfig();
+    mpud::int_config_t retIntconfig = mpu.getInterruptConfig();
     TEST_ESP_OK( mpu.lastError());
     TEST_ASSERT( retIntconfig.level == intconfig.level);
     TEST_ASSERT( retIntconfig.drive == intconfig.drive);
@@ -312,7 +307,7 @@ TEST_CASE("MPU interrupt configuration", "[MPU]")
     TEST_ASSERT( retIntconfig.clear == intconfig.clear);
     // test all interrupt setups
     unsigned int interrupts;
-    mpu::int_en_t retInterrupts;
+    mpud::int_en_t retInterrupts;
     for (interrupts = 0; interrupts <= 0xFF; ++interrupts) {
         TEST_ESP_OK( mpu.setInterruptEnabled(interrupts));
         vTaskDelay(20 / portTICK_PERIOD_MS);
@@ -334,16 +329,16 @@ TEST_CASE("MPU basic auxiliary I2C configuration", "[MPU]")
     TEST_ESP_OK( mpu.testConnection());
     TEST_ESP_OK( mpu.initialize());
     /* master configs */
-    mpu::auxi2c_config_t auxi2cConfig;
-    auxi2cConfig.clock = mpu::AUXI2C_CLOCK_258KHZ;
+    mpud::auxi2c_config_t auxi2cConfig{};
+    auxi2cConfig.clock = mpud::AUXI2C_CLOCK_258KHZ;
     auxi2cConfig.multi_master_en = true;
-    auxi2cConfig.transition = mpu::AUXI2C_TRANS_STOP;
+    auxi2cConfig.transition = mpud::AUXI2C_TRANS_STOP;
     auxi2cConfig.sample_delay = 31;
     auxi2cConfig.shadow_delay_en = true;
     auxi2cConfig.wait_for_es = false;
     TEST_ESP_OK( mpu.setAuxI2CConfig(auxi2cConfig));
     // check config
-    mpu::auxi2c_config_t retAuxi2cConfig;
+    mpud::auxi2c_config_t retAuxi2cConfig{};
     retAuxi2cConfig = mpu.getAuxI2CConfig();
     TEST_ESP_OK( mpu.lastError());
     TEST_ASSERT( auxi2cConfig.clock == retAuxi2cConfig.clock);
@@ -361,27 +356,27 @@ TEST_CASE("MPU basic auxiliary I2C configuration", "[MPU]")
     TEST_ASSERT_FALSE( mpu.getAuxI2CBypass());
     TEST_ESP_OK( mpu.lastError());
     /* slaves configs */
-    mpu::auxi2c_slv_config_t slv0config;
-    slv0config.slave = mpu::AUXI2C_SLAVE_0;
+    mpud::auxi2c_slv_config_t slv0config{};
+    slv0config.slave = mpud::AUXI2C_SLAVE_0;
     slv0config.addr = 0x1F;
-    slv0config.rw = mpu::AUXI2C_READ;
+    slv0config.rw = mpud::AUXI2C_READ;
     slv0config.reg_addr = 0x07;
     slv0config.reg_dis = 0;
     slv0config.swap_en = 0;
     slv0config.rxlength = 14;
     slv0config.sample_delay_en = 0;
     TEST_ESP_OK( mpu.setAuxI2CSlaveConfig(slv0config));
-    mpu::auxi2c_slv_config_t slv1config;
-    slv1config.slave = mpu::AUXI2C_SLAVE_1;
+    mpud::auxi2c_slv_config_t slv1config{};
+    slv1config.slave = mpud::AUXI2C_SLAVE_1;
     slv1config.addr = 0x19;
-    slv1config.rw = mpu::AUXI2C_WRITE;
+    slv1config.rw = mpud::AUXI2C_WRITE;
     slv1config.reg_addr = 0x50;
     slv1config.reg_dis = 1;
     slv1config.txdata = 0xFA;
     slv1config.sample_delay_en = 1;
     TEST_ESP_OK( mpu.setAuxI2CSlaveConfig(slv1config));
     // check configs
-    mpu::auxi2c_slv_config_t retSlvconfig;
+    mpud::auxi2c_slv_config_t retSlvconfig{};
     retSlvconfig = mpu.getAuxI2CSlaveConfig(slv0config.slave);
     TEST_ESP_OK( mpu.lastError());
     TEST_ASSERT( slv0config.slave == retSlvconfig.slave);
@@ -425,10 +420,10 @@ TEST_CASE("MPU slave 4 tranfers", "[MPU]")
     TEST_ESP_OK( mpu.testConnection());
     TEST_ESP_OK( mpu.initialize());
     // config master first
-    mpu::auxi2c_config_t auxi2cConfig;
-    auxi2cConfig.clock = mpu::AUXI2C_CLOCK_400KHZ;
+    mpud::auxi2c_config_t auxi2cConfig{};
+    auxi2cConfig.clock = mpud::AUXI2C_CLOCK_400KHZ;
     auxi2cConfig.multi_master_en = true;
-    auxi2cConfig.transition = mpu::AUXI2C_TRANS_RESTART;
+    auxi2cConfig.transition = mpud::AUXI2C_TRANS_RESTART;
     auxi2cConfig.sample_delay = 0;
     auxi2cConfig.shadow_delay_en = false;
     auxi2cConfig.wait_for_es = false;
@@ -459,7 +454,7 @@ TEST_CASE("MPU external frame synchronization (FSYNC pin)", "[MPU]")
     TEST_ESP_OK( mpu.testConnection());
     TEST_ESP_OK( mpu.initialize());
     // config esp32 gpio for FSYNC signal simulation
-    gpio_config_t fsyncIOconfig;
+    gpio_config_t fsyncIOconfig{};
     fsyncIOconfig.pin_bit_mask = ((uint64_t) 1 << CONFIG_MPU_TEST_FSYNC_PIN);
     fsyncIOconfig.mode = GPIO_MODE_OUTPUT;
     fsyncIOconfig.pull_up_en = GPIO_PULLUP_DISABLE;
@@ -467,11 +462,11 @@ TEST_CASE("MPU external frame synchronization (FSYNC pin)", "[MPU]")
     fsyncIOconfig.intr_type = GPIO_INTR_DISABLE;
     TEST_ESP_OK( gpio_config(&fsyncIOconfig));
     // check fsync configs
-    mpu::int_lvl_t fsyncLevel = mpu::INT_LVL_ACTIVE_LOW;
+    mpud::int_lvl_t fsyncLevel = mpud::INT_LVL_ACTIVE_LOW;
     TEST_ESP_OK( mpu.setFsyncConfig(fsyncLevel));
     TEST_ASSERT_EQUAL_INT( fsyncLevel, mpu.getFsyncConfig());
     TEST_ESP_OK( mpu.lastError());
-    fsyncLevel = mpu::INT_LVL_ACTIVE_HIGH;
+    fsyncLevel = mpud::INT_LVL_ACTIVE_HIGH;
     TEST_ESP_OK( mpu.setFsyncConfig(fsyncLevel));
     TEST_ASSERT_EQUAL_INT( fsyncLevel, mpu.getFsyncConfig());
     TEST_ESP_OK( mpu.lastError());
@@ -480,29 +475,29 @@ TEST_CASE("MPU external frame synchronization (FSYNC pin)", "[MPU]")
     TEST_ASSERT_TRUE( mpu.getFsyncEnabled());
     TEST_ESP_OK( mpu.lastError());
     // enable fsync to propagate to INT pin and register INT_STATUS
-    mpu::int_en_t intmask = mpu::INT_EN_I2C_MST_FSYNC;
+    mpud::int_en_t intmask = mpud::INT_EN_I2C_MST_FSYNC;
     TEST_ESP_OK( mpu.setInterruptEnabled(intmask));
     TEST_ASSERT_EQUAL_UINT8( intmask, mpu.getInterruptEnabled());
     TEST_ESP_OK( mpu.lastError());
     
     // Output a FSYNC signal, then
     // check for the interrupt in INT_STATUS and I2C_MST_STATUS
-    mpu::auxi2c_stat_t auxI2Cstatus = 0;
-    mpu::int_stat_t intStatus = 0;
+    mpud::auxi2c_stat_t auxI2Cstatus = 0;
+    mpud::int_stat_t intStatus = 0;
     for (size_t i = 0; i < 10; i++) {
         gpio_set_level((gpio_num_t)CONFIG_MPU_TEST_FSYNC_PIN, 1);
         auxI2Cstatus = mpu.getAuxI2CStatus();
         TEST_ESP_OK( mpu.lastError());
         intStatus = mpu.getInterruptStatus();
         TEST_ESP_OK( mpu.lastError());
-        TEST_ASSERT(auxI2Cstatus & mpu::AUXI2C_STAT_FSYNC);
+        TEST_ASSERT(auxI2Cstatus & mpud::AUXI2C_STAT_FSYNC);
         TEST_ASSERT(intStatus & intmask);
         gpio_set_level((gpio_num_t)CONFIG_MPU_TEST_FSYNC_PIN, 0);
         auxI2Cstatus = mpu.getAuxI2CStatus();
         TEST_ESP_OK( mpu.lastError());
         intStatus = mpu.getInterruptStatus();
         TEST_ESP_OK( mpu.lastError());
-        TEST_ASSERT(! (auxI2Cstatus & mpu::AUXI2C_STAT_FSYNC));
+        TEST_ASSERT(! (auxI2Cstatus & mpud::AUXI2C_STAT_FSYNC));
         TEST_ASSERT(! (intStatus & intmask));
         vTaskDelay(50 / portTICK_PERIOD_MS);
     }
@@ -526,26 +521,26 @@ TEST_CASE("MPU standby mode", "[MPU]")
     TEST_ESP_OK( mpu.testConnection());
     TEST_ESP_OK( mpu.initialize());
     // check setups
-    mpu::stby_en_t stbySensors[] = {
-        mpu::STBY_EN_ACCEL_X | mpu::STBY_EN_GYRO_Y | mpu::STBY_EN_TEMP | mpu::STBY_EN_LOWPWR_GYRO_PLL_ON,
-        mpu::STBY_EN_ACCEL_Y | mpu::STBY_EN_ACCEL_Z | mpu::STBY_EN_TEMP,
-        mpu::STBY_EN_ACCEL_Z | mpu::STBY_EN_GYRO_X | mpu::STBY_EN_GYRO_Y,
-        mpu::STBY_EN_TEMP | mpu::STBY_EN_LOWPWR_GYRO_PLL_ON,
-        mpu::STBY_EN_ACCEL | mpu::STBY_EN_GYRO | mpu::STBY_EN_TEMP | mpu::STBY_EN_LOWPWR_GYRO_PLL_ON
+    mpud::stby_en_t stbySensors[] = {
+        mpud::STBY_EN_ACCEL_X | mpud::STBY_EN_GYRO_Y | mpud::STBY_EN_TEMP | mpud::STBY_EN_LOWPWR_GYRO_PLL_ON,
+        mpud::STBY_EN_ACCEL_Y | mpud::STBY_EN_ACCEL_Z | mpud::STBY_EN_TEMP,
+        mpud::STBY_EN_ACCEL_Z | mpud::STBY_EN_GYRO_X | mpud::STBY_EN_GYRO_Y,
+        mpud::STBY_EN_TEMP | mpud::STBY_EN_LOWPWR_GYRO_PLL_ON,
+        mpud::STBY_EN_ACCEL | mpud::STBY_EN_GYRO | mpud::STBY_EN_TEMP | mpud::STBY_EN_LOWPWR_GYRO_PLL_ON
     };
     for (auto stby : stbySensors) {
         TEST_ESP_OK( mpu.setStandbyMode(stby));
-        mpu::stby_en_t retStbySensors = mpu.getStandbyMode();
+        mpud::stby_en_t retStbySensors = mpu.getStandbyMode();
         printf("stby: %#X, retStbySensors: %#X", stby, retStbySensors);
         TEST_ASSERT( stby == retStbySensors);
         uint8_t data[2];
-        TEST_ESP_OK( mpu.readByte(mpu::regs::PWR_MGMT1, data));
-        TEST_ESP_OK( mpu.readByte(mpu::regs::PWR_MGMT2, data+1));
+        TEST_ESP_OK( mpu.readByte(mpud::regs::PWR_MGMT1, data));
+        TEST_ESP_OK( mpu.readByte(mpud::regs::PWR_MGMT2, data+1));
         printf(" -> PWR_MGMT1: %#X, PWR_MGMT2: %#X\n", data[0], data[1]);
-        TEST_ASSERT( ((stby & mpu::STBY_EN_TEMP) >> 3) == (data[0] & (1 << mpu::regs::PWR1_TEMP_DIS_BIT)));
-        TEST_ASSERT( ((stby & mpu::STBY_EN_LOWPWR_GYRO_PLL_ON) >> 3) == (data[0] & (1 << mpu::regs::PWR1_GYRO_STANDBY_BIT)));
-        TEST_ASSERT( (stby & mpu::STBY_EN_ACCEL) == (data[1] & mpu::regs::PWR2_STBY_XYZA_BITS));
-        TEST_ASSERT( (stby & mpu::STBY_EN_GYRO) == (data[1] & mpu::regs::PWR2_STBY_XYZG_BITS));
+        TEST_ASSERT( ((stby & mpud::STBY_EN_TEMP) >> 3) == (data[0] & (1 << mpud::regs::PWR1_TEMP_DIS_BIT)));
+        TEST_ASSERT( ((stby & mpud::STBY_EN_LOWPWR_GYRO_PLL_ON) >> 3) == (data[0] & (1 << mpud::regs::PWR1_GYRO_STANDBY_BIT)));
+        TEST_ASSERT( (stby & mpud::STBY_EN_ACCEL) == (data[1] & mpud::regs::PWR2_STBY_XYZA_BITS));
+        TEST_ASSERT( (stby & mpud::STBY_EN_GYRO) == (data[1] & mpud::regs::PWR2_STBY_XYZG_BITS));
     }
 }
 
@@ -558,7 +553,7 @@ TEST_CASE("MPU FIFO buffer", "[MPU]")
     TEST_ESP_OK( mpu.initialize());
     TEST_ESP_OK( mpu.setSampleRate(4));
     // config mode
-    mpu::fifo_mode_t fifoMode = mpu::FIFO_MODE_STOP_FULL;
+    mpud::fifo_mode_t fifoMode = mpud::FIFO_MODE_STOP_FULL;
     TEST_ESP_OK( mpu.setFIFOMode(fifoMode));
     TEST_ASSERT_EQUAL_INT( fifoMode, mpu.getFIFOMode());
     TEST_ESP_OK( mpu.lastError());
@@ -569,35 +564,35 @@ TEST_CASE("MPU FIFO buffer", "[MPU]")
     /* prepare for test */
     #ifdef CONFIG_MPU_AK89xx
     // free slaves 0 and 1 in case of MPU9150 or MPU9250
-    TEST_ESP_OK( mpu.compassSetMode(mpu::MAG_MODE_POWER_DOWN));
+    TEST_ESP_OK( mpu.compassSetMode(mpud::MAG_MODE_POWER_DOWN));
     #endif
-    mpu::auxi2c_slv_config_t slvconfig;
-    slvconfig.slave = mpu::AUXI2C_SLAVE_0;
-    slvconfig.rw = mpu::AUXI2C_READ;
+    mpud::auxi2c_slv_config_t slvconfig{};
+    slvconfig.slave = mpud::AUXI2C_SLAVE_0;
+    slvconfig.rw = mpud::AUXI2C_READ;
     slvconfig.rxlength = 2;
     TEST_ESP_OK( mpu.setAuxI2CSlaveConfig(slvconfig));
     TEST_ESP_OK( mpu.setAuxI2CSlaveEnabled(slvconfig.slave, true));
     TEST_ESP_OK( mpu.setAuxI2CEnabled(true));
-    TEST_ESP_OK( mpu.setInterruptEnabled(mpu::INT_EN_RAWDATA_READY));
+    TEST_ESP_OK( mpu.setInterruptEnabled(mpud::INT_EN_RAWDATA_READY));
     // sets of configs
-    mpu::fifo_config_t fifoConfigs[] = {
-        mpu::FIFO_CFG_ACCEL | mpu::FIFO_CFG_GYRO | mpu::FIFO_CFG_TEMPERATURE,
-        mpu::FIFO_CFG_ACCEL | mpu::FIFO_CFG_TEMPERATURE,
-        mpu::FIFO_CFG_GYRO,
-        mpu::FIFO_CFG_SLAVE0 | mpu::FIFO_CFG_SLAVE1| mpu::FIFO_CFG_SLAVE2 | mpu::FIFO_CFG_SLAVE3
+    mpud::fifo_config_t fifoConfigs[] = {
+        mpud::FIFO_CFG_ACCEL | mpud::FIFO_CFG_GYRO | mpud::FIFO_CFG_TEMPERATURE,
+        mpud::FIFO_CFG_ACCEL | mpud::FIFO_CFG_TEMPERATURE,
+        mpud::FIFO_CFG_GYRO,
+        mpud::FIFO_CFG_SLAVE0 | mpud::FIFO_CFG_SLAVE1| mpud::FIFO_CFG_SLAVE2 | mpud::FIFO_CFG_SLAVE3
     };
     uint16_t countArray[] = { 14, 8, 6, 2};
     /* test configs */
     for (int i = 0; i < sizeof(fifoConfigs) / sizeof(fifoConfigs[0]); i++) {
         // set and check config
         TEST_ESP_OK( mpu.setFIFOConfig(fifoConfigs[i]));
-        mpu::fifo_config_t retConfig = mpu.getFIFOConfig();
+        mpud::fifo_config_t retConfig = mpu.getFIFOConfig();
         TEST_ASSERT( fifoConfigs[i] == retConfig);
         TEST_ESP_OK( mpu.lastError());
         // check count
         TEST_ESP_OK( mpu.resetFIFO());  // zero count first
         mpu.getInterruptStatus();  // clear status first
-        while(!(mpu.getInterruptStatus() & mpu::INT_STAT_RAWDATA_READY) && !mpu.lastError()) {}
+        while(!(mpu.getInterruptStatus() & mpud::INT_STAT_RAWDATA_READY) && !mpu.lastError()) {}
         uint16_t count = mpu.getFIFOCount();
         printf("FIFO config: 0x%X, real packet count: %d\n", fifoConfigs[i], count);
         TEST_ASSERT( countArray[i] == count);
@@ -611,8 +606,8 @@ TEST_CASE("MPU offset test", "[MPU]")
     test::MPU_t mpu;
     TEST_ESP_OK( mpu.testConnection());
     TEST_ESP_OK( mpu.initialize());
-    TEST_ESP_OK( mpu.setAccelFullScale(mpu::ACCEL_FS_16G));
-    TEST_ESP_OK( mpu.setGyroFullScale(mpu::GYRO_FS_1000DPS));
+    TEST_ESP_OK( mpu.setAccelFullScale(mpud::ACCEL_FS_16G));
+    TEST_ESP_OK( mpu.setGyroFullScale(mpud::GYRO_FS_1000DPS));
     // test
     printf("This test computes the offsets for a MPU device\n"
            "For the test to succed, the chip has to remain as horizontal as possible.\n"
@@ -626,7 +621,7 @@ TEST_CASE("MPU offset test", "[MPU]")
     fflush(stdout);
     vTaskDelay(1000 / portTICK_PERIOD_MS);
     // without offsets
-    mpu::raw_axes_t accelRaw, gyroRaw;
+    mpud::raw_axes_t accelRaw, gyroRaw;
     printf(">> Sensor data without offsets cancellation:\n");
     for (int i = 0; i < 6; i++) {
         TEST_ESP_OK( mpu.motion(&accelRaw, &gyroRaw));
@@ -635,7 +630,7 @@ TEST_CASE("MPU offset test", "[MPU]")
         vTaskDelay(50 / portTICK_PERIOD_MS);
     }
     // factory offsets
-    mpu::raw_axes_t accelFactoryOffset, gyroFactoryOffset;
+    mpud::raw_axes_t accelFactoryOffset, gyroFactoryOffset;
     accelFactoryOffset = mpu.getAccelOffset();
     TEST_ESP_OK( mpu.lastError());
     gyroFactoryOffset = mpu.getGyroOffset();
@@ -645,7 +640,7 @@ TEST_CASE("MPU offset test", "[MPU]")
         accelFactoryOffset.x, accelFactoryOffset.y, accelFactoryOffset.z,
         gyroFactoryOffset.x, gyroFactoryOffset.y, gyroFactoryOffset.z);
     // calculate offsets
-    mpu::raw_axes_t accelOffset, gyroOffset;
+    mpud::raw_axes_t accelOffset, gyroOffset;
     TEST_ESP_OK( mpu.computeOffsets(&accelOffset, &gyroOffset));
     printf(">> Computed offsets:\n");
     printf("accel: [ %+d %+d %+d ] \t gyro: [ %+d %+d %+d ]\n",
@@ -653,7 +648,7 @@ TEST_CASE("MPU offset test", "[MPU]")
     // set offsets
     TEST_ESP_OK( mpu.setAccelOffset(accelOffset));
     TEST_ESP_OK( mpu.setGyroOffset(gyroOffset));
-    mpu::raw_axes_t retAccelOffset, retGyroOffset;
+    mpud::raw_axes_t retAccelOffset, retGyroOffset;
     retAccelOffset = mpu.getAccelOffset();
     TEST_ESP_OK( mpu.lastError());
     retGyroOffset = mpu.getGyroOffset();
@@ -688,10 +683,10 @@ TEST_CASE("MPU self-test check", "[MPU]")
     TEST_ESP_OK( mpu.testConnection());
     TEST_ESP_OK( mpu.initialize());
     /* test */
-    mpu::selftest_t selfTestResult;
+    mpud::selftest_t selfTestResult;
     TEST_ESP_OK( mpu.selfTest(&selfTestResult));
     printf("[%s] SELF-TEST result: 0x%X\n",
-        (selfTestResult == mpu::SELF_TEST_PASS) ? (LOG_COLOR_I " OK " LOG_RESET_COLOR) : (LOG_COLOR_E "FAIL" LOG_RESET_COLOR),
+        (selfTestResult == mpud::SELF_TEST_PASS) ? (LOG_COLOR_I " OK " LOG_RESET_COLOR) : (LOG_COLOR_E "FAIL" LOG_RESET_COLOR),
         selfTestResult);
 }
 
@@ -703,12 +698,12 @@ TEST_CASE("MPU motion detection and wake-on-motion mode", "[MPU]")
     TEST_ESP_OK( mpu.testConnection());
     TEST_ESP_OK( mpu.initialize());
     /* assert possible configuration */
-    mpu::mot_config_t motConfig;
+    mpud::mot_config_t motConfig{};
     #if defined CONFIG_MPU6050
     motConfig.threshold = 20;
     motConfig.time = 2;
     motConfig.accel_on_delay = 1;
-    motConfig.counter = mpu::MOT_COUNTER_DEC_1;
+    motConfig.counter = mpud::MOT_COUNTER_DEC_1;
     #elif defined CONFIG_MPU6500
     motConfig.threshold = 150;
     #endif
@@ -716,7 +711,7 @@ TEST_CASE("MPU motion detection and wake-on-motion mode", "[MPU]")
     TEST_ESP_OK( mpu.setMotionFeatureEnabled(true));
     TEST_ASSERT_TRUE( mpu.getMotionFeatureEnabled());
     TEST_ESP_OK( mpu.lastError());
-    mpu::mot_config_t retmotConfig;
+    mpud::mot_config_t retmotConfig{};
     retmotConfig = mpu.getMotionDetectConfig();
     TEST_ASSERT( motConfig.threshold == retmotConfig.threshold);
     #if defined CONFIG_MPU6050
@@ -727,9 +722,9 @@ TEST_CASE("MPU motion detection and wake-on-motion mode", "[MPU]")
     /* enter low power mode */
     TEST_ESP_OK( mpu.setLowPowerAccelMode(true));
     #if defined CONFIG_MPU6050
-    TEST_ESP_OK( mpu.setLowPowerAccelRate(mpu::LP_ACCEL_RATE_20HZ));
+    TEST_ESP_OK( mpu.setLowPowerAccelRate(mpud::LP_ACCEL_RATE_20HZ));
     #elif defined CONFIG_MPU6500
-    TEST_ESP_OK( mpu.setLowPowerAccelRate(mpu::LP_ACCEL_RATE_250HZ));
+    TEST_ESP_OK( mpu.setLowPowerAccelRate(mpud::LP_ACCEL_RATE_250HZ));
     #endif
     /* test motion interrupt */
     #if defined CONFIG_MPU6050
@@ -742,7 +737,7 @@ TEST_CASE("MPU motion detection and wake-on-motion mode", "[MPU]")
     printf(">> Motion-Detect Config:: threshold: %d mg, rate: %d Hz\n", thresholdMg, rate);
     #endif
     // configure interrupt
-    TEST_ESP_OK( mpu.setInterruptEnabled(mpu::INT_EN_MOTION_DETECT));
+    TEST_ESP_OK( mpu.setInterruptEnabled(mpud::INT_EN_MOTION_DETECT));
     TEST_ESP_OK( mpuConfigInterrupt(mpuTaskNotifier, xTaskGetCurrentTaskHandle()));
     // check interrupt for a period
     TickType_t startTick = xTaskGetTickCount();
@@ -777,16 +772,16 @@ TEST_CASE("MPU free-fall detection", "[MPU]")
     TEST_ESP_OK( mpu.testConnection());
     TEST_ESP_OK( mpu.initialize());
     /* assert possible configs */
-    mpu::ff_config_t FFConfig;
+    mpud::ff_config_t FFConfig{};
     FFConfig.threshold = 160;
     FFConfig.time = 100;
     FFConfig.accel_on_delay = 0;
-    FFConfig.counter = mpu::MOT_COUNTER_DEC_2;
+    FFConfig.counter = mpud::MOT_COUNTER_DEC_2;
     TEST_ESP_OK( mpu.setFreeFallConfig(FFConfig));
     TEST_ESP_OK( mpu.setMotionFeatureEnabled(true));
     TEST_ASSERT_TRUE( mpu.getMotionFeatureEnabled());
     TEST_ESP_OK( mpu.lastError());
-    mpu::ff_config_t retFFConfig;
+    mpud::ff_config_t retFFConfig{};
     retFFConfig = mpu.getFreeFallConfig();
     TEST_ASSERT( FFConfig.threshold == retFFConfig.threshold);
     TEST_ASSERT( FFConfig.time == retFFConfig.time);
@@ -796,7 +791,7 @@ TEST_CASE("MPU free-fall detection", "[MPU]")
     uint16_t thresholdMg = FFConfig.threshold * 4;
     printf(">> Free-Fall Config:: threshold: %d mg, time: %d ms\n", thresholdMg, FFConfig.time);
     // configure interrupt
-    TEST_ESP_OK( mpu.setInterruptEnabled(mpu::INT_EN_FREE_FALL));
+    TEST_ESP_OK( mpu.setInterruptEnabled(mpud::INT_EN_FREE_FALL));
     TEST_ESP_OK( mpuConfigInterrupt(mpuTaskNotifier, xTaskGetCurrentTaskHandle()));
     // check interrupt for a period
     TickType_t startTick = xTaskGetTickCount();
@@ -825,14 +820,14 @@ TEST_CASE("MPU zero-motion detection", "[MPU]")
     TEST_ESP_OK( mpu.testConnection());
     TEST_ESP_OK( mpu.initialize());
     /* assert possible configs */
-    mpu::zrmot_config_t ZRMotConfig;
+    mpud::zrmot_config_t ZRMotConfig{};
     ZRMotConfig.threshold = 200;
     ZRMotConfig.time = 20;
     TEST_ESP_OK( mpu.setZeroMotionConfig(ZRMotConfig));
     TEST_ESP_OK( mpu.setMotionFeatureEnabled(true));
     TEST_ASSERT_TRUE( mpu.getMotionFeatureEnabled());
     TEST_ESP_OK( mpu.lastError());
-    mpu::zrmot_config_t retZRMotConfig;
+    mpud::zrmot_config_t retZRMotConfig{};
     retZRMotConfig = mpu.getZeroMotionConfig();
     TEST_ASSERT( ZRMotConfig.threshold == retZRMotConfig.threshold);
     TEST_ASSERT( ZRMotConfig.time == retZRMotConfig.time);
@@ -840,7 +835,7 @@ TEST_CASE("MPU zero-motion detection", "[MPU]")
     uint16_t thresholdMg = ZRMotConfig.threshold * 4;
     printf(">> Zero-Motion Config:: threshold: %d mg, time: %d ms\n", thresholdMg, ZRMotConfig.time);
     // configure interrupt
-    TEST_ESP_OK( mpu.setInterruptEnabled(mpu::INT_EN_ZERO_MOTION));
+    TEST_ESP_OK( mpu.setInterruptEnabled(mpud::INT_EN_ZERO_MOTION));
     TEST_ESP_OK( mpuConfigInterrupt(mpuTaskNotifier, xTaskGetCurrentTaskHandle()));
     // check interrupt for a period
     TickType_t startTick = xTaskGetTickCount();
@@ -870,20 +865,20 @@ TEST_CASE("MPU compass configuration", "[MPU]")
     TEST_ESP_OK( mpu.initialize());
     // test
     TEST_ESP_OK( mpu.compassTestConnection());
-    TEST_ASSERT( mpu.compassGetMode() == mpu::MAG_MODE_SINGLE_MEASURE);
+    TEST_ASSERT( mpu.compassGetMode() == mpud::MAG_MODE_SINGLE_MEASURE);
     // check sensitivity
     #ifdef CONFIG_MPU_AK8963
-    mpu::mag_sensy_t magSensy = mpu::MAG_SENSITIVITY_0_6_uT;
+    mpud::mag_sensy_t magSensy = mpud::MAG_SENSITIVITY_0_6_uT;
     TEST_ESP_OK( mpu.compassSetSensitivity(magSensy));
     TEST_ASSERT( magSensy == mpu.compassGetSensitivity());
     TEST_ESP_OK( mpu.lastError());
-    magSensy = mpu::MAG_SENSITIVITY_0_15_uT;
+    magSensy = mpud::MAG_SENSITIVITY_0_15_uT;
     TEST_ESP_OK( mpu.compassSetSensitivity(magSensy));
     TEST_ASSERT( magSensy == mpu.compassGetSensitivity());
     TEST_ESP_OK( mpu.lastError());
     #endif
     // self-test
-    mpu::raw_axes_t magSelfTest;
+    mpud::raw_axes_t magSelfTest;
     bool selftest = mpu.compassSelfTest(&magSelfTest);
     printf("[%s] self-test: %+d %+d %+d\n",
         selftest ? (LOG_COLOR_I " OK " LOG_RESET_COLOR) : (LOG_COLOR_E "FAIL" LOG_RESET_COLOR),
@@ -892,12 +887,12 @@ TEST_CASE("MPU compass configuration", "[MPU]")
     uint8_t magAdj[3];
     TEST_ESP_OK( mpu.compassGetAdjustment(magAdj, magAdj+1, magAdj+2));
     // heading
-    mpu::raw_axes_t mag;
+    mpud::raw_axes_t mag;
     for (int i = 0; i < 5; i++) {
         TEST_ESP_OK( mpu.heading(&mag));
-        mag.x = mpu::math::magAdjust(mag.x, magAdj[0]);
-        mag.y = mpu::math::magAdjust(mag.y, magAdj[1]);
-        mag.z = mpu::math::magAdjust(mag.z, magAdj[2]);
+        mag.x = mpud::math::magAdjust(mag.x, magAdj[0]);
+        mag.y = mpud::math::magAdjust(mag.y, magAdj[1]);
+        mag.z = mpud::math::magAdjust(mag.z, magAdj[2]);
         printf("heading: %+d %+d %+d\n", mag.x, mag.y, mag.z);
         vTaskDelay(100 / portTICK_PERIOD_MS);
     }
