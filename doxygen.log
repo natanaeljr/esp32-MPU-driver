@@ -1,0 +1,14 @@
+Warning: ignoring unsupported tag `ALLOW_UNICODE_NAMES    =' at line 79, file Doxyfile
+Warning: ignoring unsupported tag `TOC_INCLUDE_HEADINGS   =' at line 314, file Doxyfile
+Warning: ignoring unsupported tag `GROUP_NESTED_COMPOUNDS =' at line 371, file Doxyfile
+Warning: ignoring unsupported tag `HIDE_COMPOUND_REFERENCE=' at line 542, file Doxyfile
+Warning: ignoring unsupported tag `WARN_AS_ERROR          =' at line 766, file Doxyfile
+Warning: ignoring unsupported tag `HTML_DYNAMIC_MENUS     =' at line 1246, file Doxyfile
+Warning: ignoring unsupported tag `LATEX_EXTRA_STYLESHEET =' at line 1761, file Doxyfile
+Warning: ignoring unsupported tag `LATEX_TIMESTAMP        =' at line 1828, file Doxyfile
+Warning: ignoring unsupported tag `RTF_SOURCE_CODE        =' at line 1894, file Doxyfile
+Warning: ignoring unsupported tag `MAN_SUBDIR             =' at line 1929, file Doxyfile
+Warning: ignoring unsupported tag `DOCBOOK_PROGRAMLISTING =' at line 1992, file Doxyfile
+Warning: ignoring unsupported tag `PLANTUML_JAR_PATH      =' at line 2421, file Doxyfile
+Warning: ignoring unsupported tag `PLANTUML_CFG_FILE      =' at line 2426, file Doxyfile
+Warning: ignoring unsupported tag `PLANTUML_INCLUDE_PATH  =' at line 2431, file Doxyfile
