@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.abspath('.'))
 
 # Call Doxygen to get XML files from the header files
 print "Calling Doxygen to generate latest XML files"
-call('cd ..; doxygen', shell=True)
+call('cd ../doxygen; doxygen', shell=True)
 
 # -- Project information -----------------------------------------------------
 
@@ -49,7 +49,7 @@ extensions = [
 ]
 
 # Breathe extension variables
-breathe_projects = { 'mpu-driver': 'xml/' }
+breathe_projects = { 'mpu-driver': '../doxygen/xml/' }
 breathe_default_project = 'mpu-driver'
 
 # Add any paths that contain templates here, relative to this directory.

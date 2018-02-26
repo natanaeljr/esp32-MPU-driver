@@ -1,15 +1,11 @@
-.. image:: _static/MPUdriver.jpg
-    :alt: MPU DRIVER - EP32
+==========================
+MPU Driver - Documentation
+==========================
 
-A Motion sensor library
+.. important::
 
-.. toctree::
-    :maxdepth: 2
-    :hidden:
-    
-    INSTALLATION
-    USAGE
-    API REFERENCE <apiref>
+    This documentation is a work in progress.
+    Improvements, suggestions and corrections are very welcome.
 
 Introduction
 ============
@@ -22,3 +18,8 @@ Reference
 
 * :ref:`genindex`
 * :ref:`search`
+
+Test
+====
+
+.. doxygentypedef:: MPU_t

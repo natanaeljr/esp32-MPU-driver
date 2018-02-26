@@ -8,8 +8,10 @@ test/unit-test-app/partition_table_unit_test_app.csv
 
 ### Documentation build artifacts
 docs/build/
-docs/source/xml/
-docs/source/man/
+docs/doxygen/xml/
+docs/doxygen/man/
+docs/doxygen/html/
+docs/doxygen/doxygen-warning-log.txt
 
 ### Miscellaneous
 NOTES.md
