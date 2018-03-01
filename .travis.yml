@@ -45,7 +45,7 @@ script:
 
 # Generate Doxygen documentation
 after_success:
-  - tools/ci/gen_doxygen_docs.sh
+  - $TRAVIS_BUILD_DIR/tools/ci/gen_doxygen_docs.sh
 
 # Deploy docs to gh-pages
 deploy:
