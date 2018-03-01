@@ -123,19 +123,19 @@ config MPU_LOG_LEVEL_NONE
     bool "No output"
 config MPU_LOG_LEVEL_ERROR
     bool "Error"
-    depends on LOG_DEFAULT_LEVEL > 0
+    depends on LOG_DEFAULT_LEVEL_ERROR || LOG_DEFAULT_LEVEL_WARN  || LOG_DEFAULT_LEVEL_INFO  || LOG_DEFAULT_LEVEL_DEBUG  || LOG_DEFAULT_LEVEL_VERBOSE
 config MPU_LOG_LEVEL_WARN
     bool "Warning"
-    depends on LOG_DEFAULT_LEVEL > 1
+    depends on LOG_DEFAULT_LEVEL_WARN  || LOG_DEFAULT_LEVEL_INFO  || LOG_DEFAULT_LEVEL_DEBUG || LOG_DEFAULT_LEVEL_VERBOSE
 config MPU_LOG_LEVEL_INFO
     bool "Info"
-    depends on LOG_DEFAULT_LEVEL > 2
+    depends on LOG_DEFAULT_LEVEL_INFO  || LOG_DEFAULT_LEVEL_DEBUG || LOG_DEFAULT_LEVEL_VERBOSE
 config MPU_LOG_LEVEL_DEBUG
     bool "Debug"
-    depends on LOG_DEFAULT_LEVEL > 3
+    depends on LOG_DEFAULT_LEVEL_DEBUG || LOG_DEFAULT_LEVEL_VERBOSE
 config MPU_LOG_LEVEL_VERBOSE
     bool "Verbose"
-    depends on LOG_DEFAULT_LEVEL > 4
+    depends on LOG_DEFAULT_LEVEL_VERBOSE
 
 endchoice
 
@@ -151,7 +151,7 @@ config MPU_LOG_LEVEL
 
 config MPU_ENABLE_DMP
     bool "Digital Motion Processor (DMP)"
-    default "y"
+    default "n"
     help
         Enable DMP (Digital Motion Processor) code to be compiled.
 
@@ -169,7 +169,7 @@ config MPU_ENABLE_DMP
 config MPU_LOG_ERROR_TRACES
     bool "Log communication error traces"
     depends on MPU_LOG_LEVEL > 0
-    default "n"
+    default "y"
     help
         Display on console communication error traces that occur within MPU driver code.
         Mostly for debugging.
