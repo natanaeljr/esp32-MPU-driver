@@ -1727,8 +1727,11 @@ uint8_t MPU::compassGetInfo() {
 
 /**
  * @brief Change magnetometer's measurement mode.
- * @note Setting to MAG_MODE_POWER_DOWN will disable readings from compass and disable (free) Aux I2C slaves 0 and 1.
- *  **It will not disable Aux I2C Master I/F though!** To enable back, use compassInit().
+ * @note
+ *  - When user wants to change operation mode, transit to power-down mode first and then transit to other modes.
+ *    After power-down mode is set, at least 100µs(Twat) is needed before setting another mode.
+ *  - Setting to MAG_MODE_POWER_DOWN will disable readings from compass and disable (free) Aux I2C slaves 0 and 1.
+ *    It will not disable Aux I2C Master I/F though! To enable back, use compassInit().
  * */
 esp_err_t MPU::compassSetMode(mag_mode_t mode) {
 // keep previous sensitivity value

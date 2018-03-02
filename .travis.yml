@@ -1,4 +1,5 @@
 sudo: false
+language: cpp
 
 # Environment variables
 env:
@@ -28,8 +29,8 @@ addons:
 
 # setup to run script
 before_script:
-  - tools/ci/setup_esp_idf.sh
-  - tools/ci/setup_ext_libs.sh
+  - $TRAVIS_BUILD_DIR/tools/ci/setup_esp_idf.sh
+  - $TRAVIS_BUILD_DIR/tools/ci/setup_ext_libs.sh
   - cd $TRAVIS_BUILD_DIR/test/unit-test-app
   - sed -i 's/${HOME}/${TRAVIS_BUILD_DIR}/g' Makefile
   - cat Makefile
