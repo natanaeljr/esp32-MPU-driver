@@ -1031,7 +1031,11 @@ It will check the communication protocol which the <a class="el" href="classmpud
 </div><div class="memdoc">
 
 <p>Change magnetometer's measurement mode. </p>
-<dl class="section note"><dt>Note</dt><dd>Setting to MAG_MODE_POWER_DOWN will disable readings from compass and disable (free) Aux I2C slaves 0 and 1. <b>It will not disable Aux I2C Master I/F though!</b> To enable back, use <a class="el" href="classmpud_1_1MPU.html#ad630f8c5b4530723a71e299c66403f58" title="Initialize Magnetometer sensor. ">compassInit()</a>. </dd></dl>
+<dl class="section note"><dt>Note</dt><dd><ul>
+<li>When user wants to change operation mode, transit to power-down mode first and then transit to other modes. After power-down mode is set, at least 100µs(Twat) is needed before setting another mode.</li>
+<li>Setting to MAG_MODE_POWER_DOWN will disable readings from compass and disable (free) Aux I2C slaves 0 and 1. It will not disable Aux I2C Master I/F though! To enable back, use <a class="el" href="classmpud_1_1MPU.html#ad630f8c5b4530723a71e299c66403f58" title="Initialize Magnetometer sensor. ">compassInit()</a>. </li>
+</ul>
+</dd></dl>
 
 </div>
 </div>
