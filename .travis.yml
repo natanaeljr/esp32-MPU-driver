@@ -1,8 +1,11 @@
 sudo: false
+language: cpp
 
 # Environment variables
 env:
   global:
+    - PATH: $PATH:$TRAVIS_BUILD_DIR/esp/xtensa-esp32-elf/bin
+    - IDF_PATH: $TRAVIS_BUILD_DIR/esp/esp-idf
     - GH_REPO_NAME: esp32-MPU-driver
     - GH_REPO_REF: github.com/natanaeljr/esp32-MPU-driver.git
     - DOXYFILE_PATH: docs/doxygen
@@ -17,18 +20,35 @@ addons:
       - doxygen-latex
       - doxygen-gui
       - graphviz
+      - libncurses-dev
+      - flex
+      - bison
+      - gperf
+      - python
+      - python-serial
 
-# Build your code e.g. by calling make
+# setup to run script
+before_script:
+  - $TRAVIS_BUILD_DIR/tools/ci/setup_esp_idf.sh
+  - $TRAVIS_BUILD_DIR/tools/ci/setup_ext_libs.sh
+  - cd $TRAVIS_BUILD_DIR/test/unit-test-app
+  - sed -i 's/${HOME}/${TRAVIS_BUILD_DIR}/g' Makefile
+  - cat Makefile
+
+# Build code
 script:
-  - make --help
+  # Try build unit-test-app
+  - cd $TRAVIS_BUILD_DIR/test/unit-test-app
+  - make defconfig
+  - make list-components
+  - make all -j5
+
 
 # Generate Doxygen documentation
 after_success:
-  - cd $TRAVIS_BUILD_DIR/tools/ci
-  - chmod +x gen_doxygen_docs.sh
-  - ./gen_doxygen_docs.sh
+  - $TRAVIS_BUILD_DIR/tools/ci/gen_doxygen_docs.sh
 
-# Deploy to gh-pages
+# Deploy docs to gh-pages
 deploy:
   provider: pages
   skip-cleanup: true
