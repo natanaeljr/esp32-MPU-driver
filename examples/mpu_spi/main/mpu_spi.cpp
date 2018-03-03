@@ -105,8 +105,8 @@ extern "C" void app_main() {
         accelG = mpud::accelGravity(accelRaw, mpud::ACCEL_FS_4G);
         gyroDPS = mpud::gyroDegPerSec(gyroRaw, mpud::GYRO_FS_500DPS);
         // Debug
-        printf("accel: %.2f %.2f %.2f [G]      ", accelG.x, accelG.y, accelG.z);
-        printf("gyro: %.2f %.2f %.2f [º/s]\n", gyroDPS[0], gyroDPS[1], gyroDPS[2]);
+        printf("accel: [%+6.2f %+6.2f %+6.2f ] (G) \t", accelG.x, accelG.y, accelG.z);
+        printf("gyro: [%+7.2f %+7.2f %+7.2f ] (º/s)\n", gyroDPS[0], gyroDPS[1], gyroDPS[2]);
         vTaskDelay(100 / portTICK_PERIOD_MS);
     }
 }
