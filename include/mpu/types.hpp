@@ -533,9 +533,11 @@ static constexpr mag_stat1_t MAG_STAT1_DATA_OVERRUN{1 << regs::mag::STATUS1_DATA
 
 /*! Magnetometer sensor status 2 */
 typedef uint8_t mag_stat2_t;
-static constexpr mag_stat2_t MAG_STAT1_SENSOR_OVERFLOW{1 << regs::mag::STATUS2_OVERFLOW_BIT};
-#ifdef CONFIG_MPU_AK8975
-static constexpr mag_stat2_t MAG_STAT1_DATA_OVERRUN{1 << regs::mag::STATUS1_DATA_OVERRUN_BIT};
+static constexpr mag_stat2_t MAG_STAT2_SENSOR_OVERFLOW{1 << regs::mag::STATUS2_OVERFLOW_BIT};
+#ifdef CONFIG_MPU_AK8963
+static constexpr mag_stat2_t MAG_STAT2_BIT_OUTPUT_SETTING{1 << regs::mag::STATUS2_BIT_OUTPUT_M_BIT};
+#elif CONFIG_MPU_AK8975
+static constexpr mag_stat2_t MAG_STAT2_DATA_ERROR{1 << regs::mag::STATUS2_DATA_ERROR_BIT};
 #endif
 
 #ifdef CONFIG_MPU_AK8963
