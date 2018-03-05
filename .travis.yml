@@ -13,7 +13,7 @@ env:
     - MAKEFLAGS: "-j2"
 
 stages:
-  - tests
+  - test
   - name: deploy
     if: branch = dev
 
