@@ -1,0 +1,31 @@
+### ESP-IDF
+**/build/
+**/sdkconfig
+**/sdkconfig.old
+
+## This partition table is generated
+test/unit-test-app/partition_table_unit_test_app.csv
+
+### Documentation build artifacts
+docs/build/
+docs/doxygen/xml/
+docs/doxygen/man/
+docs/doxygen/html/
+docs/doxygen/doxygen-warning-log.txt
+
+### Miscellaneous
+NOTES.md
+tools.mk
+.clang-format
+
+### Visual Studio Code
+.vscode/
+
+### CLion
+.idea/
+CMakeLists.txt
+cmake-build-debug/
+
+
+### temporarily
+include/mpu/fusion.hpp
