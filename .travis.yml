@@ -12,12 +12,6 @@ env:
     - DOXYFILE: Doxyfile
     - MAKEFLAGS: "-j2"
 
-cache:
-  apt: true
-  directories:
-    - esp/xtensa-esp32-elf
-    - esp/libraries
-
 stages:
   - tests
   - name: deploy
