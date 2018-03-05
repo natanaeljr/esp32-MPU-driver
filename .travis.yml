@@ -50,7 +50,7 @@ jobs:
             - doxygen-latex
             - doxygen-gui
             - graphviz
-      befor_script: skip
+      before_script: skip
       script: ./tools/ci/gen_doxygen_docs.sh
       deploy:
         provider: pages
