@@ -38,6 +38,7 @@ jobs:
   include:
     - script: ./tools/ci/build.sh  test/unit-test-app  --protocols=I2C  --chips=all
     - script: ./tools/ci/build.sh  test/unit-test-app  --protocols=SPI  --chips=all
+    - script: ./tools/ci/build.sh  examples/advanced   --protocols=all  --chips=all
     - script: ./tools/ci/build.sh  examples/mpu_i2c    --protocols=I2C  --chips=all
     - script: ./tools/ci/build.sh  examples/mpu_spi    --protocols=SPI  --chips=all
     - stage: deploy
