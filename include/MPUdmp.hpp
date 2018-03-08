@@ -16,18 +16,18 @@
 
 #if !defined CONFIG_MPU_ENABLE_DMP
 #warning ''You must enable the option DMP in \
-menuconfig -> components -> MPU driver, \
-to compile the DMP source code''
+menuconfig -> components -> MPU driver, to compile the DMP source code''
 #endif
 
 /*! MPU Driver namespace */
-namespace mpud {
-
+namespace mpud
+{
 /*! DMP namespace */
-namespace dmp {
-
+namespace dmp
+{
 /*! MPU with DMP interface */
-class MPUdmp : public mpud::MPU {
+class MPUdmp : public mpud::MPU
+{
 };
 
 typedef MPUdmp MPUdmp_t;

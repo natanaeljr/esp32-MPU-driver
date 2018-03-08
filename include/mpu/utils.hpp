@@ -14,20 +14,15 @@
 
 #include <stdint.h>
 #include "sdkconfig.h"
-#include "esp_err.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "MPU.hpp"
-#include "mpu/math.hpp"
-#include "mpu/types.hpp"
 
 /*! MPU Driver namespace */
-namespace mpud {
-
+namespace mpud
+{
 /*! Utilities namespace */
-inline namespace utils {
+inline namespace utils
+{
 }  // namespace utils
 
 }  // namespace mpud
 
-#endif  /* end of include guard: _MPU_UTILS_HPP_ */
+#endif /* end of include guard: _MPU_UTILS_HPP_ */

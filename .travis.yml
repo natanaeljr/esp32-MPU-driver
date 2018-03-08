@@ -10,16 +10,18 @@ env:
     - GH_REPO_REF: github.com/natanaeljr/esp32-MPU-driver.git
     - DOXYFILE_PATH: docs/doxygen
     - DOXYFILE: Doxyfile
+    - MAKEFLAGS: "-j2"
+
+stages:
+  - test
+  - name: docs deploy
+    if: branch = dev
 
 # Install dependencies
 addons:
   apt:
     packages:
-      - doxygen
-      - doxygen-doc
-      - doxygen-latex
-      - doxygen-gui
-      - graphviz
+      - bash
       - libncurses-dev
       - flex
       - bison
@@ -31,30 +33,42 @@ addons:
 before_script:
   - $TRAVIS_BUILD_DIR/tools/ci/setup_esp_idf.sh
   - $TRAVIS_BUILD_DIR/tools/ci/setup_ext_libs.sh
-  - cd $TRAVIS_BUILD_DIR/test/unit-test-app
-  - sed -i 's/${HOME}/${TRAVIS_BUILD_DIR}/g' Makefile
-  - cat Makefile
 
-# Build code
-script:
-  # Try build unit-test-app
-  - cd $TRAVIS_BUILD_DIR/test/unit-test-app
-  - make defconfig
-  - make list-components
-  - make all -j5
-
-
-# Generate Doxygen documentation
-after_success:
-  - $TRAVIS_BUILD_DIR/tools/ci/gen_doxygen_docs.sh
-
-# Deploy docs to gh-pages
-deploy:
-  provider: pages
-  skip-cleanup: true
-  github-token: $GITHUB_TOKEN
-  keep-history: true
-  target-branch: gh-pages
-  local-dir: gh-pages
-  on:
-    branch: dev
+jobs:
+  include:
+    - script: ./tools/ci/build.sh  test/unit-test-app  --protocols=I2C  --chips=all
+      env:
+        - UNIT_TEST_I2C: 1
+    - script: ./tools/ci/build.sh  test/unit-test-app  --protocols=SPI  --chips=all
+      env:
+        - UNIT_TEST_SPI: 1
+    - script: ./tools/ci/build.sh  examples/mpu_real   --protocols=all  --chips=all
+      env:
+        - EXAMPLE_MPU_REAL: 1
+    - script: ./tools/ci/build.sh  examples/mpu_i2c    --protocols=I2C  --chips=all
+      env:
+        - EXAMPLE_MPU_I2C: 1
+    - script: ./tools/ci/build.sh  examples/mpu_spi    --protocols=SPI  --chips=all
+      env:
+        - EXAMPLE_MPU_SPI: 1
+    - stage: docs deploy
+      addons:
+        apt:
+          packages:
+            - bash
+            - doxygen
+            - doxygen-doc
+            - doxygen-latex
+            - doxygen-gui
+            - graphviz
+      before_script: skip
+      script: ./tools/ci/gen_doxygen_docs.sh
+      deploy:
+        provider: pages
+        skip-cleanup: true
+        github-token: $GITHUB_TOKEN
+        keep-history: true
+        target-branch: gh-pages
+        local-dir: gh-pages
+        on:
+          branch: dev
