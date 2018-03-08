@@ -7,17 +7,18 @@
 /**
  * @file mpu/log.hpp
  * @brief MPU Log System
+ * 
  * @attention
  *  This header is intended to be used ONLY inside the library itself
- *  Do not include this file in your application.
+ *  Do not include this header in your application.
  * */
 
 #ifndef _MPU_LOG_HPP_
 #define _MPU_LOG_HPP_
 
-#include "sdkconfig.h"
-#include "esp_log.h"
 #include "esp_err.h"
+#include "esp_log.h"
+#include "sdkconfig.h"
 
 // Note: declare TAG before include this header
 // Note: include only in .cpp files from this library
@@ -34,21 +35,21 @@
 #define MPU_LOGDMSG(msg, format, ...) MPU_LOGD("%s()-> %s" format, __FUNCTION__, msg, ##__VA_ARGS__)
 #define MPU_LOGVMSG(msg, format, ...) MPU_LOGV("%s()-> %s" format, __FUNCTION__, msg, ##__VA_ARGS__)
 
-#ifdef MPU_LOG_ERROR_TRACES
+#ifdef CONFIG_MPU_LOG_ERROR_TRACES
 #define MPU_ERR_CHECK(x) mpud::log::errorCheckLogger(x, __ASSERT_FUNC, __LINE__, #x)
 #else
 #define MPU_ERR_CHECK(x) (x)
 #endif
 
 /*! MPU Driver namespace */
-namespace mpud {
-
+namespace mpud
+{
 /*! Log namespace */
-inline namespace log {
-
+inline namespace log
+{
 /*! Messages namespace */
-namespace msgs {
-
+namespace msgs
+{
 static const char INVALID_ARG[]           = "Invalid Argument";
 static const char INVALID_STATE[]         = "Invalid State";
 static const char INVALID_LENGTH[]        = "Invalid length";
@@ -71,9 +72,9 @@ static const char EMPTY[]                 = "";
 
 }  // namespace msgs
 
-static inline esp_err_t errorCheckLogger(esp_err_t x, const char* func, const int line, const char* expr) {
-    if (x)
-        MPU_LOGE("func:%s @ line:%d, expr:\"%s\", error:0x%X ", func, line, expr, x);
+static inline esp_err_t errorCheckLogger(esp_err_t x, const char* func, const int line, const char* expr)
+{
+    if (x) MPU_LOGE("func:%s @ line:%d, expr:\"%s\", error:0x%X ", func, line, expr, x);
     return x;
 }
 
@@ -81,4 +82,4 @@ static inline esp_err_t errorCheckLogger(esp_err_t x, const char* func, const in
 
 }  // namespace mpud
 
-#endif  /* end of include guard: _MPU_LOG_HPP_ */
+#endif /* end of include guard: _MPU_LOG_HPP_ */
