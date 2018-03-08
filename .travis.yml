@@ -42,9 +42,9 @@ jobs:
     - script: ./tools/ci/build.sh  test/unit-test-app  --protocols=SPI  --chips=all
       env:
         - UNIT_TEST_SPI: 1
-    - script: ./tools/ci/build.sh  examples/advanced   --protocols=all  --chips=all
+    - script: ./tools/ci/build.sh  examples/mpu_real   --protocols=all  --chips=all
       env:
-        - EXAMPLE_ADVANCED: 1
+        - EXAMPLE_MPU_REAL: 1
     - script: ./tools/ci/build.sh  examples/mpu_i2c    --protocols=I2C  --chips=all
       env:
         - EXAMPLE_MPU_I2C: 1
