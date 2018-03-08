@@ -1,6 +1,6 @@
 # Project Makefile #
 
-PROJECT_NAME := advanced
+PROJECT_NAME := mpu-real
 
 # Path to MPU Driver
 EXTRA_COMPONENT_DIRS += $(abspath ../..)
