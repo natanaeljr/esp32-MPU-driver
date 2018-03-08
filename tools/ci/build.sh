@@ -115,9 +115,9 @@ print_config() {
 build() {
 	chip="$1"
 	pro="$2"
-	echo "###############################################"
-	echo ">>> Building: chip '$chip' and protocol '$pro'"
-	echo "###############################################"
+	echo "################################################################################"
+	echo ">>> Building $directory: chip '$chip' and protocol '$pro'"
+	echo "################################################################################"
 	prev_pwd=$(pwd)
 	cd "$directory"
 	echo "Adjusting Makefile..."

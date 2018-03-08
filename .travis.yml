@@ -14,7 +14,7 @@ env:
 
 stages:
   - test
-  - name: deploy
+  - name: docs deploy
     if: branch = dev
 
 # Install dependencies
@@ -37,11 +37,21 @@ before_script:
 jobs:
   include:
     - script: ./tools/ci/build.sh  test/unit-test-app  --protocols=I2C  --chips=all
+      env:
+        - UNIT_TEST_I2C: 1
     - script: ./tools/ci/build.sh  test/unit-test-app  --protocols=SPI  --chips=all
+      env:
+        - UNIT_TEST_SPI: 1
     - script: ./tools/ci/build.sh  examples/advanced   --protocols=all  --chips=all
+      env:
+        - EXAMPLE_ADVANCED: 1
     - script: ./tools/ci/build.sh  examples/mpu_i2c    --protocols=I2C  --chips=all
+      env:
+        - EXAMPLE_MPU_I2C: 1
     - script: ./tools/ci/build.sh  examples/mpu_spi    --protocols=SPI  --chips=all
-    - stage: deploy
+      env:
+        - EXAMPLE_MPU_SPI: 1
+    - stage: docs deploy
       addons:
         apt:
           packages:
