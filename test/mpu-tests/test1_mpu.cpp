@@ -1,43 +1,51 @@
+// =========================================================================
+// This library is placed under the MIT License
+// Copyright 2017-2018 Natanael Josue Rabello. All rights reserved.
+// For the license information refer to LICENSE file in root directory.
+// =========================================================================
+
 /**
  * @file test_mpu.cpp
- * Test file for MPU Driver
+ * Test code for MPU Driver
  */
 
-#include "stdio.h"
-#include "stdint.h"
-#include "sdkconfig.h"
+#include <stdint.h>
+#include <stdio.h>
+
+#include "driver/gpio.h"
+#include "driver/i2c.h"
+#include "driver/spi_master.h"
 #include "esp_attr.h"
 #include "esp_err.h"
-#include "esp_log.h"
-#include "driver/i2c.h"
-#include "driver/gpio.h"
-#include "driver/spi_master.h"
 #include "esp_intr_alloc.h"
+#include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "sdkconfig.h"
 #include "unity.h"
 #include "unity_config.h"
+
 #include "MPU.hpp"
+#include "mpu/math.hpp"
 #include "mpu/registers.hpp"
 #include "mpu/types.hpp"
 #include "mpu/utils.hpp"
-#include "mpu/math.hpp"
+
+#include "mpu_test_helper.hpp"
+namespace test {
+#ifdef CONFIG_MPU_I2C
+#include "I2Cbus.hpp"
+I2C_t& i2c = getI2C((i2c_port_t) CONFIG_MPU_TEST_I2CBUS_PORT);
+#elif CONFIG_MPU_SPI
+#include "SPIbus.hpp"
+SPI_t& spi = getSPI((spi_host_device_t) CONFIG_MPU_TEST_SPIBUS_HOST);
+spi_device_handle_t spi_mpu_handle = nullptr;
+#endif
+bool isBusInit = false;
+}  // test
+
 
 namespace test {
-/**
- * Bus type
- * */
-#ifdef CONFIG_MPU_I2C
-I2C_t& i2c = getI2C((i2c_port_t)CONFIG_MPU_TEST_I2CBUS_PORT);
-#elif CONFIG_MPU_SPI
-SPI_t& spi = getSPI((spi_host_device_t)CONFIG_MPU_TEST_SPIBUS_HOST);
-spi_device_handle_t mpuSpiHandle;
-#endif
-/**
- * Hold state of bus init.
- * If a test fail, isBusInit stays true, so is not initialized again
- * */
-bool isBusInit = false;
 /**
  * MPU class modified to initialize the bus automaticaly when
  * instantiated, and close when object is destroyed.
@@ -58,10 +66,10 @@ class MPU : public mpud::MPU {
         if (!isBusInit) {
             spi.begin(CONFIG_MPU_TEST_SPIBUS_MOSI_PIN, CONFIG_MPU_TEST_SPIBUS_MISO_PIN,
                 CONFIG_MPU_TEST_SPIBUS_SCLK_PIN);
-            spi.addDevice(0, CONFIG_MPU_TEST_SPIBUS_CLOCK_HZ, CONFIG_MPU_TEST_SPIBUS_CS_PIN, &mpuSpiHandle);
+            spi.addDevice(0, CONFIG_MPU_TEST_SPIBUS_CLOCK_HZ, CONFIG_MPU_TEST_SPIBUS_CS_PIN, &spi_mpu_handle);
         }
         this->setBus(spi);
-        this->setAddr(mpuSpiHandle);
+        this->setAddr(spi_mpu_handle);
         #endif
 
         if (!isBusInit) isBusInit = true;
