@@ -11,6 +11,7 @@
 
 #include "MPU.hpp"
 #include <math.h>
+#include <stdint.h>
 #include <string.h>
 #include "esp_err.h"
 #include "freertos/FreeRTOS.h"

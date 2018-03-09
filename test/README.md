@@ -34,6 +34,7 @@ See [Unit Testing in ESP32] for more information.
 1. free-fall detection
 1. zero-motion detection
 1. compass configuration
+1. dmp firmware loading
 
 ---
 

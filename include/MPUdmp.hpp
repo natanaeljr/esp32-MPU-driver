@@ -25,12 +25,26 @@ namespace mpud
 /*! DMP namespace */
 namespace dmp
 {
-/*! MPU with DMP interface */
-class MPUdmp : public mpud::MPU
-{
-};
+class MPU;
+}  //
+}  //
 
-typedef MPUdmp MPUdmp_t;
+/*! Easy alias for MPU class with DMP interface */
+typedef mpud::dmp::MPU MPUdmp_t;
+
+namespace mpud
+{
+namespace dmp
+{
+/*! Motion Processing Unit with DMP interface */
+class MPU : public mpud::MPU
+{
+ public:
+    esp_err_t loadDMP();
+
+    esp_err_t writeMemory(uint16_t memAddr, uint8_t length, const uint8_t* data);
+    esp_err_t readMemory(uint16_t memAddr, uint8_t length, uint8_t* data);
+};
 
 }  // namespace dmp
 
