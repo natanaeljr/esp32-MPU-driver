@@ -37,7 +37,7 @@ class MPUdmp : public mpud::MPU
  public:
     //! \name Setup
     //! \{
-    esp_err_t loadDMP();
+    esp_err_t loadDMPFirware();
     esp_err_t enableDMP();
     esp_err_t disableDMP();
     esp_err_t resetDMP();

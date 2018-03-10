@@ -41,10 +41,15 @@ static constexpr dmp_feature_t DMP_FEATURE_ANY_LP_QUAT   = (DMP_FEATURE_LP_3X_QU
 
 /**
  * @brief Activate the DMP.
- * @attention Must have already pushed the DMP firmware with loadDMP().
+ * @attention
+ *   The DMP image must already have been pushed to memory with loadDMPFirware().
+ * @warning
+ *   This function sets the Sample Rate to 200 Hz which is the default DMP operation rate.
+ *   Cannot be changed while DMP enabled. Use setDMPOutputRate() to change DMP Output Rate to FIFO.
  */
 esp_err_t MPUdmp::enableDMP()
 {
+    if (MPU_ERR_CHECK(setSampleRate(kDMPSampleRate))) return err;
     return MPU_ERR_CHECK(writeBit(regs::USER_CTRL, regs::USERCTRL_DMP_EN_BIT, 0x1));
 }
 
@@ -93,7 +98,7 @@ esp_err_t MPUdmp::resetDMP()
  * @brief Load DMP firmware into DMP Memory.
  * @note DMP Memory is vollatile, so it has to be reload every power-up.
  */
-esp_err_t MPUdmp::loadDMP()
+esp_err_t MPUdmp::loadDMPFirware()
 {
     uint16_t addr = 0;  // chunk start address
     while (addr < kDMPCodeSize) {
@@ -179,12 +184,15 @@ esp_err_t MPUdmp::readMemory(uint16_t memAddr, uint8_t length, uint8_t* data)
  *  - DMP_FEATURE_PEDOMETER is always enabled.
  * @param features Combined (`ORed`) features to enable.
  * @todo Implement rest of the features
+ * @return
+ *  - `ESP_ERR_INVALID_ARG`: Invalid set of features, see note.
+ *  - `I2C/SPI` default read/write errors.
  */
 esp_err_t MPUdmp::setDMPFeatures(dmp_feature_t features)
 {
     /* Check for invalid options */
     if ((features & DMP_FEATURE_LP_3X_QUAT) && (features & DMP_FEATURE_LP_6X_QUAT)) {
-        MPU_LOGEMSG("LP_QUAT and 6X_LP_QUAT are mutually exclusive", "");
+        MPU_LOGEMSG("LP_3X_QUAT and LP_6X_QUAT are mutually exclusive", "");
         return err = ESP_ERR_INVALID_ARG;
     }
     if ((features & DMP_FEATURE_SEND_RAW_GYRO) && (features & DMP_FEATURE_SEND_CAL_GYRO)) {
@@ -195,19 +203,19 @@ esp_err_t MPUdmp::setDMPFeatures(dmp_feature_t features)
     /* Temporary */
     // TODO: Implement and remove
     if (features & DMP_FEATURE_TAP) {
-        MPU_LOGWMSG("DMP_FEATURE_TAP not yet supported", "");
+        MPU_LOGWMSG("TAP not yet supported", "");
         features &= ~(dmp_feature_t)(DMP_FEATURE_TAP);
     }
     if (features & DMP_FEATURE_ANDROID_ORIENT) {
-        MPU_LOGWMSG("DMP_FEATURE_ANDROID_ORIENT not yet supported", "");
+        MPU_LOGWMSG("ANDROID_ORIENT not yet supported", "");
         features &= ~(dmp_feature_t)(DMP_FEATURE_ANDROID_ORIENT);
     }
 
     /* Set integration scale factor */
-    buffer[0] = kGyroScaleFactor >> 24;
-    buffer[1] = kGyroScaleFactor >> 16;
-    buffer[2] = kGyroScaleFactor >> 8;
-    buffer[3] = kGyroScaleFactor & 0xFF;
+    buffer[0] = (kGyroScaleFactor >> 24) & 0xFF;
+    buffer[1] = (kGyroScaleFactor >> 16) & 0xFF;
+    buffer[2] = (kGyroScaleFactor >> 8) & 0xFF;
+    buffer[3] = (kGyroScaleFactor) &0xFF;
     if (MPU_ERR_CHECK(writeMemory(D_0_104, 4, buffer))) return err;
 
     /* Send sensor data to the FIFO. */
@@ -264,10 +272,12 @@ esp_err_t MPUdmp::setDMPFeatures(dmp_feature_t features)
     if (MPU_ERR_CHECK(writeMemory(CFG_ANDROID_ORIENT_INT, 1, buffer))) return err;
 
     /* Enable LP 3-axis Quaternions */
-    if (MPU_ERR_CHECK(setLP3xQuatFeature(features & DMP_FEATURE_LP_3X_QUAT))) return err;
+    const int enableLP3XQuat = (features & DMP_FEATURE_LP_3X_QUAT);
+    if (MPU_ERR_CHECK(setLP3xQuatFeature(enableLP3XQuat))) return err;
 
     /* Enable LP 6-axis Quaternions */
-    if (MPU_ERR_CHECK(setLP6xQuatFeature(features & DMP_FEATURE_LP_6X_QUAT))) return err;
+    const int enableLP6XQuat = (features & DMP_FEATURE_LP_6X_QUAT);
+    if (MPU_ERR_CHECK(setLP6xQuatFeature(enableLP6XQuat))) return err;
 
     /* Pedometer is always enabled. */
     this->enabledFeatures = features | DMP_FEATURE_PEDOMETER;
@@ -373,6 +383,7 @@ esp_err_t MPUdmp::setDMPOutputRate(uint16_t rate)
  * A DMP interrupt can be configured to trigger on either of the two conditions below:
  *  \n a. One FIFO period has elapsed (set by setDMPOutputRate()).
  *  \n b. A tap event has been detected.
+ * @note Call setInterruptEnabled() make the DMP interrupt propagate to INT pin.
  * @param mode `DMP_INT_GESTURE` or `DMP_INT_CONTINUOUS`.
  */
 esp_err_t MPUdmp::setDMPInterruptMode(dmp_int_mode_t mode)
