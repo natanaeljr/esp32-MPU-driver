@@ -397,9 +397,6 @@ static constexpr int_stat_t INT_STAT_ZERO_MOTION = (1 << regs::INT_STATUS_ZEROMO
 typedef enum { FIFO_SIZE_512B = 0, FIFO_SIZE_1K = 1, FIFO_SIZE_2K = 2, FIFO_SIZE_4K = 3 } fifo_size_t;
 #endif
 
-/*! DMP Interrupt mode */
-typedef enum { DMP_INT_MODE_PACKET = 0, DMP_INT_MODE_GESTURE = 1 } dmp_int_mode_t;
-
 /*! FIFO mode */
 typedef enum {
     FIFO_MODE_OVERWRITE = 0,  //!< when fifo full, additional writes will be written to fifo, replacing the oldest data.
@@ -420,32 +417,6 @@ static constexpr fifo_config_t FIFO_CFG_SLAVE3      = (1 << 8);
 #if defined CONFIG_MPU_AK89xx
 static constexpr fifo_config_t FIFO_CFG_COMPASS = (FIFO_CFG_SLAVE0);  // 8 bytes
 #endif
-
-// Enable DMP features
-/* @note DMP_FEATURE_LP_QUAT and DMP_FEATURE_6X_LP_QUAT are mutually exclusive.
- * @note DMP_FEATURE_SEND_RAW_GYRO and DMP_FEATURE_SEND_CAL_GYRO are also
- * mutually exclusive.
- * @note DMP_FEATURE_PEDOMETER is always enabled.
- */
-
-/* typedef uint16_t dmp_features_t;
-static constexpr dmp_features_t DMP_FEATURE_TAP =            {0x001};
-static constexpr dmp_features_t DMP_FEATURE_ANDROID_ORIENT = {0x002};
-static constexpr dmp_features_t DMP_FEATURE_LP_QUAT =        {0x004};
-static constexpr dmp_features_t DMP_FEATURE_PEDOMETER =      {0x008};
-static constexpr dmp_features_t DMP_FEATURE_6X_LP_QUAT =     {0x010};
-static constexpr dmp_features_t DMP_FEATURE_GYRO_CAL =       {0x020};
-static constexpr dmp_features_t DMP_FEATURE_SEND_RAW_ACCEL = {0x040};
-static constexpr dmp_features_t DMP_FEATURE_SEND_RAW_GYRO =  {0x080};
-static constexpr dmp_features_t DMP_FEATURE_SEND_CAL_GYRO =  {0x100};
-
-// DMP Tap axes
-typedef uint8_t dmp_tap_axis_t;
-static constexpr dmp_tap_axis_t DMP_TAP_X       {0x30};
-static constexpr dmp_tap_axis_t DMP_TAP_Y       {0x0C};
-static constexpr dmp_tap_axis_t DMP_TAP_Z       {0x03};
-static constexpr dmp_tap_axis_t DMP_TAP_XYZ     {0x3F};
- */
 
 /*! Generic axes struct to store sensors' data */
 template <class type_t>

@@ -18,12 +18,12 @@
 
 #include <stdint.h>
 
-static constexpr uint8_t kMemoryBankNum    = 12;    /*!< Memory number of Banks */
-static constexpr uint8_t kMemoryChunkSize  = 16;    /*!< Memory Chunk size */
-static constexpr uint16_t kMemoryBankSize  = 256;   /*!< Memory Bank size */
-static constexpr uint16_t kDMPStartAddress = 0x400; /*!< DMP Code start address */
-static constexpr uint16_t kDMPCodeSize     = 3062;  /*!< DMP Code size */
-static constexpr uint16_t kDMPSampleRate   = 200;   /*!< DMP Sample Rate: 200Hz */
+static constexpr uint8_t kMemoryBankNum        = 12;    /*!< Memory number of Banks */
+static constexpr uint8_t kMemoryChunkSize      = 16;    /*!< Memory Chunk size */
+static constexpr uint16_t kMemoryBankSize      = 256;   /*!< Memory Bank size */
+static constexpr uint16_t kDMPCodeSize         = 3062;  /*!< DMP Code size */
+static constexpr uint16_t kDMPSampleRate       = 200;   /*!< DMP Sample Rate: 200Hz */
+static constexpr uint16_t kProgramStartAddress = 0x400; /*!< DMP program start address */
 
 /*! DMP image */
 static constexpr uint8_t kDMPMemory[kDMPCodeSize]{
