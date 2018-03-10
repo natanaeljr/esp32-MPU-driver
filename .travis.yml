@@ -15,7 +15,7 @@ env:
 stages:
   - test
   - name: docs deploy
-    if: branch = dev
+    if: branch = test
 
 # Install dependencies
 addons:
@@ -71,4 +71,4 @@ jobs:
         target-branch: gh-pages
         local-dir: gh-pages
         on:
-          branch: dev
+          branch: test
