@@ -42,7 +42,7 @@ SPI_t& spi = getSPI((spi_host_device_t) CONFIG_MPU_TEST_SPIBUS_HOST);
 spi_device_handle_t spi_mpu_handle = nullptr;
 #endif
 bool isBusInit = false;
-}  // test
+}  // namespace test
 
 
 namespace test {
@@ -88,70 +88,48 @@ class MPU : public mpud::MPU {
     }
 };
 using MPU_t = MPU;
-}  // namespace test
 
-
-
-/** Setup gpio and ISR for interrupt pin (ISR must IRAM_ATTR)*/
-static esp_err_t mpuConfigInterrupt(void (*isr)(void*), void * arg) {
+esp_err_t mpuConfigInterrupt(void (*isr)(void*), void* arg)
+{
     esp_err_t ret = ESP_OK;
     gpio_config_t io_config{};
     io_config.pin_bit_mask = ((uint64_t) 1 << CONFIG_MPU_TEST_INTERRUPT_PIN);
-    io_config.mode = GPIO_MODE_INPUT;
-    io_config.pull_up_en = GPIO_PULLUP_DISABLE;
+    io_config.mode         = GPIO_MODE_INPUT;
+    io_config.pull_up_en   = GPIO_PULLUP_DISABLE;
     io_config.pull_down_en = GPIO_PULLDOWN_DISABLE;
-    io_config.intr_type = GPIO_INTR_POSEDGE;
-    ret = gpio_config(&io_config);
+    io_config.intr_type    = GPIO_INTR_POSEDGE;
+    ret                    = gpio_config(&io_config);
     if (ret) return ret;
     ret = gpio_install_isr_service(ESP_INTR_FLAG_IRAM);
     if (ret) return ret;
-    ret = gpio_isr_handler_add((gpio_num_t)CONFIG_MPU_TEST_INTERRUPT_PIN, isr, arg);
+    ret = gpio_isr_handler_add((gpio_num_t) CONFIG_MPU_TEST_INTERRUPT_PIN, isr, arg);
     return ret;
 }
 
-static esp_err_t mpuRemoveInterrupt() {
+esp_err_t mpuRemoveInterrupt()
+{
     esp_err_t ret;
-    ret = gpio_isr_handler_remove((gpio_num_t)CONFIG_MPU_TEST_INTERRUPT_PIN);
+    ret = gpio_isr_handler_remove((gpio_num_t) CONFIG_MPU_TEST_INTERRUPT_PIN);
     if (ret) return ret;
     gpio_uninstall_isr_service();
     return ret;
 }
 
-/** ISR to notify a task */
-static void IRAM_ATTR mpuTaskNotifier(void *arg) {
+void IRAM_ATTR mpuTaskNotifier(void* arg)
+{
     TaskHandle_t taskhandle = (TaskHandle_t) arg;
-    BaseType_t HPTaskWoken = pdFALSE;
+    BaseType_t HPTaskWoken  = pdFALSE;
     vTaskNotifyGiveFromISR(taskhandle, &HPTaskWoken);
-    if (HPTaskWoken == pdTRUE)
-        portYIELD_FROM_ISR();
+    if (HPTaskWoken == pdTRUE) portYIELD_FROM_ISR();
 }
 
-/** ISR to measure sample rate */
-static void IRAM_ATTR mpuInterruptCounterISR(void * arg) {
+void IRAM_ATTR mpuInterruptCounterISR(void* arg)
+{
     int& count = *((int*) arg);
     count++;
 }
 
-/** Routine to measure sample rate */
-static void mpuMeasureSampleRate(test::MPU_t& mpu, uint16_t rate, int numOfSamples) {
-    const int threshold = 0.05 * rate; // percentage, 0.05 = 5%
-    int count = 0;
-    printf("> Sample rate set to %d Hz\n", rate);
-    printf("> Now measuring true interrupt rate... wait %d secs\n", numOfSamples);
-    TEST_ESP_OK( mpuConfigInterrupt(mpuInterruptCounterISR, (void*) &count));
-    // enable raw-sensor-data-ready interrupt to propagate to interrupt pin.
-    TEST_ESP_OK( mpu.writeByte(mpud::regs::INT_ENABLE, (1 << mpud::regs::INT_ENABLE_RAW_DATA_RDY_BIT)));
-    vTaskDelay((numOfSamples * 1000) / portTICK_PERIOD_MS);
-    TEST_ESP_OK( mpuRemoveInterrupt());
-    uint16_t finalRate = count / numOfSamples;
-    printf("> Final measured rate is %d Hz\n", finalRate);
-    const int minRate = rate - threshold;
-    const int maxRate = rate + threshold;
-    TEST_ASSERT ((finalRate >= minRate) && (finalRate <= maxRate));
-}
-
-
-
+}  // namespace test
 
 /******************************************
  * TESTS ----------------------------------
@@ -227,9 +205,10 @@ TEST_CASE("MPU sample rate measurement", "[MPU]")
     /** rate measurement */
     constexpr int numOfSamples = 5;
     constexpr uint16_t rates[] = {5, 50, 100, 250, 500, 1000};
+    TEST_ESP_OK(mpu.setInterruptEnabled(mpud::INT_EN_RAWDATA_READY));
     for (auto rate : rates) {
         TEST_ESP_OK( mpu.setSampleRate(rate));
-        mpuMeasureSampleRate(mpu, rate, numOfSamples);
+        test::mpuMeasureInterruptRate(mpu, rate, numOfSamples);
     }
 }
 
@@ -248,7 +227,8 @@ TEST_CASE("MPU max sample rate test", "[MPU]")
     /* measure maximum sample rate consistency */
     uint16_t rate = mpud::SAMPLE_RATE_MAX;
     constexpr int numOfSamples = 5;
-    mpuMeasureSampleRate(mpu, rate, numOfSamples);
+    TEST_ESP_OK(mpu.setInterruptEnabled(mpud::INT_EN_RAWDATA_READY));
+    test::mpuMeasureInterruptRate(mpu, rate, numOfSamples);
 }
 
 
@@ -284,11 +264,12 @@ TEST_CASE("MPU low power accelerometer mode", "[MPU]")
     constexpr uint16_t rates[] = {2, 31, 125};
     #endif
     constexpr int numOfSamples = 5;
+    TEST_ESP_OK(mpu.setInterruptEnabled(mpud::INT_EN_RAWDATA_READY));
     for (int i = 0; i < (sizeof(rates) / sizeof(rates[0])); i++) {
         TEST_ESP_OK( mpu.setLowPowerAccelRate(lp_accel_rates[i]));
         TEST_ASSERT_EQUAL_INT(lp_accel_rates[i], mpu.getLowPowerAccelRate());
         TEST_ESP_OK( mpu.lastError());
-        mpuMeasureSampleRate(mpu, rates[i], numOfSamples);
+        test::mpuMeasureInterruptRate(mpu, rates[i], numOfSamples);
     }
 }
 
@@ -746,7 +727,7 @@ TEST_CASE("MPU motion detection and wake-on-motion mode", "[MPU]")
     #endif
     // configure interrupt
     TEST_ESP_OK( mpu.setInterruptEnabled(mpud::INT_EN_MOTION_DETECT));
-    TEST_ESP_OK( mpuConfigInterrupt(mpuTaskNotifier, xTaskGetCurrentTaskHandle()));
+    TEST_ESP_OK( test::mpuConfigInterrupt(test::mpuTaskNotifier, xTaskGetCurrentTaskHandle()));
     // check interrupt for a period
     TickType_t startTick = xTaskGetTickCount();
     TickType_t endTick = startTick + (pdMS_TO_TICKS(10000));  // 10 seconds of test
@@ -768,7 +749,7 @@ TEST_CASE("MPU motion detection and wake-on-motion mode", "[MPU]")
     TEST_ASSERT_FALSE( mpu.getMotionFeatureEnabled());
     TEST_ESP_OK( mpu.lastError());
     // free interrupt
-    TEST_ESP_OK( mpuRemoveInterrupt());
+    TEST_ESP_OK( test::mpuRemoveInterrupt());
 }
 
 
@@ -800,7 +781,7 @@ TEST_CASE("MPU free-fall detection", "[MPU]")
     printf(">> Free-Fall Config:: threshold: %d mg, time: %d ms\n", thresholdMg, FFConfig.time);
     // configure interrupt
     TEST_ESP_OK( mpu.setInterruptEnabled(mpud::INT_EN_FREE_FALL));
-    TEST_ESP_OK( mpuConfigInterrupt(mpuTaskNotifier, xTaskGetCurrentTaskHandle()));
+    TEST_ESP_OK( test::mpuConfigInterrupt(test::mpuTaskNotifier, xTaskGetCurrentTaskHandle()));
     // check interrupt for a period
     TickType_t startTick = xTaskGetTickCount();
     TickType_t endTick = startTick + (pdMS_TO_TICKS(10000));  // 10 seconds of test
@@ -815,7 +796,7 @@ TEST_CASE("MPU free-fall detection", "[MPU]")
     TEST_ASSERT_FALSE( mpu.getMotionFeatureEnabled());
     TEST_ESP_OK( mpu.lastError());
     // free interrupt
-    TEST_ESP_OK( mpuRemoveInterrupt());
+    TEST_ESP_OK( test::mpuRemoveInterrupt());
 }
 #endif
 
@@ -844,7 +825,7 @@ TEST_CASE("MPU zero-motion detection", "[MPU]")
     printf(">> Zero-Motion Config:: threshold: %d mg, time: %d ms\n", thresholdMg, ZRMotConfig.time);
     // configure interrupt
     TEST_ESP_OK( mpu.setInterruptEnabled(mpud::INT_EN_ZERO_MOTION));
-    TEST_ESP_OK( mpuConfigInterrupt(mpuTaskNotifier, xTaskGetCurrentTaskHandle()));
+    TEST_ESP_OK( test::mpuConfigInterrupt(test::mpuTaskNotifier, xTaskGetCurrentTaskHandle()));
     // check interrupt for a period
     TickType_t startTick = xTaskGetTickCount();
     TickType_t endTick = startTick + (pdMS_TO_TICKS(10000));  // 10 seconds of test
@@ -859,7 +840,7 @@ TEST_CASE("MPU zero-motion detection", "[MPU]")
     TEST_ASSERT_FALSE( mpu.getMotionFeatureEnabled());
     TEST_ESP_OK( mpu.lastError());
     // free interrupt
-    TEST_ESP_OK( mpuRemoveInterrupt());
+    TEST_ESP_OK( test::mpuRemoveInterrupt());
 }
 #endif
 

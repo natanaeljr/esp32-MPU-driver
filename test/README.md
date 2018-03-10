@@ -15,9 +15,13 @@ The mpu tests also work with the default unit-test-app from _esp-idf_. If you \'
 
 See [Unit Testing in ESP32] for more information.
 
+[Unit Testing in ESP32]: https://esp-idf.readthedocs.io/en/latest/api-guides/unit-tests.html
+
+DMP Tests can be enabled by setting the DMP option in the MPU Driver component menu.
+
 **Current tests:**
 
-1. basic test
+1. mpu basic test
 1. sample rate measurement
 1. max sample rate test
 1. low power accelerometer mode
@@ -35,7 +39,7 @@ See [Unit Testing in ESP32] for more information.
 1. zero-motion detection
 1. compass configuration
 1. dmp firmware loading
+1. dmp basic test
+1. dmp output data rate measurement
 
 ---
-
-[Unit Testing in ESP32]: https://esp-idf.readthedocs.io/en/latest/api-guides/unit-tests.html

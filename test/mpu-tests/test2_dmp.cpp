@@ -33,6 +33,7 @@
 #include "MPU.hpp"
 #include "MPUdmp.hpp"
 #include "dmp/image.hpp"
+#include "dmp/types.hpp"
 #include "mpu/registers.hpp"
 #include "mpu/types.hpp"
 
@@ -41,14 +42,14 @@
 namespace test
 {
 /**
- * MPU class modified to initialize the bus automaticaly when
+ * MPUdmp class modified to initialize the bus automaticaly when
  * instantiated, and close when object is destroyed.
  * Also, resets MPU on construction and destruction.
  * */
-class MPU : public mpud::dmp::MPU
+class MPUdmp : public mpud::MPUdmp
 {
  public:
-    MPU() : mpud::dmp::MPU()
+    MPUdmp() : mpud::MPUdmp()
     {
 #ifdef CONFIG_MPU_I2C
         if (!isBusInit) {
@@ -72,7 +73,7 @@ class MPU : public mpud::dmp::MPU
         this->reset();
     }
 
-    ~MPU()
+    ~MPUdmp()
     {
         this->reset();
 #ifdef CONFIG_MPU_I2C
@@ -83,8 +84,19 @@ class MPU : public mpud::dmp::MPU
         this->bus->close();
         isBusInit = false;
     }
+
+ public:
+    // turn protected methods as public
+    esp_err_t writeMemory(uint16_t memAddr, uint8_t length, const uint8_t* data)
+    {
+        return mpud::MPUdmp::writeMemory(memAddr, length, data);
+    }
+    esp_err_t readMemory(uint16_t memAddr, uint8_t length, uint8_t* data)
+    {
+        return mpud::MPUdmp::readMemory(memAddr, length, data);
+    }
 };
-using MPUdmp_t = MPU;
+using MPUdmp_t = MPUdmp;
 }  // namespace test
 
 /******************************************
@@ -96,7 +108,7 @@ TEST_CASE("DMP firmware loading", "[MPU][DMP]")
     test::MPUdmp_t mpu;
     TEST_ESP_OK(mpu.testConnection());
     TEST_ESP_OK(mpu.initialize());
-    TEST_ESP_OK(mpu.loadDMP());
+    TEST_ESP_OK(mpu.loadDMPFirware());
     /* Check if the loaded DMP memory matches DMP image */
     uint8_t buffer[kDMPCodeSize];
     uint16_t addr = 0;  // chunk start address
@@ -107,6 +119,74 @@ TEST_CASE("DMP firmware loading", "[MPU][DMP]")
     }
     TEST_ASSERT_EQUAL_HEX8_ARRAY(kDMPMemory, buffer, kDMPCodeSize);
     printf("> DMP firmware verified!\n");
+}
+
+//-
+
+TEST_CASE("DMP basic test", "[MPU][DMP]")
+{
+    test::MPUdmp_t mpu;
+    TEST_ESP_OK(mpu.testConnection());
+    TEST_ESP_OK(mpu.initialize());
+    TEST_ESP_OK(mpu.loadDMPFirware());
+    /* Check DMP activation */
+    TEST_ASSERT_FALSE(mpu.getDMPEnabled());
+    TEST_ESP_OK(mpu.lastError());
+    TEST_ESP_OK(mpu.enableDMP());
+    TEST_ASSERT_TRUE(mpu.getDMPEnabled());
+    TEST_ESP_OK(mpu.lastError());
+    TEST_ESP_OK(mpu.disableDMP());
+    TEST_ASSERT_FALSE(mpu.getDMPEnabled());
+    TEST_ESP_OK(mpu.lastError());
+    TEST_ESP_OK(mpu.enableDMP());
+    /* Check Features setter */
+    mpud::dmp_feature_t features;
+    features = mpud::DMP_FEATURE_ANDROID_ORIENT | mpud::DMP_FEATURE_TAP;
+    TEST_ESP_OK(mpu.setDMPFeatures(features));
+    TEST_ASSERT(mpud::DMP_FEATURE_PEDOMETER == mpu.getDMPFeatures());
+    features = mpud::DMP_FEATURE_LP_3X_QUAT | mpud::DMP_FEATURE_LP_6X_QUAT;
+    TEST_ESP_ERR(ESP_ERR_INVALID_ARG, mpu.setDMPFeatures(features));
+    features = mpud::DMP_FEATURE_SEND_RAW_GYRO | mpud::DMP_FEATURE_SEND_CAL_GYRO;
+    TEST_ESP_ERR(ESP_ERR_INVALID_ARG, mpu.setDMPFeatures(features));
+    features = mpud::DMP_FEATURE_SEND_RAW_ACCEL | mpud::DMP_FEATURE_GYRO_CAL | mpud::DMP_FEATURE_SEND_CAL_GYRO |
+               mpud::DMP_FEATURE_LP_6X_QUAT | mpud::DMP_FEATURE_PEDOMETER;
+    TEST_ESP_OK(mpu.setDMPFeatures(features));
+    TEST_ASSERT_EQUAL_HEX16(features, mpu.getDMPFeatures());
+    TEST_ASSERT_EQUAL_UINT8(28, mpu.getDMPPacketLength());
+    /* Test Test section */
+}
+
+//-
+
+TEST_CASE("DMP output data rate test", "[MPU][DMP]")
+{
+    test::MPUdmp_t mpu;
+    TEST_ESP_OK(mpu.testConnection());
+    TEST_ESP_OK(mpu.initialize());
+    TEST_ESP_OK(mpu.loadDMPFirware());
+    /* Invalid rate/state check */
+    TEST_ESP_OK(mpu.setDMPOutputRate(0));
+    TEST_ESP_OK(mpu.setDMPOutputRate(201));
+    TEST_ESP_OK(mpu.setDMPOutputRate(1));
+    TEST_ESP_OK(mpu.setDMPOutputRate(200));
+    TEST_ESP_OK(mpu.setDMPOutputRate(13));
+    TEST_ESP_OK(mpu.setDMPOutputRate(57));
+    TEST_ESP_OK(mpu.setDMPOutputRate(-1));
+    /** ODR measurement */
+    constexpr mpud::dmp_feature_t features =
+        (mpud::DMP_FEATURE_SEND_RAW_ACCEL | mpud::DMP_FEATURE_SEND_RAW_GYRO | mpud::DMP_FEATURE_ANDROID_ORIENT |
+         mpud::DMP_FEATURE_TAP | mpud::DMP_FEATURE_GYRO_CAL | mpud::DMP_FEATURE_LP_6X_QUAT |
+         mpud::DMP_FEATURE_PEDOMETER);
+    TEST_ESP_OK(mpu.setDMPFeatures(features));
+    TEST_ESP_OK(mpu.enableDMP());
+    TEST_ESP_OK(mpu.setDMPInterruptMode(mpud::DMP_INT_MODE_CONTINUOUS));
+    TEST_ESP_OK(mpu.setInterruptEnabled(mpud::INT_EN_DMP_READY));
+    constexpr int numOfSamples = 5;
+    constexpr uint16_t rates[] = {200, 100, 10};  // 1, 5, 10, 50, 100, 200
+    for (auto rate : rates) {
+        TEST_ESP_OK(mpu.setDMPOutputRate(rate));
+        test::mpuMeasureInterruptRate(mpu, rate, numOfSamples);
+    }
 }
 
 #endif  // defined CONFIG_MPU_ENABLE_DMP
