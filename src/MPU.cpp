@@ -210,18 +210,18 @@ esp_err_t MPU::setSampleRate(uint16_t rate)
         MPU_LOGWMSG(msgs::INVALID_STATE, ", sample rate divider is not effective when DLPF is (0 or 7)");
 #endif
 
-    constexpr uint16_t internalSampleRate = 1000;
-    uint16_t divider                      = internalSampleRate / rate - 1;
+    constexpr uint16_t kInternalSampleRate = 1000;
+    uint16_t divider                       = kInternalSampleRate / rate - 1;
+    // Write divider to register
+    if (MPU_ERR_CHECK(writeByte(regs::SMPLRT_DIV, (uint8_t) divider))) return err;
     // Check for rate match
-    uint16_t finalRate = (internalSampleRate / (1 + divider));
+    uint16_t finalRate = (kInternalSampleRate / (1 + divider));
     if (finalRate != rate) {
         MPU_LOGW("Sample rate constrained to %d Hz", finalRate);
     }
     else {
         MPU_LOGI("Sample rate set to %d Hz", finalRate);
     }
-    // Write divider to register
-    if (MPU_ERR_CHECK(writeByte(regs::SMPLRT_DIV, (uint8_t) divider))) return err;
 
         // check and set compass sample rate
 #ifdef CONFIG_MPU_AK89xx
