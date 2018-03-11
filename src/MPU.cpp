@@ -33,9 +33,9 @@ namespace mpud
  * @brief Initialize MPU device and set basic configurations.
  * @details
  *  Init configuration:
- *  - Accel FSR: 4G
- *  - Gyro FSR: 500DPS
- *  - Sample rate: 100Hz
+ *  - Accel FSR: 2G
+ *  - Gyro FSR: 2000DPS
+ *  - Sample rate: 50Hz
  *  - DLPF: 42Hz
  *  - INT pin: disabled
  *  - FIFO: disabled
@@ -71,8 +71,8 @@ esp_err_t MPU::initialize()
 #endif
 
     // set Full Scale range
-    if (MPU_ERR_CHECK(setGyroFullScale(GYRO_FS_500DPS))) return err;
-    if (MPU_ERR_CHECK(setAccelFullScale(ACCEL_FS_4G))) return err;
+    if (MPU_ERR_CHECK(setGyroFullScale(GYRO_FS_2000DPS))) return err;
+    if (MPU_ERR_CHECK(setAccelFullScale(ACCEL_FS_2G))) return err;
     // set Digital Low Pass Filter to get smoother data
     if (MPU_ERR_CHECK(setDigitalLowPassFilter(DLPF_42HZ))) return err;
 
@@ -84,8 +84,8 @@ esp_err_t MPU::initialize()
 #endif
 #endif
 
-    // set sample rate to 100Hz
-    if (MPU_ERR_CHECK(setSampleRate(100))) return err;
+    // set sample rate to 50Hz
+    if (MPU_ERR_CHECK(setSampleRate(50))) return err;
     MPU_LOGI("Initialization complete");
     return err;
 }
