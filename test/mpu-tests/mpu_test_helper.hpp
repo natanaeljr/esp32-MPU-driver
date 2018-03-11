@@ -11,6 +11,9 @@
 
 #pragma once
 
+#include <math.h>
+#include <stdint.h>
+#include <stdlib.h>
 #include "MPU.hpp"
 #include "sdkconfig.h"
 
@@ -63,7 +66,7 @@ inline void mpuMeasureInterruptRate(MPU_t& mpu, uint16_t rate, int numOfSamples)
     TEST_ESP_OK(mpuConfigInterrupt(mpuInterruptCounterISR, (void*) &count));
     vTaskDelay((numOfSamples * 1000) / portTICK_PERIOD_MS);
     TEST_ESP_OK(mpuRemoveInterrupt());
-    uint16_t finalRate = count / numOfSamples;
+    uint16_t finalRate = round((float) count / numOfSamples);
     printf("> Final measured rate is %d Hz\n", finalRate);
     const int minRate = rate - threshold;
     const int maxRate = rate + threshold;
