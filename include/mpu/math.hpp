@@ -130,6 +130,33 @@ inline int16_t magAdjust(const int16_t axis, const uint8_t adjValue)
 }
 #endif
 
+inline uint16_t orientationMatrixToScalar(const int8_t* matrix)
+{
+    auto rowToScale = [](const int8_t* row) {
+        uint16_t b;
+        if (row[0] > 0)
+            b = 0;
+        else if (row[0] < 0)
+            b = 4;
+        else if (row[1] > 0)
+            b = 1;
+        else if (row[1] < 0)
+            b = 5;
+        else if (row[2] > 0)
+            b = 2;
+        else if (row[2] < 0)
+            b = 6;
+        else
+            b = 7;  // error
+        return b;
+    };
+    uint16_t scalar = 0;
+    scalar |= rowToScale(matrix);
+    scalar |= rowToScale(matrix + 3) << 3;
+    scalar |= rowToScale(matrix + 6) << 6;
+    return scalar;
+}
+
 }  // namespace math
 
 }  // namespace mpud

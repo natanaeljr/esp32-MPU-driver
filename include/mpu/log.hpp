@@ -56,7 +56,6 @@ static const char INVALID_LENGTH[]        = "Invalid length";
 static const char INVALID_FIFO_RATE[]     = "Invalid FIFO rate";
 static const char INVALID_SAMPLE_RATE[]   = "Invalid Sample rate";
 static const char INVALID_DMP_RATE[]      = "Invalid DMP output rate";
-static const char INVALID_TAP_THRESH[]    = "Invalid Tap threshold";
 static const char DMP_LOAD_FAIL[]         = "Failed loading DMP firmware";
 static const char DMP_NOT_LOADED[]        = "DMP firmware not loaded";
 static const char UNKNOWN_DMP_CFG_STATE[] = "Unknown DMP config state";

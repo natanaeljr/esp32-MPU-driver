@@ -39,7 +39,7 @@ typedef uint16_t dmp_feature_t;
 static constexpr dmp_feature_t DMP_FEATURE_NONE           = {0x000};  //!< Disable all Features
 static constexpr dmp_feature_t DMP_FEATURE_TAP            = {0x001};  //!< Tap Gesture Recognition
 static constexpr dmp_feature_t DMP_FEATURE_ANDROID_ORIENT = {0x002};  //!< Orientation Gesture Recognition
-static constexpr dmp_feature_t DMP_FEATURE_PEDOMETER      = {0x008};  //!< Pedometer Gesture Recognition
+static constexpr dmp_feature_t DMP_FEATURE_PEDOMETER      = {0x008};  //!< Pedometer Gesture Recognition. !**Always Enabled**!
 static constexpr dmp_feature_t DMP_FEATURE_LP_3X_QUAT     = {0x004};  //!< Low-Power 3-axis (Gyro only) Quaternions
 static constexpr dmp_feature_t DMP_FEATURE_LP_6X_QUAT     = {0x010};  //!< Low-Power 6 axis (Gyro and Accel) Quaternions
 static constexpr dmp_feature_t DMP_FEATURE_GYRO_CAL       = {0x020};  //!< Constant Gyroscope Calibration
@@ -47,14 +47,44 @@ static constexpr dmp_feature_t DMP_FEATURE_SEND_RAW_ACCEL = {0x040};  //!< Raw A
 static constexpr dmp_feature_t DMP_FEATURE_SEND_RAW_GYRO  = {0x080};  //!< Raw Gyroscope data
 static constexpr dmp_feature_t DMP_FEATURE_SEND_CAL_GYRO  = {0x100};  //!< Calibrated Gyroscope data
 
-/*
-//! DMP Tap Axes
+/*! DMP Tap Axes */
 typedef uint8_t dmp_tap_axis_t;
-static constexpr dmp_tap_axis_t DMP_TAP_X       {0x30};
-static constexpr dmp_tap_axis_t DMP_TAP_Y       {0x0C};
-static constexpr dmp_tap_axis_t DMP_TAP_Z       {0x03};
-static constexpr dmp_tap_axis_t DMP_TAP_XYZ     {0x3F};
-*/
+static constexpr dmp_tap_axis_t DMP_TAP_X   = {0x30};
+static constexpr dmp_tap_axis_t DMP_TAP_Y   = {0x0C};
+static constexpr dmp_tap_axis_t DMP_TAP_Z   = {0x03};
+static constexpr dmp_tap_axis_t DMP_TAP_XYZ = {0x3F};
+
+/*! DMP Tap Configuration */
+typedef struct
+{
+    uint16_t threshold_X;     //!< Tap threshold for accel X axis in mg/ms, (max: 1600).
+    uint16_t threshold_Y;     //!< Tap threshold for accel Y axis in mg/ms, (max: 1600).
+    uint16_t threshold_Z;     //!< Tap threshold for accel Z axis in mg/ms, (max: 1600).
+    uint8_t count;            //!< Minimum number of consecutive taps needed for an interrupt (1-4).
+    uint16_t time;            //!< Length between valid taps, in milliseconds.
+    uint16_t time_multi_tap;  //!< Maximum time between taps to register as a multi-tap.
+    struct
+    {
+        uint16_t threshold; /*!< Shake rejection threshold in DPS.
+                             * If the DMP detects a gyro sample larger than `threshold`, taps are rejected. */
+        uint16_t time;      /*!< Shake rejection time in milliseconds.
+                             * Sets the length of time that the gyro must be outside of the threshold
+                             * before taps are rejected. A mandatory 60 ms is added to this parameter. */
+        uint16_t timeout;   /*!< Shake rejection timeout in milliseconds.
+                             * Sets the length of time after a shake rejection that the gyro must stay
+                             * inside of the `threshold` before taps can be detected again.
+                             * A mandatory 60 ms is added to this parameter. */
+    } shake_reject;
+} dmp_tap_config_t;
+
+/*! Quaternion struct */
+typedef struct
+{
+    int32_t x;
+    int32_t y;
+    int32_t z;
+    int32_t w;
+} quaternion_t;
 
 }  // namespace types
 

@@ -20,6 +20,7 @@
 #include "dmp/types.hpp"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "mpu/math.hpp"
 #include "mpu/registers.hpp"
 #include "mpu/types.hpp"
 #include "sdkconfig.h"
@@ -35,7 +36,7 @@ static const char* TAG = CONFIG_MPU_CHIP_MODEL;
 namespace mpud
 {
 /* CONSTANTS */
-static constexpr size_t kGyroScaleFactor                 = (46850825LL * 200 / kDMPSampleRate);
+static constexpr uint32_t kGyroScaleFactor               = (46850825UL * 200 / kDMPSampleRate);
 static constexpr dmp_feature_t DMP_FEATURE_SEND_ANY_GYRO = (DMP_FEATURE_SEND_RAW_GYRO | DMP_FEATURE_SEND_CAL_GYRO);
 static constexpr dmp_feature_t DMP_FEATURE_ANY_LP_QUAT   = (DMP_FEATURE_LP_3X_QUAT | DMP_FEATURE_LP_6X_QUAT);
 
@@ -50,7 +51,9 @@ static constexpr dmp_feature_t DMP_FEATURE_ANY_LP_QUAT   = (DMP_FEATURE_LP_3X_QU
 esp_err_t MPUdmp::enableDMP()
 {
     if (MPU_ERR_CHECK(setSampleRate(kDMPSampleRate))) return err;
-    return MPU_ERR_CHECK(writeBit(regs::USER_CTRL, regs::USERCTRL_DMP_EN_BIT, 0x1));
+    if (MPU_ERR_CHECK(writeBit(regs::USER_CTRL, regs::USERCTRL_DMP_EN_BIT, 0x1))) return err;
+    MPU_LOGI("DMP activated");
+    return err;
 }
 
 /**
@@ -60,7 +63,9 @@ esp_err_t MPUdmp::enableDMP()
  */
 esp_err_t MPUdmp::disableDMP()
 {
-    return MPU_ERR_CHECK(writeBit(regs::USER_CTRL, regs::USERCTRL_DMP_EN_BIT, 0x0));
+    if (MPU_ERR_CHECK(writeBit(regs::USER_CTRL, regs::USERCTRL_DMP_EN_BIT, 0x0))) return err;
+    MPU_LOGI("DMP deactivated");
+    return err;
 }
 
 /**
@@ -96,9 +101,9 @@ esp_err_t MPUdmp::resetDMP()
 
 /**
  * @brief Load DMP firmware into DMP Memory.
- * @note DMP Memory is vollatile, so it has to be reload every power-up.
+ * @note DMP Memory is vollatile, so the firmware has to be reloaded every power-up.
  */
-esp_err_t MPUdmp::loadDMPFirware()
+esp_err_t MPUdmp::loadDMPFirmware()
 {
     uint16_t addr = 0;  // chunk start address
     while (addr < kDMPCodeSize) {
@@ -202,14 +207,16 @@ esp_err_t MPUdmp::setDMPFeatures(dmp_feature_t features)
 
     /* Temporary */
     // TODO: Implement and remove
-    if (features & DMP_FEATURE_TAP) {
-        MPU_LOGWMSG("TAP not yet supported", "");
-        features &= ~(dmp_feature_t)(DMP_FEATURE_TAP);
-    }
-    if (features & DMP_FEATURE_ANDROID_ORIENT) {
-        MPU_LOGWMSG("ANDROID_ORIENT not yet supported", "");
-        features &= ~(dmp_feature_t)(DMP_FEATURE_ANDROID_ORIENT);
-    }
+    // if (features & DMP_FEATURE_TAP) {
+    //     MPU_LOGWMSG("TAP not yet supported", "");
+    //     features &= ~(dmp_feature_t)(DMP_FEATURE_TAP);
+    // }
+    // if (features & DMP_FEATURE_ANDROID_ORIENT) {
+    //     MPU_LOGWMSG("ANDROID_ORIENT not yet supported", "");
+    //     features &= ~(dmp_feature_t)(DMP_FEATURE_ANDROID_ORIENT);
+    // }
+
+    uint8_t buffer[10];
 
     /* Set integration scale factor */
     buffer[0] = (kGyroScaleFactor >> 24) & 0xFF;
@@ -238,7 +245,8 @@ esp_err_t MPUdmp::setDMPFeatures(dmp_feature_t features)
     if (MPU_ERR_CHECK(writeMemory(CFG_27, 1, buffer))) return err;
 
     /* Enable Gyro calibration feature */
-    if (MPU_ERR_CHECK(setGyroCalFeature(features & DMP_FEATURE_GYRO_CAL))) return err;
+    const int enableGyroCal = (features & DMP_FEATURE_GYRO_CAL);
+    if (MPU_ERR_CHECK(setGyroCalFeature(enableGyroCal))) return err;
 
     /* Enable Gyro data features */
     if (features & DMP_FEATURE_SEND_ANY_GYRO) {
@@ -259,10 +267,27 @@ esp_err_t MPUdmp::setDMPFeatures(dmp_feature_t features)
 
     /* Enable Tap feature */
     if (features & DMP_FEATURE_TAP) {
-        (void) 0;  // TODO: implement
+        buffer[0] = 0xF8;  // enable
+        if (MPU_ERR_CHECK(writeMemory(CFG_20, 1, buffer))) return err;
+        const dmp_tap_config_t tapConf{
+            .threshold_X    = 250,
+            .threshold_Y    = 250,
+            .threshold_Z    = 250,
+            .count          = 1,
+            .time           = 100,
+            .time_multi_tap = 500,
+            {
+                // shake reject:
+                .threshold = 200,
+                .time      = 40,
+                .timeout   = 10  //
+            }                    //
+        };
+        if (MPU_ERR_CHECK(setTapConfig(tapConf))) return err;
+        if (MPU_ERR_CHECK(setTapAxisEnabled(DMP_TAP_XYZ))) return err;
     }
     else {
-        buffer[0] = 0xD8;
+        buffer[0] = 0xD8;  // disable
         if (MPU_ERR_CHECK(writeMemory(CFG_20, 1, buffer))) return err;
     }
 
@@ -284,6 +309,8 @@ esp_err_t MPUdmp::setDMPFeatures(dmp_feature_t features)
 
     // Clean FIFO buffer
     if (MPU_ERR_CHECK(resetFIFO())) return err;
+    this->getInterruptStatus();
+    if (MPU_ERR_CHECK(lastError())) return err;
 
     // Update FIFO packet length
     updatePacketLength();
@@ -342,6 +369,92 @@ esp_err_t MPUdmp::setLP6xQuatFeature(bool enable)
 }
 
 /**
+ * @brief Configure Tap Gesture Recognition feature.
+ * @todo Document it.
+ */
+esp_err_t MPUdmp::setTapConfig(const dmp_tap_config_t& config)
+{
+    /* Check for invalid input */
+    if (config.threshold_X > 1600 || config.threshold_Y > 1600 || config.threshold_Z > 1600) {
+        MPU_LOGEMSG("Invalid Tap Threshold", ", maximum is 1600 mg/ms");
+        return err = ESP_ERR_INVALID_ARG;
+    }
+    if (config.count < 1 || config.count > 4) {
+        MPU_LOGEMSG("Invalid Tap count", ", min 1, max 4");
+        return err = ESP_ERR_INVALID_ARG;
+    }
+
+    const accel_fs_t kAccelFS = getAccelFullScale();
+    if (MPU_ERR_CHECK(lastError())) return err;
+    const uint16_t kAccelSensitivity = math::accelSensitivity(kAccelFS);
+
+    /* Set Tap threshold */
+    const uint16_t threshold[3] = {
+        config.threshold_X,  //
+        config.threshold_Y,  //
+        config.threshold_Z   //
+    };
+    for (int i = 0; i < 3; i++) {
+        const float scaledThresh = threshold[i] / kDMPSampleRate;
+        uint16_t dmpThresh_1     = scaledThresh * kAccelSensitivity;
+        uint16_t dmpThresh_2     = scaledThresh * kAccelSensitivity * 0.75f;
+        buffer[0]                = dmpThresh_1 >> 8;
+        buffer[1]                = dmpThresh_1 & 0xFF;
+        buffer[2]                = dmpThresh_2 >> 8;
+        buffer[3]                = dmpThresh_2 & 0xFF;
+        if (MPU_ERR_CHECK(writeMemory((DMP_TAP_THX + (i * 4)), 2, &buffer[0]))) return err;
+        if (MPU_ERR_CHECK(writeMemory((D_1_36 + (i * 4)), 2, &buffer[2]))) return err;
+    }
+
+    /* Set Tap count */
+    buffer[0] = config.count - 1;
+    if (MPU_ERR_CHECK(writeMemory(D_1_79, 1, buffer))) return err;
+
+    /* Set Tap time */
+    const uint16_t dmpTime = config.time / (1000 / kDMPSampleRate);
+    buffer[0]              = (dmpTime >> 8);
+    buffer[1]              = (dmpTime & 0xFF);
+    if (MPU_ERR_CHECK(writeMemory(DMP_TAPW_MIN, 2, buffer))) return err;
+
+    /* Set Multi-tap time */
+    const uint16_t dmpTimeMultiTap = config.time / (1000 / kDMPSampleRate);
+    buffer[0]                      = (dmpTimeMultiTap >> 8);
+    buffer[1]                      = (dmpTimeMultiTap & 0xFF);
+    if (MPU_ERR_CHECK(writeMemory(D_1_218, 2, buffer))) return err;
+
+    /* Set Shake reject threshold */
+    int32_t scaledThresh = kGyroScaleFactor / 1000 * config.shake_reject.threshold;
+    buffer[0]            = (scaledThresh >> 24) & 0xFF;
+    buffer[1]            = (scaledThresh >> 16) & 0xFF;
+    buffer[2]            = (scaledThresh >> 8) & 0xFF;
+    buffer[3]            = (scaledThresh & 0xFF);
+    if (MPU_ERR_CHECK(writeMemory(D_1_92, 4, buffer))) return err;
+
+    /* Set Shake reject time */
+    const uint16_t dmpShakeRejectTime = config.shake_reject.time / (1000 / kDMPSampleRate);
+    buffer[0]                         = (dmpShakeRejectTime >> 8);
+    buffer[1]                         = (dmpShakeRejectTime & 0xFF);
+    if (MPU_ERR_CHECK(writeMemory(D_1_90, 2, buffer))) return err;
+
+    /* Set Shake reject timeout */
+    const uint16_t dmpShakeRejectTimeout = config.shake_reject.timeout / (1000 / kDMPSampleRate);
+    buffer[0]                            = (dmpShakeRejectTimeout >> 8);
+    buffer[1]                            = (dmpShakeRejectTimeout & 0xFF);
+    if (MPU_ERR_CHECK(writeMemory(D_1_88, 2, buffer))) return err;
+
+    return err = ESP_OK;
+}
+
+/**
+ * @brief Enable Tap Detection on the given axes.
+ * @todo Document it.
+ */
+esp_err_t MPUdmp::setTapAxisEnabled(dmp_tap_axis_t axes)
+{
+    return MPU_ERR_CHECK(writeMemory(D_1_72, 1, &axes));
+}
+
+/**
  * @brief Set DMP Output Data Rate.
  * DMP Output rate: 1 ~ 200 Hz. Should be a perfect divider of 200. \n
  * Only used when DMP is on.
@@ -361,9 +474,9 @@ esp_err_t MPUdmp::setDMPOutputRate(uint16_t rate)
         rate = 1;
     }
     // calculate and write rate divider to DMP
-    uint16_t divider = kDMPSampleRate / rate - 1;
-    buffer[0]        = divider >> 8;
-    buffer[1]        = divider & 0xFF;
+    const uint16_t divider = kDMPSampleRate / rate - 1;
+    buffer[0]              = (divider >> 8) & 0xFF;
+    buffer[1]              = (divider & 0xFF);
     if (MPU_ERR_CHECK(writeMemory(D_0_22, 2, buffer))) return err;
     if (MPU_ERR_CHECK(writeMemory(CFG_6, 12, kRegsEnd))) return err;
 
@@ -402,6 +515,50 @@ esp_err_t MPUdmp::setDMPInterruptMode(dmp_int_mode_t mode)
 }
 
 /**
+ * @brief Push gyro and accel orientation to the DMP.
+ * @param orient Gyro and accel orientation in body frame.
+ * @todo Document it.
+ */
+esp_err_t MPUdmp::setOrientation(uint16_t orient)
+{
+    constexpr uint8_t kGyroAxes[3]  = {DINA4C, DINACD, DINA6C};
+    constexpr uint8_t kAccelAxes[3] = {DINA0C, DINAC9, DINA2C};
+    constexpr uint8_t kGyroSign[3]  = {DINA36, DINA56, DINA76};
+    constexpr uint8_t kAccelSign[3] = {DINA26, DINA46, DINA66};
+    uint8_t gyroRegs[3], accelRegs[3];
+
+    /* Chip-to-body, axes only. */
+    gyroRegs[0]  = kGyroAxes[orient & 3];
+    gyroRegs[1]  = kGyroAxes[(orient >> 3) & 3];
+    gyroRegs[2]  = kGyroAxes[(orient >> 6) & 3];
+    accelRegs[0] = kAccelAxes[orient & 3];
+    accelRegs[1] = kAccelAxes[(orient >> 3) & 3];
+    accelRegs[2] = kAccelAxes[(orient >> 6) & 3];
+    if (MPU_ERR_CHECK(writeMemory(FCFG_1, 3, gyroRegs))) return err;
+    if (MPU_ERR_CHECK(writeMemory(FCFG_2, 3, accelRegs))) return err;
+
+    /* Chip-to-body, sign only. */
+    memcpy(gyroRegs, kGyroSign, 3);
+    memcpy(accelRegs, kAccelSign, 3);
+    if (orient & 4) {
+        gyroRegs[0] |= 1;
+        accelRegs[0] |= 1;
+    }
+    if (orient & 0x20) {
+        gyroRegs[1] |= 1;
+        accelRegs[1] |= 1;
+    }
+    if (orient & 0x100) {
+        gyroRegs[2] |= 1;
+        accelRegs[2] |= 1;
+    }
+    if (MPU_ERR_CHECK(writeMemory(FCFG_3, 3, gyroRegs))) return err;
+    if (MPU_ERR_CHECK(writeMemory(FCFG_7, 3, accelRegs))) return err;
+
+    return err = ESP_OK;
+}
+
+/**
  * @brief Calculate and Set the Packet Length field
  */
 void MPUdmp::updatePacketLength()
@@ -411,6 +568,56 @@ void MPUdmp::updatePacketLength()
     if (enabledFeatures & DMP_FEATURE_SEND_RAW_ACCEL) packetLength += 6;
     if (enabledFeatures & DMP_FEATURE_SEND_ANY_GYRO) packetLength += 6;
     if (enabledFeatures & (DMP_FEATURE_TAP | DMP_FEATURE_ANDROID_ORIENT)) packetLength += 4;
+}
+
+/**
+ * @brief Read DMP output data from FIFO.
+ *
+ * @param accel
+ * @param gyro
+ * @param quat
+ */
+esp_err_t MPUdmp::readDMPData(raw_axes_t* accel, raw_axes_t* gyro, quaternion_t* quat)
+{
+    uint8_t fifo[kDMPMaxPacketLength] = {0};
+    if (MPU_ERR_CHECK(readFIFO(packetLength, fifo))) return err;
+
+    uint8_t* data = &fifo[0];
+    uint8_t index = 0;
+
+    if (enabledFeatures & DMP_FEATURE_ANY_LP_QUAT) {
+        quat->x = (data[0] << 24) | (data[1] << 16) | (data[2] << 8) | (data[3]);
+        quat->y = (data[4] << 24) | (data[5] << 16) | (data[6] << 8) | (data[7]);
+        quat->z = (data[8] << 24) | (data[9] << 16) | (data[10] << 8) | (data[11]);
+        quat->w = (data[12] << 24) | (data[13] << 16) | (data[14] << 8) | (data[15]);
+        index += 16;
+#if defined CONFIG_MPU_FIFO_CORRUPTION_CHECK
+        // TODO
+#endif
+    }
+
+    data += index;
+    if (enabledFeatures & DMP_FEATURE_SEND_RAW_ACCEL) {
+        accel->x = (data[0] << 8) | (data[1]);
+        accel->y = (data[2] << 8) | (data[3]);
+        accel->z = (data[4] << 8) | (data[5]);
+        index += 6;
+    }
+
+    data += index;
+    if (enabledFeatures & DMP_FEATURE_SEND_ANY_GYRO) {
+        gyro->x = (data[0] << 8) | (data[1]);
+        gyro->y = (data[2] << 8) | (data[3]);
+        gyro->z = (data[4] << 8) | (data[5]);
+        index += 6;
+    }
+
+    /* Gesture data is at the end of the DMP packet. Parse it and call
+     * the gesture callbacks (if registered).
+     */
+    // if (dmp.feature_mask & (DMP_FEATURE_TAP | DMP_FEATURE_ANDROID_ORIENT)) decode_gesture(fifo_data + ii);
+
+    return err = ESP_OK;
 }
 
 }  // namespace mpud

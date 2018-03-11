@@ -155,15 +155,15 @@ config MPU_ENABLE_DMP
     help
         Enable DMP (Digital Motion Processor) code to be compiled.
 
-# config MPU_FIFO_CORRUPTION_CHECK
-#     bool "Enable FIFO packet corruption check (DMP only)"
-#     depends on MPU_ENABLE_DMP
-#     default "y"
-#     help
-#         Check for corrupted FIFO packet by monitoring the quaternion data and
-#         ensuring that the magnitude is always normalized to one. This
-#         shouldn't happen in normal operation, but if an I2C error occurs,
-#         the FIFO reads might become misaligned.
+config MPU_FIFO_CORRUPTION_CHECK
+    bool "Enable FIFO packet corruption check (DMP only)"
+    depends on MPU_ENABLE_DMP
+    default "y"
+    help
+        Check for corrupted FIFO packet by monitoring the quaternion data and
+        ensuring that the magnitude is always normalized to one. This
+        shouldn't happen in normal operation, but if an I2C error occurs,
+        the FIFO reads might become misaligned.
 
 
 config MPU_LOG_ERROR_TRACES

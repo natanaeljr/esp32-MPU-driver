@@ -24,9 +24,10 @@ static constexpr uint16_t kMemoryBankSize      = 256;   /*!< Memory Bank size */
 static constexpr uint16_t kDMPCodeSize         = 3062;  /*!< DMP Code size */
 static constexpr uint16_t kDMPSampleRate       = 200;   /*!< DMP Sample Rate: 200Hz */
 static constexpr uint16_t kProgramStartAddress = 0x400; /*!< DMP program start address */
+static constexpr uint8_t kDMPMaxPacketLength   = 32;    /*!< DMP maximum Packet Length */
 
 /*! DMP image */
-static constexpr uint8_t kDMPMemory[kDMPCodeSize]{
+static constexpr uint8_t kDMPMemory[kDMPCodeSize] = {
     /* bank # 0 */
     0x00, 0x00, 0x70, 0x00, 0x00, 0x00, 0x00, 0x24, 0x00, 0x00, 0x00, 0x02, 0x00, 0x03, 0x00, 0x00,
     0x00, 0x65, 0x00, 0x54, 0xff, 0xef, 0x00, 0x00, 0xfa, 0x80, 0x00, 0x0b, 0x12, 0x82, 0x00, 0x01,

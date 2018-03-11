@@ -37,7 +37,7 @@ class MPUdmp : public mpud::MPU
  public:
     //! \name Setup
     //! \{
-    esp_err_t loadDMPFirware();
+    esp_err_t loadDMPFirmware();
     esp_err_t enableDMP();
     esp_err_t disableDMP();
     esp_err_t resetDMP();
@@ -48,10 +48,14 @@ class MPUdmp : public mpud::MPU
     esp_err_t setDMPFeatures(dmp_feature_t features);
     esp_err_t setDMPOutputRate(uint16_t rate);
     esp_err_t setDMPInterruptMode(dmp_int_mode_t mode);
+    esp_err_t setOrientation(uint16_t orient);
+    esp_err_t setTapConfig(const dmp_tap_config_t& config);
+    esp_err_t setTapAxisEnabled(dmp_tap_axis_t axes);
     dmp_feature_t getDMPFeatures();
     //! \}
     //! \name Packet
     //! \{
+    esp_err_t readDMPData(raw_axes_t* accel, raw_axes_t* gyro, quaternion_t* quat);
     uint8_t getDMPPacketLength();
     //! \}
 
@@ -62,7 +66,6 @@ class MPUdmp : public mpud::MPU
 
     esp_err_t writeMemory(uint16_t memAddr, uint8_t length, const uint8_t* data);
     esp_err_t readMemory(uint16_t memAddr, uint8_t length, uint8_t* data);
-
     void updatePacketLength();
 
     uint8_t packetLength;          /*! DMP Packet length, depends on enabled features */

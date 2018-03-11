@@ -13,8 +13,8 @@
 
 #if defined CONFIG_MPU_ENABLE_DMP
 
-#define min(a, b) (a < b ? a : b)
-#define max(a, b) (a > b ? a : b)
+#define min(a, b) ((a) < (b) ? (a) : (b))
+#define max(a, b) ((a) > (b) ? (a) : (b))
 
 #include <stdint.h>
 #include <stdio.h>
@@ -34,6 +34,7 @@
 #include "MPUdmp.hpp"
 #include "dmp/image.hpp"
 #include "dmp/types.hpp"
+#include "mpu/math.hpp"
 #include "mpu/registers.hpp"
 #include "mpu/types.hpp"
 
@@ -108,7 +109,7 @@ TEST_CASE("DMP firmware loading", "[MPU][DMP]")
     test::MPUdmp_t mpu;
     TEST_ESP_OK(mpu.testConnection());
     TEST_ESP_OK(mpu.initialize());
-    TEST_ESP_OK(mpu.loadDMPFirware());
+    TEST_ESP_OK(mpu.loadDMPFirmware());
     /* Check if the loaded DMP memory matches DMP image */
     uint8_t buffer[kDMPCodeSize];
     uint16_t addr = 0;  // chunk start address
@@ -128,7 +129,7 @@ TEST_CASE("DMP basic test", "[MPU][DMP]")
     test::MPUdmp_t mpu;
     TEST_ESP_OK(mpu.testConnection());
     TEST_ESP_OK(mpu.initialize());
-    TEST_ESP_OK(mpu.loadDMPFirware());
+    TEST_ESP_OK(mpu.loadDMPFirmware());
     /* Check DMP activation */
     TEST_ASSERT_FALSE(mpu.getDMPEnabled());
     TEST_ESP_OK(mpu.lastError());
@@ -141,9 +142,9 @@ TEST_CASE("DMP basic test", "[MPU][DMP]")
     TEST_ESP_OK(mpu.enableDMP());
     /* Check Features setter */
     mpud::dmp_feature_t features;
-    features = mpud::DMP_FEATURE_ANDROID_ORIENT | mpud::DMP_FEATURE_TAP;
+    features = mpud::DMP_FEATURE_ANDROID_ORIENT | mpud::DMP_FEATURE_TAP | mpud::DMP_FEATURE_PEDOMETER;
     TEST_ESP_OK(mpu.setDMPFeatures(features));
-    TEST_ASSERT(mpud::DMP_FEATURE_PEDOMETER == mpu.getDMPFeatures());
+    TEST_ASSERT_EQUAL_HEX(features, mpu.getDMPFeatures());
     features = mpud::DMP_FEATURE_LP_3X_QUAT | mpud::DMP_FEATURE_LP_6X_QUAT;
     TEST_ESP_ERR(ESP_ERR_INVALID_ARG, mpu.setDMPFeatures(features));
     features = mpud::DMP_FEATURE_SEND_RAW_GYRO | mpud::DMP_FEATURE_SEND_CAL_GYRO;
@@ -151,7 +152,7 @@ TEST_CASE("DMP basic test", "[MPU][DMP]")
     features = mpud::DMP_FEATURE_SEND_RAW_ACCEL | mpud::DMP_FEATURE_GYRO_CAL | mpud::DMP_FEATURE_SEND_CAL_GYRO |
                mpud::DMP_FEATURE_LP_6X_QUAT | mpud::DMP_FEATURE_PEDOMETER;
     TEST_ESP_OK(mpu.setDMPFeatures(features));
-    TEST_ASSERT_EQUAL_HEX16(features, mpu.getDMPFeatures());
+    TEST_ASSERT_EQUAL_HEX(features, mpu.getDMPFeatures());
     TEST_ASSERT_EQUAL_UINT8(28, mpu.getDMPPacketLength());
     /* Test Test section */
 }
@@ -163,7 +164,13 @@ TEST_CASE("DMP output data rate test", "[MPU][DMP]")
     test::MPUdmp_t mpu;
     TEST_ESP_OK(mpu.testConnection());
     TEST_ESP_OK(mpu.initialize());
-    TEST_ESP_OK(mpu.loadDMPFirware());
+    TEST_ESP_OK(mpu.loadDMPFirmware());
+    const int8_t orientation[] = {
+        1, 0, 0,  //
+        0, 1, 0,  // XYZ
+        0, 0, 1   //
+    };
+    TEST_ESP_OK(mpu.setOrientation(mpud::math::orientationMatrixToScalar(orientation)));
     /* Invalid rate/state check */
     TEST_ESP_OK(mpu.setDMPOutputRate(0));
     TEST_ESP_OK(mpu.setDMPOutputRate(201));
@@ -174,14 +181,18 @@ TEST_CASE("DMP output data rate test", "[MPU][DMP]")
     TEST_ESP_OK(mpu.setDMPOutputRate(-1));
     /** ODR measurement */
     constexpr mpud::dmp_feature_t features =
-        (mpud::DMP_FEATURE_SEND_RAW_ACCEL | mpud::DMP_FEATURE_SEND_RAW_GYRO | mpud::DMP_FEATURE_ANDROID_ORIENT |
+        (mpud::DMP_FEATURE_SEND_RAW_ACCEL | mpud::DMP_FEATURE_SEND_CAL_GYRO | mpud::DMP_FEATURE_ANDROID_ORIENT |
          mpud::DMP_FEATURE_TAP | mpud::DMP_FEATURE_GYRO_CAL | mpud::DMP_FEATURE_LP_6X_QUAT |
          mpud::DMP_FEATURE_PEDOMETER);
     TEST_ESP_OK(mpu.setDMPFeatures(features));
+    TEST_ASSERT_EQUAL_HEX(features, mpu.getDMPFeatures());
+
     TEST_ESP_OK(mpu.enableDMP());
+    
     TEST_ESP_OK(mpu.setDMPInterruptMode(mpud::DMP_INT_MODE_CONTINUOUS));
     TEST_ESP_OK(mpu.setInterruptEnabled(mpud::INT_EN_DMP_READY));
-    constexpr int numOfSamples = 5;
+
+    constexpr int numOfSamples = 1;
     constexpr uint16_t rates[] = {200, 100, 10};  // 1, 5, 10, 50, 100, 200
     for (auto rate : rates) {
         TEST_ESP_OK(mpu.setDMPOutputRate(rate));
