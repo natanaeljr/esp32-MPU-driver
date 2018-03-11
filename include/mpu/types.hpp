@@ -238,17 +238,28 @@ typedef enum {
 } auxi2c_clock_t;
 
 /*! Auxiliary I2C Master’s transition from one slave read to the next slave read */
-typedef enum { AUXI2C_TRANS_RESTART = 0, AUXI2C_TRANS_STOP = 1 } auxi2c_trans_t;
+typedef enum {  //
+    AUXI2C_TRANS_RESTART = 0,
+    AUXI2C_TRANS_STOP    = 1
+} auxi2c_trans_t;
 
 /**
  * @brief Auxiliary I2C Slaves slots
  * @note For MPU9150 & MPU9250: \n
  *  The MPU uses SLAVE0 and SLAVE1 to read Compass data so do not use this slave slots when compass is enabled.
  * */
-typedef enum { AUXI2C_SLAVE_0 = 0, AUXI2C_SLAVE_1 = 1, AUXI2C_SLAVE_2 = 2, AUXI2C_SLAVE_3 = 3 } auxi2c_slv_t;
+typedef enum {  //
+    AUXI2C_SLAVE_0 = 0,
+    AUXI2C_SLAVE_1 = 1,
+    AUXI2C_SLAVE_2 = 2,
+    AUXI2C_SLAVE_3 = 3
+} auxi2c_slv_t;
 
 /*! Auxiliary I2C operation */
-typedef enum { AUXI2C_WRITE = 0, AUXI2C_READ = 1 } auxi2c_rw_t;
+typedef enum {  //
+    AUXI2C_WRITE = 0,
+    AUXI2C_READ  = 1
+} auxi2c_rw_t;
 
 /**
  * @brief Auxiliary I2C, EOW = end of word, use for swap
@@ -339,16 +350,28 @@ typedef enum { AUXVDDIO_LVL_VLOGIC = 0, AUXVDDIO_LVL_VDD = 1 } auxvddio_lvl_t;
 #endif
 
 /*! Interrupt active level */
-typedef enum { INT_LVL_ACTIVE_HIGH = 0, INT_LVL_ACTIVE_LOW = 1 } int_lvl_t;
+typedef enum {  //
+    INT_LVL_ACTIVE_HIGH = 0,
+    INT_LVL_ACTIVE_LOW  = 1
+} int_lvl_t;
 
 /*! Interrupt drive state */
-typedef enum { INT_DRV_PUSHPULL = 0, INT_DRV_OPENDRAIN = 1 } int_drive_t;
+typedef enum {  //
+    INT_DRV_PUSHPULL  = 0,
+    INT_DRV_OPENDRAIN = 1
+} int_drive_t;
 
 /*! Interrupt mode */
-typedef enum { INT_MODE_PULSE50US = 0, INT_MODE_LATCH = 1 } int_mode_t;
+typedef enum {  //
+    INT_MODE_PULSE50US = 0,
+    INT_MODE_LATCH     = 1
+} int_mode_t;
 
 /*! Interrupt clear mode */
-typedef enum { INT_CLEAR_STATUS_REG = 0, INT_CLEAR_ANYREAD = 1 } int_clear_t;
+typedef enum {  //
+    INT_CLEAR_STATUS_REG = 0,
+    INT_CLEAR_ANYREAD    = 1
+} int_clear_t;
 
 /*! Interrupt configuration struct */
 typedef struct
@@ -394,7 +417,12 @@ static constexpr int_stat_t INT_STAT_ZERO_MOTION = (1 << regs::INT_STATUS_ZEROMO
 
 #ifdef CONFIG_MPU6500
 /*! MPU6500 Fifo size */
-typedef enum { FIFO_SIZE_512B = 0, FIFO_SIZE_1K = 1, FIFO_SIZE_2K = 2, FIFO_SIZE_4K = 3 } fifo_size_t;
+typedef enum {  //
+    FIFO_SIZE_512B = 0,
+    FIFO_SIZE_1K   = 1,
+    FIFO_SIZE_2K   = 2,
+    FIFO_SIZE_4K   = 3
+} fifo_size_t;
 #endif
 
 /*! FIFO mode */
