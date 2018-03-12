@@ -51,6 +51,7 @@ static constexpr dmp_feature_t DMP_FEATURE_ANY_LP_QUAT   = (DMP_FEATURE_LP_3X_QU
 esp_err_t MPUdmp::enableDMP()
 {
     if (MPU_ERR_CHECK(setSampleRate(kDMPSampleRate))) return err;
+    if (MPU_ERR_CHECK(setFIFOEnabled(true))) return err;
     if (MPU_ERR_CHECK(writeBit(regs::USER_CTRL, regs::USERCTRL_DMP_EN_BIT, 0x1))) return err;
     MPU_LOGI("DMP activated");
     return err;
@@ -316,7 +317,7 @@ esp_err_t MPUdmp::setDMPFeatures(dmp_feature_t features)
     if (MPU_ERR_CHECK(lastError())) return err;
 
     // Update FIFO packet length
-    this->packetLength = getDMPPacketLength();
+    this->packetLength = getDMPPacketLength(enabledFeatures);
 
     return err = ESP_OK;
 }
@@ -571,13 +572,13 @@ esp_err_t MPUdmp::setOrientation(uint16_t orient)
  */
 uint8_t MPUdmp::getDMPPacketLength(dmp_feature_t otherFeatures)
 {
-    if (otherFeatures == 0) return this->packetLength;
+    if (!otherFeatures) return this->packetLength;
 
     uint8_t otherPacketLength = 0;
-    if (otherFeatures & DMP_FEATURE_ANY_LP_QUAT) packetLength += 16;
-    if (otherFeatures & DMP_FEATURE_SEND_RAW_ACCEL) packetLength += 6;
-    if (otherFeatures & DMP_FEATURE_SEND_ANY_GYRO) packetLength += 6;
-    if (otherFeatures & (DMP_FEATURE_TAP | DMP_FEATURE_ANDROID_ORIENT)) packetLength += 4;
+    if (otherFeatures & DMP_FEATURE_ANY_LP_QUAT) otherPacketLength += 16;
+    if (otherFeatures & DMP_FEATURE_SEND_RAW_ACCEL) otherPacketLength += 6;
+    if (otherFeatures & DMP_FEATURE_SEND_ANY_GYRO) otherPacketLength += 6;
+    if (otherFeatures & (DMP_FEATURE_TAP | DMP_FEATURE_ANDROID_ORIENT)) otherPacketLength += 4;
     return otherPacketLength;
 }
 
@@ -685,37 +686,33 @@ esp_err_t MPUdmp::getDMPGyro(const uint8_t* fifoPacket, raw_axes_t* gyro)
  */
 esp_err_t MPUdmp::readDMPData(quaternion_t* quat, raw_axes_t* gyro, raw_axes_t* accel)
 {
-    uint8_t fifo[kDMPMaxPacketLength] = {0};
-    if (MPU_ERR_CHECK(readFIFO(packetLength, fifo))) return err;
-
-    uint8_t* data = &fifo[0];
-    uint8_t index = 0;
+    uint8_t i = 0;
+    uint8_t data[kDMPMaxPacketLength] = {0};
+    if (MPU_ERR_CHECK(readFIFO(packetLength, data))) return err;
 
     if (enabledFeatures & DMP_FEATURE_ANY_LP_QUAT) {
         quat->x = (data[0] << 24) | (data[1] << 16) | (data[2] << 8) | (data[3]);
         quat->y = (data[4] << 24) | (data[5] << 16) | (data[6] << 8) | (data[7]);
         quat->z = (data[8] << 24) | (data[9] << 16) | (data[10] << 8) | (data[11]);
         quat->w = (data[12] << 24) | (data[13] << 16) | (data[14] << 8) | (data[15]);
-        index += 16;
+        i += 16;
 #if defined CONFIG_MPU_FIFO_CORRUPTION_CHECK
         // TODO
 #endif
     }
 
-    data += index;
     if (enabledFeatures & DMP_FEATURE_SEND_RAW_ACCEL) {
-        accel->x = (data[0] << 8) | (data[1]);
-        accel->y = (data[2] << 8) | (data[3]);
-        accel->z = (data[4] << 8) | (data[5]);
-        index += 6;
+        accel->x = (data[0 + i] << 8) | (data[1 + i]);
+        accel->y = (data[2 + i] << 8) | (data[3 + i]);
+        accel->z = (data[4 + i] << 8) | (data[5 + i]);
+        i += 6;
     }
 
-    data += index;
     if (enabledFeatures & DMP_FEATURE_SEND_ANY_GYRO) {
-        gyro->x = (data[0] << 8) | (data[1]);
-        gyro->y = (data[2] << 8) | (data[3]);
-        gyro->z = (data[4] << 8) | (data[5]);
-        index += 6;
+        gyro->x = (data[0 + i] << 8) | (data[1 + i]);
+        gyro->y = (data[2 + i] << 8) | (data[3 + i]);
+        gyro->z = (data[4 + i] << 8) | (data[5 + i]);
+        i += 6;
     }
 
     /* Gesture data is at the end of the DMP packet. Parse it and call

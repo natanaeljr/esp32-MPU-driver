@@ -103,7 +103,7 @@ inline MPUdmp::MPUdmp(mpu_bus_t& bus) : MPUdmp(bus, MPU_DEFAULT_ADDR_HANDLE) {}
  * @param addr I2C address (`mpu_i2caddr_t`) or SPI device handle (`spi_device_handle_t`).
  */
 inline MPUdmp::MPUdmp(mpu_bus_t& bus, mpu_addr_handle_t addr)
-  : MPU(bus, addr), packetLength{0}, enabledFeatures{DMP_FEATURE_NONE}
+  : MPU(bus, addr), packetLength{0}, enabledFeatures{DMP_FEATURE_PEDOMETER}
 {
 }
 /*! Default Destructor, does nothing. */
