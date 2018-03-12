@@ -126,8 +126,9 @@ esp_err_t MPU::setSleep(bool enable)
  */
 bool MPU::getSleep()
 {
-    MPU_ERR_CHECK(readBit(regs::PWR_MGMT1, regs::PWR1_SLEEP_BIT, buffer));
-    return buffer[0];
+    uint8_t data;
+    MPU_ERR_CHECK(readBit(regs::PWR_MGMT1, regs::PWR1_SLEEP_BIT, &data));
+    return data;
 }
 
 /**
@@ -160,8 +161,9 @@ esp_err_t MPU::testConnection()
  */
 uint8_t MPU::whoAmI()
 {
-    MPU_ERR_CHECK(readByte(regs::WHO_AM_I, buffer));
-    return buffer[0];
+    uint8_t data;
+    MPU_ERR_CHECK(readByte(regs::WHO_AM_I, &data));
+    return data;
 }
 
 /**
@@ -266,9 +268,10 @@ uint16_t MPU::getSampleRate()
     MPU_ERR_CHECK(lastError());
     if (dlpf == 0 || dlpf == 7) return sampleRateMax_nolpf;
 
+    uint8_t divider;
+    MPU_ERR_CHECK(readByte(regs::SMPLRT_DIV, &divider));
     constexpr uint16_t internalSampleRate = 1000;
-    MPU_ERR_CHECK(readByte(regs::SMPLRT_DIV, buffer));
-    uint16_t rate = internalSampleRate / (1 + buffer[0]);
+    uint16_t rate                         = internalSampleRate / (1 + divider);
     return rate;
 }
 
@@ -287,8 +290,9 @@ esp_err_t MPU::setClockSource(clock_src_t clockSrc)
  */
 clock_src_t MPU::getClockSource()
 {
-    MPU_ERR_CHECK(readBits(regs::PWR_MGMT1, regs::PWR1_CLKSEL_BIT, regs::PWR1_CLKSEL_LENGTH, buffer));
-    return (clock_src_t) buffer[0];
+    uint8_t clockSrc;
+    MPU_ERR_CHECK(readBits(regs::PWR_MGMT1, regs::PWR1_CLKSEL_BIT, regs::PWR1_CLKSEL_LENGTH, &clockSrc));
+    return (clock_src_t) clockSrc;
 }
 
 /**
@@ -312,8 +316,9 @@ esp_err_t MPU::setDigitalLowPassFilter(dlpf_t dlpf)
  */
 dlpf_t MPU::getDigitalLowPassFilter()
 {
-    MPU_ERR_CHECK(readBits(regs::CONFIG, regs::CONFIG_DLPF_CFG_BIT, regs::CONFIG_DLPF_CFG_LENGTH, buffer));
-    return (dlpf_t) buffer[0];
+    uint8_t dlpf;
+    MPU_ERR_CHECK(readBits(regs::CONFIG, regs::CONFIG_DLPF_CFG_BIT, regs::CONFIG_DLPF_CFG_LENGTH, &dlpf));
+    return (dlpf_t) dlpf;
 }
 
 /**
@@ -358,6 +363,7 @@ esp_err_t MPU::resetSignalPath()
  * */
 esp_err_t MPU::setLowPowerAccelMode(bool enable)
 {
+    uint8_t buffer[2];
 // set FCHOICE
 #ifdef CONFIG_MPU6500
     fchoice_t fchoice = enable ? FCHOICE_0 : FCHOICE_3;
@@ -404,6 +410,7 @@ esp_err_t MPU::setLowPowerAccelMode(bool enable)
  * */
 bool MPU::getLowPowerAccelMode()
 {
+    uint8_t buffer[2];
 // check FCHOICE
 #ifdef CONFIG_MPU6500
     fchoice_t fchoice = getFchoice();
@@ -444,12 +451,13 @@ esp_err_t MPU::setLowPowerAccelRate(lp_accel_rate_t rate)
  */
 lp_accel_rate_t MPU::getLowPowerAccelRate()
 {
+    uint8_t rate;
 #if defined CONFIG_MPU6050
-    MPU_ERR_CHECK(readBits(regs::PWR_MGMT2, regs::PWR2_LP_WAKE_CTRL_BIT, regs::PWR2_LP_WAKE_CTRL_LENGTH, buffer));
+    MPU_ERR_CHECK(readBits(regs::PWR_MGMT2, regs::PWR2_LP_WAKE_CTRL_BIT, regs::PWR2_LP_WAKE_CTRL_LENGTH, &rate));
 #elif defined CONFIG_MPU6500
-    MPU_ERR_CHECK(readBits(regs::LP_ACCEL_ODR, regs::LPA_ODR_CLKSEL_BIT, regs::LPA_ODR_CLKSEL_LENGTH, buffer));
+    MPU_ERR_CHECK(readBits(regs::LP_ACCEL_ODR, regs::LPA_ODR_CLKSEL_BIT, regs::LPA_ODR_CLKSEL_LENGTH, &rate));
 #endif
-    return (lp_accel_rate_t) buffer[0];
+    return (lp_accel_rate_t) rate;
 }
 
 /**
@@ -584,12 +592,13 @@ mot_config_t MPU::getMotionDetectConfig()
 {
     mot_config_t config{};
 #if defined CONFIG_MPU6050
+    uint8_t data;
     MPU_ERR_CHECK(readByte(regs::MOTION_DUR, &config.time));
-    MPU_ERR_CHECK(readByte(regs::MOTION_DETECT_CTRL, buffer));
+    MPU_ERR_CHECK(readByte(regs::MOTION_DETECT_CTRL, &data));
     config.accel_on_delay =
-        (buffer[0] >> (regs::MOTCTRL_ACCEL_ON_DELAY_BIT - regs::MOTCTRL_ACCEL_ON_DELAY_LENGTH + 1)) & 0x3;
+        (data >> (regs::MOTCTRL_ACCEL_ON_DELAY_BIT - regs::MOTCTRL_ACCEL_ON_DELAY_LENGTH + 1)) & 0x3;
     config.counter =
-        (mot_counter_t)((buffer[0] >> (regs::MOTCTRL_MOT_COUNT_BIT - regs::MOTCTRL_MOT_COUNT_LENGTH + 1)) & 0x3);
+        (mot_counter_t)((data >> (regs::MOTCTRL_MOT_COUNT_BIT - regs::MOTCTRL_MOT_COUNT_LENGTH + 1)) & 0x3);
 #endif
     MPU_ERR_CHECK(readByte(regs::MOTION_THR, &config.threshold));
     return config;
@@ -615,6 +624,7 @@ mot_config_t MPU::getMotionDetectConfig()
  * */
 esp_err_t MPU::setZeroMotionConfig(zrmot_config_t& config)
 {
+    uint8_t buffer[2];
     buffer[0] = config.threshold;
     buffer[1] = config.time;
     return MPU_ERR_CHECK(writeBytes(regs::ZRMOTION_THR, 2, buffer));
@@ -625,6 +635,7 @@ esp_err_t MPU::setZeroMotionConfig(zrmot_config_t& config)
  */
 zrmot_config_t MPU::getZeroMotionConfig()
 {
+    uint8_t buffer[2];
     MPU_ERR_CHECK(readBytes(regs::ZRMOTION_THR, 2, buffer));
     zrmot_config_t config{};
     config.threshold = buffer[0];
@@ -647,6 +658,7 @@ zrmot_config_t MPU::getZeroMotionConfig()
  * */
 esp_err_t MPU::setFreeFallConfig(ff_config_t& config)
 {
+    uint8_t buffer[2];
     buffer[0] = config.threshold;
     buffer[1] = config.time;
     if (MPU_ERR_CHECK(writeBytes(regs::FF_THR, 2, buffer))) return err;
@@ -666,6 +678,7 @@ esp_err_t MPU::setFreeFallConfig(ff_config_t& config)
  */
 ff_config_t MPU::getFreeFallConfig()
 {
+    uint8_t buffer[2];
     ff_config_t config{};
     MPU_ERR_CHECK(readBytes(regs::FF_THR, 2, buffer));
     config.threshold = buffer[0];
@@ -684,8 +697,9 @@ ff_config_t MPU::getFreeFallConfig()
  * */
 mot_stat_t MPU::getMotionDetectStatus()
 {
-    MPU_ERR_CHECK(readByte(regs::MOTION_DETECT_STATUS, buffer));
-    return (mot_stat_t) buffer[0];
+    uint8_t status;
+    MPU_ERR_CHECK(readByte(regs::MOTION_DETECT_STATUS, &status));
+    return (mot_stat_t) status;
 }
 #endif  // MPU6050's stuff
 
@@ -706,6 +720,7 @@ esp_err_t MPU::setStandbyMode(stby_en_t mask)
  * */
 stby_en_t MPU::getStandbyMode()
 {
+    uint8_t buffer[2];
     MPU_ERR_CHECK(readBytes(regs::PWR_MGMT1, 2, buffer));
     constexpr uint8_t kStbyTempAndGyroPLLBits = STBY_EN_TEMP | STBY_EN_LOWPWR_GYRO_PLL_ON;
     stby_en_t mask                            = buffer[0] << 3 & kStbyTempAndGyroPLLBits;
@@ -723,12 +738,11 @@ stby_en_t MPU::getStandbyMode()
  * */
 esp_err_t MPU::setFchoice(fchoice_t fchoice)
 {
-    buffer[0] = (~(fchoice) &0x3);  // invert to fchoice_b
-    if (MPU_ERR_CHECK(
-            writeBits(regs::GYRO_CONFIG, regs::GCONFIG_FCHOICE_B, regs::GCONFIG_FCHOICE_B_LENGTH, buffer[0]))) {
+    uint8_t data = (~(fchoice) &0x3);  // invert to fchoice_b
+    if (MPU_ERR_CHECK(writeBits(regs::GYRO_CONFIG, regs::GCONFIG_FCHOICE_B, regs::GCONFIG_FCHOICE_B_LENGTH, data))) {
         return err;
     }
-    return MPU_ERR_CHECK(writeBit(regs::ACCEL_CONFIG2, regs::ACONFIG2_ACCEL_FCHOICE_B_BIT, (buffer[0] == 0) ? 0 : 1));
+    return MPU_ERR_CHECK(writeBit(regs::ACCEL_CONFIG2, regs::ACONFIG2_ACCEL_FCHOICE_B_BIT, (data == 0) ? 0 : 1));
 }
 
 /**
@@ -736,8 +750,9 @@ esp_err_t MPU::setFchoice(fchoice_t fchoice)
  */
 fchoice_t MPU::getFchoice()
 {
-    MPU_ERR_CHECK(readBits(regs::GYRO_CONFIG, regs::GCONFIG_FCHOICE_B, regs::GCONFIG_FCHOICE_B_LENGTH, buffer));
-    return (fchoice_t)(~(buffer[0]) & 0x3);
+    uint8_t data;
+    MPU_ERR_CHECK(readBits(regs::GYRO_CONFIG, regs::GCONFIG_FCHOICE_B, regs::GCONFIG_FCHOICE_B_LENGTH, &data));
+    return (fchoice_t)((~data) & 0x3);
 }
 #endif
 
@@ -754,8 +769,9 @@ esp_err_t MPU::setGyroFullScale(gyro_fs_t fsr)
  */
 gyro_fs_t MPU::getGyroFullScale()
 {
-    MPU_ERR_CHECK(readBits(regs::GYRO_CONFIG, regs::GCONFIG_FS_SEL_BIT, regs::GCONFIG_FS_SEL_LENGTH, buffer));
-    return (gyro_fs_t) buffer[0];
+    uint8_t fsr;
+    MPU_ERR_CHECK(readBits(regs::GYRO_CONFIG, regs::GCONFIG_FS_SEL_BIT, regs::GCONFIG_FS_SEL_LENGTH, &fsr));
+    return (gyro_fs_t) fsr;
 }
 
 /**
@@ -771,8 +787,9 @@ esp_err_t MPU::setAccelFullScale(accel_fs_t fsr)
  */
 accel_fs_t MPU::getAccelFullScale()
 {
-    MPU_ERR_CHECK(readBits(regs::ACCEL_CONFIG, regs::ACONFIG_FS_SEL_BIT, regs::ACONFIG_FS_SEL_LENGTH, buffer));
-    return (accel_fs_t) buffer[0];
+    uint8_t fsr;
+    MPU_ERR_CHECK(readBits(regs::ACCEL_CONFIG, regs::ACONFIG_FS_SEL_BIT, regs::ACONFIG_FS_SEL_LENGTH, &fsr));
+    return (accel_fs_t) fsr;
 }
 
 /**
@@ -785,6 +802,7 @@ accel_fs_t MPU::getAccelFullScale()
  * */
 esp_err_t MPU::setGyroOffset(raw_axes_t bias)
 {
+    uint8_t buffer[6];
     buffer[0] = (uint8_t)(bias.x >> 8);
     buffer[1] = (uint8_t)(bias.x);
     buffer[2] = (uint8_t)(bias.y >> 8);
@@ -801,6 +819,7 @@ esp_err_t MPU::setGyroOffset(raw_axes_t bias)
  * */
 raw_axes_t MPU::getGyroOffset()
 {
+    uint8_t buffer[6];
     MPU_ERR_CHECK(readBytes(regs::XG_OFFSET_H, 6, buffer));
     raw_axes_t bias;
     bias.x = (buffer[0] << 8) | buffer[1];
@@ -819,6 +838,7 @@ raw_axes_t MPU::getGyroOffset()
  * */
 esp_err_t MPU::setAccelOffset(raw_axes_t bias)
 {
+    uint8_t buffer[8];
     raw_axes_t facBias;
     // first, read OTP values of Accel factory trim
 
@@ -873,6 +893,7 @@ esp_err_t MPU::setAccelOffset(raw_axes_t bias)
  * */
 raw_axes_t MPU::getAccelOffset()
 {
+    uint8_t buffer[8];
     raw_axes_t bias;
 
 #if defined CONFIG_MPU6050
@@ -920,6 +941,7 @@ esp_err_t MPU::computeOffsets(raw_axes_t* accel, raw_axes_t* gyro)
  * */
 esp_err_t MPU::acceleration(raw_axes_t* accel)
 {
+    uint8_t buffer[6];
     if (MPU_ERR_CHECK(readBytes(regs::ACCEL_XOUT_H, 6, buffer))) return err;
     accel->x = buffer[0] << 8 | buffer[1];
     accel->y = buffer[2] << 8 | buffer[3];
@@ -932,6 +954,7 @@ esp_err_t MPU::acceleration(raw_axes_t* accel)
  * */
 esp_err_t MPU::acceleration(int16_t* x, int16_t* y, int16_t* z)
 {
+    uint8_t buffer[6];
     if (MPU_ERR_CHECK(readBytes(regs::ACCEL_XOUT_H, 6, buffer))) return err;
     *x = buffer[0] << 8 | buffer[1];
     *y = buffer[2] << 8 | buffer[3];
@@ -944,6 +967,7 @@ esp_err_t MPU::acceleration(int16_t* x, int16_t* y, int16_t* z)
  * */
 esp_err_t MPU::rotation(raw_axes_t* gyro)
 {
+    uint8_t buffer[6];
     if (MPU_ERR_CHECK(readBytes(regs::GYRO_XOUT_H, 6, buffer))) return err;
     gyro->x = buffer[0] << 8 | buffer[1];
     gyro->y = buffer[2] << 8 | buffer[3];
@@ -956,6 +980,7 @@ esp_err_t MPU::rotation(raw_axes_t* gyro)
  * */
 esp_err_t MPU::rotation(int16_t* x, int16_t* y, int16_t* z)
 {
+    uint8_t buffer[6];
     if (MPU_ERR_CHECK(readBytes(regs::GYRO_XOUT_H, 6, buffer))) return err;
     *x = buffer[0] << 8 | buffer[1];
     *y = buffer[2] << 8 | buffer[3];
@@ -968,6 +993,7 @@ esp_err_t MPU::rotation(int16_t* x, int16_t* y, int16_t* z)
  * */
 esp_err_t MPU::temperature(int16_t* temp)
 {
+    uint8_t buffer[2];
     if (MPU_ERR_CHECK(readBytes(regs::TEMP_OUT_H, 2, buffer))) return err;
     *temp = buffer[0] << 8 | buffer[1];
     return err;
@@ -978,6 +1004,7 @@ esp_err_t MPU::temperature(int16_t* temp)
  * */
 esp_err_t MPU::motion(raw_axes_t* accel, raw_axes_t* gyro)
 {
+    uint8_t buffer[14];
     if (MPU_ERR_CHECK(readBytes(regs::ACCEL_XOUT_H, 14, buffer))) return err;
     accel->x = buffer[0] << 8 | buffer[1];
     accel->y = buffer[2] << 8 | buffer[3];
@@ -994,6 +1021,7 @@ esp_err_t MPU::motion(raw_axes_t* accel, raw_axes_t* gyro)
  * */
 esp_err_t MPU::heading(raw_axes_t* mag)
 {
+    uint8_t buffer[6];
     if (MPU_ERR_CHECK(readBytes(regs::EXT_SENS_DATA_01, 6, buffer))) return err;
     mag->x = buffer[1] << 8 | buffer[0];
     mag->y = buffer[3] << 8 | buffer[2];
@@ -1006,6 +1034,7 @@ esp_err_t MPU::heading(raw_axes_t* mag)
  * */
 esp_err_t MPU::heading(int16_t* x, int16_t* y, int16_t* z)
 {
+    uint8_t buffer[6];
     if (MPU_ERR_CHECK(readBytes(regs::EXT_SENS_DATA_01, 6, buffer))) return err;
     *x = buffer[1] << 8 | buffer[0];
     *y = buffer[3] << 8 | buffer[2];
@@ -1038,6 +1067,7 @@ esp_err_t MPU::motion(raw_axes_t* accel, raw_axes_t* gyro, raw_axes_t* mag)
  * */
 esp_err_t MPU::sensors(raw_axes_t* accel, raw_axes_t* gyro, int16_t* temp)
 {
+    uint8_t buffer[14];
     if (MPU_ERR_CHECK(readBytes(regs::ACCEL_XOUT_H, 14, buffer))) return err;
     accel->x = buffer[0] << 8 | buffer[1];
     accel->y = buffer[2] << 8 | buffer[3];
@@ -1100,8 +1130,9 @@ esp_err_t MPU::setAuxVDDIOLevel(auxvddio_lvl_t level)
  */
 auxvddio_lvl_t MPU::getAuxVDDIOLevel()
 {
-    MPU_ERR_CHECK(readBit(regs::YG_OTP_OFFSET_TC, regs::TC_PWR_MODE_BIT, buffer));
-    return (auxvddio_lvl_t) buffer[0];
+    uint8_t data;
+    MPU_ERR_CHECK(readBit(regs::YG_OTP_OFFSET_TC, regs::TC_PWR_MODE_BIT, &data));
+    return (auxvddio_lvl_t) data;
 }
 #endif
 
@@ -1111,18 +1142,19 @@ auxvddio_lvl_t MPU::getAuxVDDIOLevel()
  */
 esp_err_t MPU::setInterruptConfig(int_config_t config)
 {
-    if (MPU_ERR_CHECK(readByte(regs::INT_PIN_CONFIG, buffer))) return err;
+    uint8_t data;
+    if (MPU_ERR_CHECK(readByte(regs::INT_PIN_CONFIG, &data))) return err;
     // zero the bits we're setting, but keep the others we're not setting as they are;
     constexpr uint8_t INT_PIN_CONFIG_BITMASK = (1 << regs::INT_CFG_LEVEL_BIT) | (1 << regs::INT_CFG_OPEN_BIT) |
                                                (1 << regs::INT_CFG_LATCH_EN_BIT) |
                                                (1 << regs::INT_CFG_ANYRD_2CLEAR_BIT);
-    buffer[0] &= ~INT_PIN_CONFIG_BITMASK;
+    data &= ~INT_PIN_CONFIG_BITMASK;
     // set the configurations
-    buffer[0] |= config.level << regs::INT_CFG_LEVEL_BIT;
-    buffer[0] |= config.drive << regs::INT_CFG_OPEN_BIT;
-    buffer[0] |= config.mode << regs::INT_CFG_LATCH_EN_BIT;
-    buffer[0] |= config.clear << regs::INT_CFG_ANYRD_2CLEAR_BIT;
-    return MPU_ERR_CHECK(writeByte(regs::INT_PIN_CONFIG, buffer[0]));
+    data |= config.level << regs::INT_CFG_LEVEL_BIT;
+    data |= config.drive << regs::INT_CFG_OPEN_BIT;
+    data |= config.mode << regs::INT_CFG_LATCH_EN_BIT;
+    data |= config.clear << regs::INT_CFG_ANYRD_2CLEAR_BIT;
+    return MPU_ERR_CHECK(writeByte(regs::INT_PIN_CONFIG, data));
 }
 
 /**
@@ -1130,12 +1162,13 @@ esp_err_t MPU::setInterruptConfig(int_config_t config)
  */
 int_config_t MPU::getInterruptConfig()
 {
-    MPU_ERR_CHECK(readByte(regs::INT_PIN_CONFIG, buffer));
+    uint8_t data;
+    MPU_ERR_CHECK(readByte(regs::INT_PIN_CONFIG, &data));
     int_config_t config{};
-    config.level = (int_lvl_t)((buffer[0] >> regs::INT_CFG_LEVEL_BIT) & 0x1);
-    config.drive = (int_drive_t)((buffer[0] >> regs::INT_CFG_OPEN_BIT) & 0x1);
-    config.mode  = (int_mode_t)((buffer[0] >> regs::INT_CFG_LATCH_EN_BIT) & 0x1);
-    config.clear = (int_clear_t)((buffer[0] >> regs::INT_CFG_ANYRD_2CLEAR_BIT) & 0x1);
+    config.level = (int_lvl_t)((data >> regs::INT_CFG_LEVEL_BIT) & 0x1);
+    config.drive = (int_drive_t)((data >> regs::INT_CFG_OPEN_BIT) & 0x1);
+    config.mode  = (int_mode_t)((data >> regs::INT_CFG_LATCH_EN_BIT) & 0x1);
+    config.clear = (int_clear_t)((data >> regs::INT_CFG_ANYRD_2CLEAR_BIT) & 0x1);
     return config;
 }
 
@@ -1153,8 +1186,9 @@ esp_err_t MPU::setInterruptEnabled(int_en_t mask)
  */
 int_en_t MPU::getInterruptEnabled()
 {
-    MPU_ERR_CHECK(readByte(regs::INT_ENABLE, buffer));
-    return (int_en_t) buffer[0];
+    uint8_t enabled;
+    MPU_ERR_CHECK(readByte(regs::INT_ENABLE, &enabled));
+    return (int_en_t) enabled;
 }
 
 /**
@@ -1164,8 +1198,9 @@ int_en_t MPU::getInterruptEnabled()
  */
 int_stat_t MPU::getInterruptStatus()
 {
-    MPU_ERR_CHECK(readByte(regs::INT_STATUS, buffer));
-    return (int_stat_t) buffer[0];
+    uint8_t status;
+    MPU_ERR_CHECK(readByte(regs::INT_STATUS, &status));
+    return (int_stat_t) status;
 }
 
 /**
@@ -1186,8 +1221,9 @@ esp_err_t MPU::setFIFOMode(fifo_mode_t mode)
  */
 fifo_mode_t MPU::getFIFOMode()
 {
-    MPU_ERR_CHECK(readBit(regs::CONFIG, regs::CONFIG_FIFO_MODE_BIT, buffer));
-    return (fifo_mode_t) buffer[0];
+    uint8_t mode;
+    MPU_ERR_CHECK(readBit(regs::CONFIG, regs::CONFIG_FIFO_MODE_BIT, &mode));
+    return (fifo_mode_t) mode;
 }
 
 /**
@@ -1204,6 +1240,7 @@ esp_err_t MPU::setFIFOConfig(fifo_config_t config)
  */
 fifo_config_t MPU::getFIFOConfig()
 {
+    uint8_t buffer[2];
     MPU_ERR_CHECK(readBytes(regs::FIFO_EN, 2, buffer));
     fifo_config_t config = buffer[0];
     config |= (buffer[1] & (1 << mpud::regs::I2CMST_CTRL_SLV_3_FIFO_EN_BIT)) << 3;
@@ -1223,8 +1260,9 @@ esp_err_t MPU::setFIFOEnabled(bool enable)
  */
 bool MPU::getFIFOEnabled()
 {
-    MPU_ERR_CHECK(readBit(regs::USER_CTRL, regs::USERCTRL_FIFO_EN_BIT, buffer));
-    return buffer[0];
+    uint8_t enable;
+    MPU_ERR_CHECK(readBit(regs::USER_CTRL, regs::USERCTRL_FIFO_EN_BIT, &enable));
+    return enable;
 }
 
 /**
@@ -1244,6 +1282,7 @@ esp_err_t MPU::resetFIFO()
  * */
 uint16_t MPU::getFIFOCount()
 {
+    uint8_t buffer[2];
     MPU_ERR_CHECK(readBytes(regs::FIFO_COUNT_H, 2, buffer));
     uint16_t count = buffer[0] << 8 | buffer[1];
     return count;
@@ -1273,16 +1312,17 @@ esp_err_t MPU::writeFIFO(size_t length, const uint8_t* data)
 esp_err_t MPU::setAuxI2CConfig(const auxi2c_config_t& config)
 {
     // TODO: check compass enabled, to constrain sample_delay which defines the compass read sample
+    uint8_t data;
     // rate
-    if (MPU_ERR_CHECK(readBit(regs::I2C_MST_CTRL, regs::I2CMST_CTRL_SLV_3_FIFO_EN_BIT, buffer))) {
+    if (MPU_ERR_CHECK(readBit(regs::I2C_MST_CTRL, regs::I2CMST_CTRL_SLV_3_FIFO_EN_BIT, &data))) {
         return err;
     }
-    buffer[0] <<= regs::I2CMST_CTRL_SLV_3_FIFO_EN_BIT;
-    buffer[0] |= config.multi_master_en << regs::I2CMST_CTRL_MULT_EN_BIT;
-    buffer[0] |= config.wait_for_es << regs::I2CMST_CTRL_WAIT_FOR_ES_BIT;
-    buffer[0] |= config.transition << regs::I2CMST_CTRL_P_NSR_BIT;
-    buffer[0] |= config.clock;
-    if (MPU_ERR_CHECK(writeByte(regs::I2C_MST_CTRL, buffer[0]))) return err;
+    data <<= regs::I2CMST_CTRL_SLV_3_FIFO_EN_BIT;
+    data |= config.multi_master_en << regs::I2CMST_CTRL_MULT_EN_BIT;
+    data |= config.wait_for_es << regs::I2CMST_CTRL_WAIT_FOR_ES_BIT;
+    data |= config.transition << regs::I2CMST_CTRL_P_NSR_BIT;
+    data |= config.clock;
+    if (MPU_ERR_CHECK(writeByte(regs::I2C_MST_CTRL, data))) return err;
     if (MPU_ERR_CHECK(writeBits(regs::I2C_SLV4_CTRL, regs::I2C_SLV4_MST_DELAY_BIT, regs::I2C_SLV4_MST_DELAY_LENGTH,
                                 config.sample_delay))) {
         return err;
@@ -1303,6 +1343,7 @@ esp_err_t MPU::setAuxI2CConfig(const auxi2c_config_t& config)
  */
 auxi2c_config_t MPU::getAuxI2CConfig()
 {
+    uint8_t buffer[3];
     MPU_ERR_CHECK(readByte(regs::I2C_MST_CTRL, buffer));
     auxi2c_config_t config{};
     config.multi_master_en = buffer[0] >> regs::I2CMST_CTRL_MULT_EN_BIT;
@@ -1334,6 +1375,7 @@ esp_err_t MPU::setAuxI2CEnabled(bool enable)
  */
 bool MPU::getAuxI2CEnabled()
 {
+    uint8_t buffer[2];
     MPU_ERR_CHECK(readBit(regs::USER_CTRL, regs::USERCTRL_I2C_MST_EN_BIT, buffer));
     MPU_ERR_CHECK(readBit(regs::INT_PIN_CONFIG, regs::INT_CFG_I2C_BYPASS_EN_BIT, buffer + 1));
     return buffer[0] && (!buffer[1]);
@@ -1344,6 +1386,7 @@ bool MPU::getAuxI2CEnabled()
  * */
 esp_err_t MPU::setAuxI2CSlaveConfig(const auxi2c_slv_config_t& config)
 {
+    uint8_t buffer[3];
     // slaves' config registers are grouped as 3 regs in a row
     const uint8_t regAddr = config.slave * 3 + regs::I2C_SLV0_ADDR;
     // data for regs::I2C_SLVx_ADDR
@@ -1384,6 +1427,7 @@ esp_err_t MPU::setAuxI2CSlaveConfig(const auxi2c_slv_config_t& config)
  */
 auxi2c_slv_config_t MPU::getAuxI2CSlaveConfig(auxi2c_slv_t slave)
 {
+    uint8_t buffer[5];
     auxi2c_slv_config_t config;
     const uint8_t regAddr = slave * 3 + regs::I2C_SLV0_ADDR;
     config.slave          = slave;
@@ -1420,9 +1464,10 @@ esp_err_t MPU::setAuxI2CSlaveEnabled(auxi2c_slv_t slave, bool enable)
  */
 bool MPU::getAuxI2CSlaveEnabled(auxi2c_slv_t slave)
 {
+    uint8_t data;
     const uint8_t regAddr = slave * 3 + regs::I2C_SLV0_CTRL;
-    MPU_ERR_CHECK(readBit(regAddr, regs::I2C_SLV_EN_BIT, buffer));
-    return buffer[0];
+    MPU_ERR_CHECK(readBit(regAddr, regs::I2C_SLV_EN_BIT, &data));
+    return data;
 }
 
 /**
@@ -1459,6 +1504,7 @@ esp_err_t MPU::setAuxI2CBypass(bool enable)
  */
 bool MPU::getAuxI2CBypass()
 {
+    uint8_t buffer[2];
     MPU_ERR_CHECK(readBit(regs::USER_CTRL, regs::USERCTRL_I2C_MST_EN_BIT, buffer));
     MPU_ERR_CHECK(readBit(regs::INT_PIN_CONFIG, regs::INT_CFG_I2C_BYPASS_EN_BIT, buffer + 1));
     return (!buffer[0]) && buffer[1];
@@ -1516,8 +1562,9 @@ esp_err_t MPU::restartAuxI2C()
  * */
 auxi2c_stat_t MPU::getAuxI2CStatus()
 {
-    MPU_ERR_CHECK(readByte(regs::I2C_MST_STATUS, buffer));
-    return (auxi2c_stat_t) buffer[0];
+    uint8_t status;
+    MPU_ERR_CHECK(readByte(regs::I2C_MST_STATUS, &status));
+    return (auxi2c_stat_t) status;
 }
 
 /**
@@ -1536,6 +1583,7 @@ auxi2c_stat_t MPU::getAuxI2CStatus()
  * */
 esp_err_t MPU::auxI2CWriteByte(uint8_t devAddr, uint8_t regAddr, const uint8_t data)
 {
+    uint8_t buffer[4];
     // check for Aux I2C master enabled first
     const bool kAuxI2CEnabled = getAuxI2CEnabled();
     if (MPU_ERR_CHECK(lastError())) return err;
@@ -1553,7 +1601,7 @@ esp_err_t MPU::auxI2CWriteByte(uint8_t devAddr, uint8_t regAddr, const uint8_t d
     // write configuration above to slave 4 registers
     if (MPU_ERR_CHECK(writeBytes(regs::I2C_SLV4_ADDR, 3, buffer))) return err;
     // clear status register before enable this transfer
-    if (MPU_ERR_CHECK(readByte(regs::I2C_MST_STATUS, buffer + 15))) return err;
+    if (MPU_ERR_CHECK(readByte(regs::I2C_MST_STATUS, buffer + 3))) return err;
     // enable transfer in slave 4
     if (MPU_ERR_CHECK(writeBit(regs::I2C_SLV4_CTRL, regs::I2C_SLV4_EN_BIT, 1))) return err;
     // check status until transfer is done
@@ -1595,6 +1643,7 @@ esp_err_t MPU::auxI2CWriteByte(uint8_t devAddr, uint8_t regAddr, const uint8_t d
  * */
 esp_err_t MPU::auxI2CReadByte(uint8_t devAddr, uint8_t regAddr, uint8_t* data)
 {
+    uint8_t buffer[4];
     // check for Aux I2C master enabled first
     const bool kAuxI2CEnabled = getAuxI2CEnabled();
     if (MPU_ERR_CHECK(lastError())) return err;
@@ -1610,7 +1659,7 @@ esp_err_t MPU::auxI2CReadByte(uint8_t devAddr, uint8_t regAddr, uint8_t* data)
     // write configuration above to slave 4 registers
     if (MPU_ERR_CHECK(writeBytes(regs::I2C_SLV4_ADDR, 2, buffer))) return err;
     // clear status register before enable this transfer
-    if (MPU_ERR_CHECK(readByte(regs::I2C_MST_STATUS, buffer + 15))) return err;
+    if (MPU_ERR_CHECK(readByte(regs::I2C_MST_STATUS, buffer + 3))) return err;
     // enable transfer in slave 4
     if (MPU_ERR_CHECK(writeBit(regs::I2C_SLV4_CTRL, regs::I2C_SLV4_EN_BIT, 1))) return err;
     // check status until transfer is done
@@ -1650,8 +1699,9 @@ esp_err_t MPU::setFsyncConfig(int_lvl_t level)
  */
 int_lvl_t MPU::getFsyncConfig()
 {
-    MPU_ERR_CHECK(readBit(regs::INT_PIN_CONFIG, regs::INT_CFG_FSYNC_LEVEL_BIT, buffer));
-    return (int_lvl_t) buffer[0];
+    uint8_t data;
+    MPU_ERR_CHECK(readBit(regs::INT_PIN_CONFIG, regs::INT_CFG_FSYNC_LEVEL_BIT, &data));
+    return (int_lvl_t) data;
 }
 
 /**
@@ -1677,8 +1727,9 @@ esp_err_t MPU::setFsyncEnabled(bool enable)
  */
 bool MPU::getFsyncEnabled()
 {
-    MPU_ERR_CHECK(readBit(regs::INT_PIN_CONFIG, regs::INT_CFG_FSYNC_INT_MODE_EN_BIT, buffer));
-    return buffer[0];
+    uint8_t data;
+    MPU_ERR_CHECK(readBit(regs::INT_PIN_CONFIG, regs::INT_CFG_FSYNC_INT_MODE_EN_BIT, &data));
+    return (bool) data;
 }
 
 /**
@@ -1824,8 +1875,9 @@ esp_err_t MPU::compassTestConnection()
  * */
 uint8_t MPU::compassWhoAmI()
 {
-    MPU_ERR_CHECK(compassReadByte(regs::mag::WHO_I_AM, buffer));
-    return buffer[0];
+    uint8_t data;
+    MPU_ERR_CHECK(compassReadByte(regs::mag::WHO_I_AM, &data));
+    return data;
 }
 
 /**
@@ -1833,8 +1885,9 @@ uint8_t MPU::compassWhoAmI()
  * */
 uint8_t MPU::compassGetInfo()
 {
-    MPU_ERR_CHECK(compassReadByte(regs::mag::INFO, buffer));
-    return buffer[0];
+    uint8_t data;
+    MPU_ERR_CHECK(compassReadByte(regs::mag::INFO, &data));
+    return data;
 }
 
 /**
@@ -1945,8 +1998,9 @@ mag_mode_t MPU::compassGetMode()
         // otherwise, get directly from the magnetometer register
     }
     else {
-        MPU_ERR_CHECK(compassReadByte(regs::mag::CONTROL1, buffer));
-        mode = (mag_mode_t)(buffer[0] & 0xF);
+        uint8_t data;
+        MPU_ERR_CHECK(compassReadByte(regs::mag::CONTROL1, &data));
+        mode = (mag_mode_t)(data & 0xF);
     }
     return mode;
 }
@@ -1973,6 +2027,7 @@ esp_err_t MPU::compassGetAdjustment(uint8_t* x, uint8_t* y, uint8_t* z)
  */
 bool MPU::compassSelfTest(raw_axes_t* result)
 {
+    uint8_t buffer[8];
     bool ret            = true;
     mag_mode_t prevMode = compassGetMode();
     if (MPU_ERR_CHECK(lastError())) return err;
@@ -2066,8 +2121,9 @@ mag_sensy_t MPU::compassGetSensitivity()
         // otherwise, get directly
     }
     else {
-        MPU_ERR_CHECK(compassReadByte(regs::mag::CONTROL1, buffer));
-        sensy = (mag_sensy_t)((buffer[0] >> regs::mag::CONTROL1_BIT_OUTPUT_BIT) & 0x1);
+        uint8_t data;
+        MPU_ERR_CHECK(compassReadByte(regs::mag::CONTROL1, &data));
+        sensy = (mag_sensy_t)((data >> regs::mag::CONTROL1_BIT_OUTPUT_BIT) & 0x1);
     }
     return sensy;
 }
@@ -2189,6 +2245,7 @@ esp_err_t MPU::accelSelfTest(raw_axes_t& regularBias, raw_axes_t& selfTestBias, 
     /* Get OTP production shift code */
     uint8_t shiftCode[3];
 #if defined CONFIG_MPU6050
+    uint8_t buffer[4];
     if (MPU_ERR_CHECK(readBytes(regs::SELF_TEST_X, 4, buffer))) return err;
     shiftCode[0] = ((buffer[0] & 0xE0) >> 3) | ((buffer[3] & 0x30) >> 4);
     shiftCode[1] = ((buffer[1] & 0xE0) >> 3) | ((buffer[3] & 0x0C) >> 2);
@@ -2282,6 +2339,7 @@ esp_err_t MPU::gyroSelfTest(raw_axes_t& regularBias, raw_axes_t& selfTestBias, u
     /* Get OTP production shift code */
     uint8_t shiftCode[3];
 #if defined CONFIG_MPU6050
+    uint8_t buffer[3];
     if (MPU_ERR_CHECK(readBytes(regs::SELF_TEST_X, 3, buffer))) return err;
     shiftCode[0] = buffer[0] & 0x1F;
     shiftCode[1] = buffer[1] & 0x1F;

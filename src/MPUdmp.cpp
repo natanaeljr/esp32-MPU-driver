@@ -73,8 +73,9 @@ esp_err_t MPUdmp::disableDMP()
  */
 bool MPUdmp::getDMPEnabled()
 {
-    MPU_ERR_CHECK(readBit(regs::USER_CTRL, regs::USERCTRL_DMP_EN_BIT, buffer));
-    return (bool) buffer[0];
+    uint8_t data;
+    MPU_ERR_CHECK(readBit(regs::USER_CTRL, regs::USERCTRL_DMP_EN_BIT, &data));
+    return (bool) data;
 }
 
 /**
@@ -86,15 +87,16 @@ bool MPUdmp::getDMPEnabled()
  */
 esp_err_t MPUdmp::resetDMP()
 {
-    if (MPU_ERR_CHECK(readByte(regs::USER_CTRL, buffer))) return err;
-    const bool prevState = buffer[0] & regs::USERCTRL_DMP_EN_BIT;
-    buffer[0] &= ~(regs::USERCTRL_DMP_EN_BIT);  // zero DMP_EN_BIT
-    buffer[0] |= regs::USERCTRL_DMP_RESET_BIT;  // set DMP_RESET_BIT
-    if (MPU_ERR_CHECK(writeByte(regs::USER_CTRL, buffer[0]))) return err;
+    uint8_t data;
+    if (MPU_ERR_CHECK(readByte(regs::USER_CTRL, &data))) return err;
+    const bool prevState = data & regs::USERCTRL_DMP_EN_BIT;
+    data &= ~(regs::USERCTRL_DMP_EN_BIT);  // zero DMP_EN_BIT
+    data |= regs::USERCTRL_DMP_RESET_BIT;  // set DMP_RESET_BIT
+    if (MPU_ERR_CHECK(writeByte(regs::USER_CTRL, data))) return err;
     vTaskDelay(50 / portTICK_PERIOD_MS);
     if (prevState) {
-        buffer[0] |= (1 << regs::USERCTRL_DMP_EN_BIT);  // set DMP_EN_BIT
-        if (MPU_ERR_CHECK(writeByte(regs::USER_CTRL, buffer[0]))) return err;
+        data |= (1 << regs::USERCTRL_DMP_EN_BIT);  // set DMP_EN_BIT
+        if (MPU_ERR_CHECK(writeByte(regs::USER_CTRL, data))) return err;
     }
     return err = ESP_OK;
 }
@@ -113,7 +115,7 @@ esp_err_t MPUdmp::loadDMPFirmware()
         // write this chunk
         if (MPU_ERR_CHECK(writeMemory(addr, length, &kDMPMemory[addr]))) return err;
         // read chunk back to verify
-        buffer[kMemoryChunkSize] = {0};
+        uint8_t buffer[kMemoryChunkSize] = {0};
         if (MPU_ERR_CHECK(readMemory(addr, length, buffer))) return err;
         // compare read chunk against this DMP code chunk
         if (memcmp(&kDMPMemory[addr], buffer, length) != 0) {
@@ -124,6 +126,7 @@ esp_err_t MPUdmp::loadDMPFirmware()
         MPU_LOGVMSG("done", " chunk: %d, length: %d, left: %d", addr, length, codeLeft - length);
         addr += length;
     }
+    uint8_t buffer[2];
     buffer[0] = kProgramStartAddress >> 8;
     buffer[1] = kProgramStartAddress & 0xFF;
     if (MPU_ERR_CHECK(writeBytes(regs::PRGM_START_H, 2, buffer))) return err;
@@ -142,6 +145,7 @@ esp_err_t MPUdmp::loadDMPFirmware()
  */
 esp_err_t MPUdmp::writeMemory(uint16_t memAddr, uint8_t length, const uint8_t* data)
 {
+    uint8_t buffer[2];
     buffer[0] = memAddr >> 8;
     buffer[1] = memAddr & 0xFF;
     // check bank boundaries
@@ -167,6 +171,7 @@ esp_err_t MPUdmp::writeMemory(uint16_t memAddr, uint8_t length, const uint8_t* d
  */
 esp_err_t MPUdmp::readMemory(uint16_t memAddr, uint8_t length, uint8_t* data)
 {
+    uint8_t buffer[2];
     buffer[0] = memAddr >> 8;
     buffer[1] = memAddr & 0xFF;
     // check bank boundaries
@@ -207,14 +212,12 @@ esp_err_t MPUdmp::setDMPFeatures(dmp_feature_t features)
 
     /* Temporary */
     // TODO: Implement and remove
-    // if (features & DMP_FEATURE_TAP) {
-    //     MPU_LOGWMSG("TAP not yet supported", "");
-    //     features &= ~(dmp_feature_t)(DMP_FEATURE_TAP);
-    // }
-    // if (features & DMP_FEATURE_ANDROID_ORIENT) {
-    //     MPU_LOGWMSG("ANDROID_ORIENT not yet supported", "");
-    //     features &= ~(dmp_feature_t)(DMP_FEATURE_ANDROID_ORIENT);
-    // }
+    if (features & DMP_FEATURE_TAP) {
+        MPU_LOGWMSG("TAP not yet fully supported", "");
+    }
+    if (features & DMP_FEATURE_ANDROID_ORIENT) {
+        MPU_LOGWMSG("ANDROID_ORIENT not yet fully supported", "");
+    }
 
     uint8_t buffer[10];
 
@@ -313,7 +316,7 @@ esp_err_t MPUdmp::setDMPFeatures(dmp_feature_t features)
     if (MPU_ERR_CHECK(lastError())) return err;
 
     // Update FIFO packet length
-    updatePacketLength();
+    this->packetLength = getDMPPacketLength();
 
     return err = ESP_OK;
 }
@@ -384,6 +387,7 @@ esp_err_t MPUdmp::setTapConfig(const dmp_tap_config_t& config)
         return err = ESP_ERR_INVALID_ARG;
     }
 
+    uint8_t buffer[4];
     const accel_fs_t kAccelFS = getAccelFullScale();
     if (MPU_ERR_CHECK(lastError())) return err;
     const uint16_t kAccelSensitivity = math::accelSensitivity(kAccelFS);
@@ -475,8 +479,9 @@ esp_err_t MPUdmp::setDMPOutputRate(uint16_t rate)
     }
     // calculate and write rate divider to DMP
     const uint16_t divider = kDMPSampleRate / rate - 1;
-    buffer[0]              = (divider >> 8) & 0xFF;
-    buffer[1]              = (divider & 0xFF);
+    uint8_t buffer[2];
+    buffer[0] = (divider >> 8) & 0xFF;
+    buffer[1] = (divider & 0xFF);
     if (MPU_ERR_CHECK(writeMemory(D_0_22, 2, buffer))) return err;
     if (MPU_ERR_CHECK(writeMemory(CFG_6, 12, kRegsEnd))) return err;
 
@@ -559,25 +564,126 @@ esp_err_t MPUdmp::setOrientation(uint16_t orient)
 }
 
 /**
- * @brief Calculate and Set the Packet Length field
+ * @brief Return the DMP Packet Length based on DMP active features.
+ * If `otherFeatures` parameter is passed, it will compute and return the packet length
+ * for this `otherFeatures`, instead of current active features in the DMP. *
+ * @param otherFeature Optional paramater. Other features to compute the packet length.
  */
-void MPUdmp::updatePacketLength()
+uint8_t MPUdmp::getDMPPacketLength(dmp_feature_t otherFeatures)
 {
-    this->packetLength = 0;
-    if (enabledFeatures & DMP_FEATURE_ANY_LP_QUAT) packetLength += 16;
-    if (enabledFeatures & DMP_FEATURE_SEND_RAW_ACCEL) packetLength += 6;
-    if (enabledFeatures & DMP_FEATURE_SEND_ANY_GYRO) packetLength += 6;
-    if (enabledFeatures & (DMP_FEATURE_TAP | DMP_FEATURE_ANDROID_ORIENT)) packetLength += 4;
+    if (otherFeatures == 0) return this->packetLength;
+
+    uint8_t otherPacketLength = 0;
+    if (otherFeatures & DMP_FEATURE_ANY_LP_QUAT) packetLength += 16;
+    if (otherFeatures & DMP_FEATURE_SEND_RAW_ACCEL) packetLength += 6;
+    if (otherFeatures & DMP_FEATURE_SEND_ANY_GYRO) packetLength += 6;
+    if (otherFeatures & (DMP_FEATURE_TAP | DMP_FEATURE_ANDROID_ORIENT)) packetLength += 4;
+    return otherPacketLength;
 }
 
 /**
- * @brief Read DMP output data from FIFO.
- *
- * @param accel
- * @param gyro
- * @param quat
+ * @brief Return the Packet Index of a certain feature.
+ * @param feature Single Feature to get index of. Multiple ORed features not allowed.
+ * @return
+ *  - `int8_t > 0`: If feature enabled and it does sends data to FIFO.
+ *  - `int8_t = -1`: If feature not enabled and/or it does not send data to FIFO.
  */
-esp_err_t MPUdmp::readDMPData(raw_axes_t* accel, raw_axes_t* gyro, quaternion_t* quat)
+int8_t MPUdmp::getPacketIndex(dmp_feature_t feature)
+{
+    int8_t index = 0;
+    if (enabledFeatures & DMP_FEATURE_ANY_LP_QUAT){
+        if (feature & DMP_FEATURE_ANY_LP_QUAT) return index;
+        index += 16;
+    }
+    if (enabledFeatures & DMP_FEATURE_SEND_RAW_ACCEL) {
+        if (feature & DMP_FEATURE_SEND_RAW_ACCEL) return index;
+        index += 6;
+    }
+    if (enabledFeatures & DMP_FEATURE_SEND_ANY_GYRO) {
+        if (feature & DMP_FEATURE_SEND_ANY_GYRO) return index;
+        index += 6;
+    }
+    if (enabledFeatures & (DMP_FEATURE_TAP | DMP_FEATURE_ANDROID_ORIENT)) {
+        if (feature & (DMP_FEATURE_TAP | DMP_FEATURE_ANDROID_ORIENT)) return index;
+        index += 4;
+    }
+    return -1;
+}
+
+/**
+ * @brief Return the Quaternion data from a DMP Packet.
+ * Features `3X_LP_QUAT` or `6X_LP_QUAT` must be enabled.
+ * @param fifoPacket DMP Packet got from FIFO.
+ * @param quat Quaternion data.
+ * @return esp_err_t
+ */
+esp_err_t MPUdmp::getDMPQuaternion(const uint8_t* fifoPacket, quaternion_t* quat)
+{
+    const int8_t index = getPacketIndex(enabledFeatures & DMP_FEATURE_ANY_LP_QUAT);
+    if (index < 0) {
+        MPU_LOGEMSG(msgs::DMP_FEATURE_NOT_EN, "");
+        return err = ESP_FAIL;
+    }
+    const uint8_t* data = fifoPacket + index;
+
+    quat->x = (data[0] << 24) | (data[1] << 16) | (data[2] << 8) | (data[3]);
+    quat->y = (data[4] << 24) | (data[5] << 16) | (data[6] << 8) | (data[7]);
+    quat->z = (data[8] << 24) | (data[9] << 16) | (data[10] << 8) | (data[11]);
+    quat->w = (data[12] << 24) | (data[13] << 16) | (data[14] << 8) | (data[15]);
+#if defined CONFIG_MPU_FIFO_CORRUPTION_CHECK
+    // TODO
+#endif
+    return err = ESP_OK;
+}
+
+/**
+ * @brief Return the Accelerometer raw data from a DMP Packet.
+ * Feature `SEND_RAW_ACCEL` must be enabled.
+ * @param fifoPacket DMP Packet got from FIFO.
+ * @param accel Accelerometer raw data.
+ */
+esp_err_t MPUdmp::getDMPAccel(const uint8_t* fifoPacket, raw_axes_t* accel)
+{
+    const int8_t index = getPacketIndex(DMP_FEATURE_SEND_RAW_ACCEL);
+    if (index < 0) {
+        MPU_LOGEMSG(msgs::DMP_FEATURE_NOT_EN, "");
+        return err = ESP_FAIL;
+    }
+    const uint8_t* data = fifoPacket + index;
+
+    accel->x = (data[0] << 8) | (data[1]);
+    accel->y = (data[2] << 8) | (data[3]);
+    accel->z = (data[4] << 8) | (data[5]);
+
+    return err = ESP_OK;
+}
+
+/**
+ * @brief Return the Gyroscope raw data from a DMP Packet.
+ * Features `SEND_RAW_GYRO` or `SEND_CAL_GYRO` must be enabled.
+ * @param fifoPacket DMP Packet got from FIFO
+ * @param accel Gyroscope raw or calibrated data, depending on enabled feature.
+ */
+esp_err_t MPUdmp::getDMPGyro(const uint8_t* fifoPacket, raw_axes_t* gyro)
+{
+    const int8_t index = getPacketIndex(DMP_FEATURE_SEND_ANY_GYRO);
+    if (index < 0) {
+        MPU_LOGEMSG(msgs::DMP_FEATURE_NOT_EN, "");
+        return err = ESP_FAIL;
+    }
+    const uint8_t* data = fifoPacket + index;
+
+    gyro->x = (data[0] << 8) | (data[1]);
+    gyro->y = (data[2] << 8) | (data[3]);
+    gyro->z = (data[4] << 8) | (data[5]);
+
+    return err = ESP_OK;
+}
+
+/**
+ * @brief Read DMP output data from FIFO directly.
+ */
+esp_err_t MPUdmp::readDMPData(quaternion_t* quat, raw_axes_t* gyro, raw_axes_t* accel)
 {
     uint8_t fifo[kDMPMaxPacketLength] = {0};
     if (MPU_ERR_CHECK(readFIFO(packetLength, fifo))) return err;

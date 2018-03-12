@@ -14,6 +14,7 @@
 
 #include "MPU.hpp"
 #include "dmp/types.hpp"
+#include "mpu/types.hpp"
 
 #if !defined CONFIG_MPU_ENABLE_DMP
 #warning ''You must enable the option DMP in \
@@ -32,9 +33,16 @@ typedef mpud::MPUdmp MPUdmp_t;
 namespace mpud
 {
 /*! MPU with Digital Motion Processing interface */
-class MPUdmp : public mpud::MPU
+class MPUdmp : public MPU
 {
  public:
+    //! \name Constructors / Destructor
+    //! \{
+    MPUdmp();
+    explicit MPUdmp(mpu_bus_t& bus);
+    MPUdmp(mpu_bus_t& bus, mpu_addr_handle_t addr);
+    ~MPUdmp();
+    //! \}
     //! \name Setup
     //! \{
     esp_err_t loadDMPFirmware();
@@ -53,11 +61,14 @@ class MPUdmp : public mpud::MPU
     esp_err_t setTapAxisEnabled(dmp_tap_axis_t axes);
     dmp_feature_t getDMPFeatures();
     //! \}
-    //! \name Packet
+    //! \name Data
     //! \{
-    esp_err_t readDMPData(raw_axes_t* accel, raw_axes_t* gyro, quaternion_t* quat);
-    uint8_t getDMPPacketLength();
+    uint8_t getDMPPacketLength(dmp_feature_t otherFeatures = 0);
+    esp_err_t getDMPQuaternion(const uint8_t* fifoPacket, quaternion_t* quat);
+    esp_err_t getDMPAccel(const uint8_t* fifoPacket, raw_axes_t* accel);
+    esp_err_t getDMPGyro(const uint8_t* fifoPacket, raw_axes_t* gyro);
     //! \}
+    esp_err_t readDMPData(quaternion_t* quat, raw_axes_t* gyro, raw_axes_t* accel);
 
  protected:
     esp_err_t setGyroCalFeature(bool enable);
@@ -66,7 +77,7 @@ class MPUdmp : public mpud::MPU
 
     esp_err_t writeMemory(uint16_t memAddr, uint8_t length, const uint8_t* data);
     esp_err_t readMemory(uint16_t memAddr, uint8_t length, uint8_t* data);
-    void updatePacketLength();
+    int8_t getPacketIndex(dmp_feature_t feature);
 
     uint8_t packetLength;          /*! DMP Packet length, depends on enabled features */
     dmp_feature_t enabledFeatures; /*! Current enabled Features */
@@ -79,15 +90,29 @@ class MPUdmp : public mpud::MPU
 // ==============
 namespace mpud
 {
+/*! Default Constructor. */
+inline MPUdmp::MPUdmp() : MPUdmp(MPU_DEFAULT_BUS){};
+/**
+ * @brief Contruct a MPUdmp in the given communication bus.
+ * @param bus Bus protocol object of type `I2Cbus` or `SPIbus`.
+ */
+inline MPUdmp::MPUdmp(mpu_bus_t& bus) : MPUdmp(bus, MPU_DEFAULT_ADDR_HANDLE) {}
+/**
+ * @brief Construct a MPUdmp in the given communication bus and address.
+ * @param bus Bus protocol object of type `I2Cbus` or `SPIbus`.
+ * @param addr I2C address (`mpu_i2caddr_t`) or SPI device handle (`spi_device_handle_t`).
+ */
+inline MPUdmp::MPUdmp(mpu_bus_t& bus, mpu_addr_handle_t addr)
+  : MPU(bus, addr), packetLength{0}, enabledFeatures{DMP_FEATURE_NONE}
+{
+}
+/*! Default Destructor, does nothing. */
+inline MPUdmp::~MPUdmp() = default;
+
 /*! Return current enabled DMP Features */
 inline dmp_feature_t MPUdmp::getDMPFeatures()
 {
     return this->enabledFeatures;
-}
-/*! Return DMP Packet Length */
-inline uint8_t MPUdmp::getDMPPacketLength()
-{
-    return this->packetLength;
 }
 
 }  // namespace mpud

@@ -165,12 +165,6 @@ TEST_CASE("DMP output data rate test", "[MPU][DMP]")
     TEST_ESP_OK(mpu.testConnection());
     TEST_ESP_OK(mpu.initialize());
     TEST_ESP_OK(mpu.loadDMPFirmware());
-    const int8_t orientation[] = {
-        1, 0, 0,  //
-        0, 1, 0,  // XYZ
-        0, 0, 1   //
-    };
-    TEST_ESP_OK(mpu.setOrientation(mpud::math::orientationMatrixToScalar(orientation)));
     /* Invalid rate/state check */
     TEST_ESP_OK(mpu.setDMPOutputRate(0));
     TEST_ESP_OK(mpu.setDMPOutputRate(201));
@@ -180,20 +174,24 @@ TEST_CASE("DMP output data rate test", "[MPU][DMP]")
     TEST_ESP_OK(mpu.setDMPOutputRate(57));
     TEST_ESP_OK(mpu.setDMPOutputRate(-1));
     /** ODR measurement */
+    const int8_t orientation[] = {
+        1, 0, 0,  //
+        0, 1, 0,  // XYZ
+        0, 0, 1   //
+    };
+    TEST_ESP_OK(mpu.setOrientation(mpud::math::orientationMatrixToScalar(orientation)));
     constexpr mpud::dmp_feature_t features =
         (mpud::DMP_FEATURE_SEND_RAW_ACCEL | mpud::DMP_FEATURE_SEND_CAL_GYRO | mpud::DMP_FEATURE_ANDROID_ORIENT |
          mpud::DMP_FEATURE_TAP | mpud::DMP_FEATURE_GYRO_CAL | mpud::DMP_FEATURE_LP_6X_QUAT |
          mpud::DMP_FEATURE_PEDOMETER);
     TEST_ESP_OK(mpu.setDMPFeatures(features));
     TEST_ASSERT_EQUAL_HEX(features, mpu.getDMPFeatures());
-
-    TEST_ESP_OK(mpu.enableDMP());
-    
     TEST_ESP_OK(mpu.setDMPInterruptMode(mpud::DMP_INT_MODE_CONTINUOUS));
     TEST_ESP_OK(mpu.setInterruptEnabled(mpud::INT_EN_DMP_READY));
+    TEST_ESP_OK(mpu.enableDMP());
 
     constexpr int numOfSamples = 1;
-    constexpr uint16_t rates[] = {200, 100, 10};  // 1, 5, 10, 50, 100, 200
+    constexpr uint16_t rates[] = {1, 5, 10, 50, 100, 200};
     for (auto rate : rates) {
         TEST_ESP_OK(mpu.setDMPOutputRate(rate));
         test::mpuMeasureInterruptRate(mpu, rate, numOfSamples);
