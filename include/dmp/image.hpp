@@ -17,15 +17,11 @@
 #define _DMP_IMAGE_HPP_
 
 #include <stdint.h>
+#include "dmp/defines.hpp"
 
-static constexpr uint8_t kMemoryBankNum        = 12;    /*!< Memory number of Banks */
-static constexpr uint8_t kMemoryChunkSize      = 16;    /*!< Memory Chunk size */
-static constexpr uint16_t kMemoryBankSize      = 256;   /*!< Memory Bank size */
-static constexpr uint16_t kDMPCodeSize         = 3062;  /*!< DMP Code size */
-static constexpr uint16_t kDMPSampleRate       = 200;   /*!< DMP Sample Rate: 200Hz */
-static constexpr uint16_t kProgramStartAddress = 0x400; /*!< DMP program start address */
-static constexpr uint8_t kDMPMaxPacketLength   = 32;    /*!< DMP maximum Packet Length */
-
+/*! MPU Driver namespace */
+namespace mpud
+{
 /*! DMP image */
 static constexpr uint8_t kDMPMemory[kDMPCodeSize] = {
     /* bank # 0 */
@@ -233,5 +229,7 @@ static constexpr uint8_t kDMPMemory[kDMPCodeSize] = {
     0xac, 0xde, 0x80, 0x92, 0xa2, 0xf2, 0x4c, 0x82, 0xa8, 0xf1, 0xca, 0xf2, 0x35, 0xf1, 0x96, 0x88,
     0xa6, 0xd9, 0x00, 0xd8, 0xf1, 0xff
 };
+
+}  // namespace mpud
 
 #endif  /* end of include guard: _DMP_IMAGE_HPP_ */

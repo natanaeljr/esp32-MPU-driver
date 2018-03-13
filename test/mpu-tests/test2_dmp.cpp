@@ -32,6 +32,7 @@
 
 #include "MPU.hpp"
 #include "MPUdmp.hpp"
+#include "dmp/defines.hpp"
 #include "dmp/image.hpp"
 #include "dmp/types.hpp"
 #include "mpu/math.hpp"
@@ -111,14 +112,14 @@ TEST_CASE("DMP firmware loading", "[MPU][DMP]")
     TEST_ESP_OK(mpu.initialize());
     TEST_ESP_OK(mpu.loadDMPFirmware());
     /* Check if the loaded DMP memory matches DMP image */
-    uint8_t buffer[kDMPCodeSize];
+    uint8_t buffer[mpud::kDMPCodeSize];
     uint16_t addr = 0;  // chunk start address
-    while (addr < kDMPCodeSize) {
-        const uint8_t length = min(kDMPCodeSize - addr, kMemoryChunkSize);
+    while (addr < mpud::kDMPCodeSize) {
+        const uint8_t length = min(mpud::kDMPCodeSize - addr, mpud::kMemoryChunkSize);
         TEST_ESP_OK(mpu.readMemory(addr, length, &buffer[addr]));
         addr += length;
     }
-    TEST_ASSERT_EQUAL_HEX8_ARRAY(kDMPMemory, buffer, kDMPCodeSize);
+    TEST_ASSERT_EQUAL_HEX8_ARRAY(mpud::kDMPMemory, buffer, mpud::kDMPCodeSize);
     printf("> DMP firmware verified!\n");
 }
 

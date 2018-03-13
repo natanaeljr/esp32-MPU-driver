@@ -39,7 +39,7 @@ typedef uint16_t dmp_feature_t;
 static constexpr dmp_feature_t DMP_FEATURE_NONE           = {0x000};  //!< Disable all Features
 static constexpr dmp_feature_t DMP_FEATURE_TAP            = {0x001};  //!< Tap Gesture Recognition
 static constexpr dmp_feature_t DMP_FEATURE_ANDROID_ORIENT = {0x002};  //!< Orientation Gesture Recognition
-static constexpr dmp_feature_t DMP_FEATURE_PEDOMETER      = {0x008};  //!< Pedometer Gesture Recognition. !**Always Enabled**!
+static constexpr dmp_feature_t DMP_FEATURE_PEDOMETER      = {0x008};  //!< Pedometer Gesture Recognition. Always Enabled
 static constexpr dmp_feature_t DMP_FEATURE_LP_3X_QUAT     = {0x004};  //!< Low-Power 3-axis (Gyro only) Quaternions
 static constexpr dmp_feature_t DMP_FEATURE_LP_6X_QUAT     = {0x010};  //!< Low-Power 6 axis (Gyro and Accel) Quaternions
 static constexpr dmp_feature_t DMP_FEATURE_GYRO_CAL       = {0x020};  //!< Constant Gyroscope Calibration
@@ -78,13 +78,28 @@ typedef struct
 } dmp_tap_config_t;
 
 /*! Quaternion struct */
-typedef struct
+template <class T>
+struct Quaternion
 {
-    int32_t x;
-    int32_t y;
-    int32_t z;
-    int32_t w;
-} quaternion_t;
+    union
+    {
+        T wxyz[4];
+        struct
+        {
+            T w;
+            T x;
+            T y;
+            T z;
+        };
+    };
+    Quaternion() : w{1}, x{0}, y{0}, z{0} {}
+    Quaternion(T w, T x, T y, T z) : w{w}, x{x}, y{y}, z{z} {}
+    T& operator[](int i) { return wxyz[i]; }
+    const T& operator[](int i) const { return wxyz[i]; }
+};
+/* Readymade Quaternion types */
+typedef Quaternion<int32_t> quat_q30_t;  //!< Quaternion in q30 fixed point.
+typedef Quaternion<float> quat_t;        //!< Quaternion in floating point (float) format.
 
 }  // namespace types
 

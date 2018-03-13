@@ -64,11 +64,11 @@ class MPUdmp : public MPU
     //! \name Data
     //! \{
     uint8_t getDMPPacketLength(dmp_feature_t otherFeatures = 0);
-    esp_err_t getDMPQuaternion(const uint8_t* fifoPacket, quaternion_t* quat);
+    esp_err_t getDMPQuaternion(const uint8_t* fifoPacket, quat_q30_t* quat);
     esp_err_t getDMPAccel(const uint8_t* fifoPacket, raw_axes_t* accel);
     esp_err_t getDMPGyro(const uint8_t* fifoPacket, raw_axes_t* gyro);
+    esp_err_t readDMPPacket(quat_q30_t* quat, raw_axes_t* gyro, raw_axes_t* accel);
     //! \}
-    esp_err_t readDMPData(quaternion_t* quat, raw_axes_t* gyro, raw_axes_t* accel);
 
  protected:
     esp_err_t setGyroCalFeature(bool enable);
@@ -79,8 +79,8 @@ class MPUdmp : public MPU
     esp_err_t readMemory(uint16_t memAddr, uint8_t length, uint8_t* data);
     int8_t getPacketIndex(dmp_feature_t feature);
 
-    uint8_t packetLength;          /*! DMP Packet length, depends on enabled features */
-    dmp_feature_t enabledFeatures; /*! Current enabled Features */
+    uint8_t packetLength;          /*!< DMP Packet length, depends on enabled features */
+    dmp_feature_t enabledFeatures; /*!< Current enabled Features */
 };
 
 }  // namespace mpud
@@ -103,7 +103,7 @@ inline MPUdmp::MPUdmp(mpu_bus_t& bus) : MPUdmp(bus, MPU_DEFAULT_ADDR_HANDLE) {}
  * @param addr I2C address (`mpu_i2caddr_t`) or SPI device handle (`spi_device_handle_t`).
  */
 inline MPUdmp::MPUdmp(mpu_bus_t& bus, mpu_addr_handle_t addr)
-  : MPU(bus, addr), packetLength{0}, enabledFeatures{DMP_FEATURE_PEDOMETER}
+  : MPU(bus, addr), packetLength{0}, enabledFeatures{DMP_FEATURE_NONE}
 {
 }
 /*! Default Destructor, does nothing. */

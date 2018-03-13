@@ -16,6 +16,18 @@
 #ifndef _DMP_DEFINES_HPP_
 #define _DMP_DEFINES_HPP_
 
+/*! MPU Driver namespace */
+namespace mpud
+{
+static constexpr uint8_t kMemoryBankNum        = 12;    /*!< Memory number of Banks */
+static constexpr uint8_t kMemoryChunkSize      = 16;    /*!< Memory Chunk size */
+static constexpr uint16_t kMemoryBankSize      = 256;   /*!< Memory Bank size */
+static constexpr uint16_t kDMPCodeSize         = 3062;  /*!< DMP Code size */
+static constexpr uint16_t kDMPSampleRate       = 200;   /*!< DMP Sample Rate: 200Hz */
+static constexpr uint16_t kProgramStartAddress = 0x400; /*!< DMP program start address */
+static constexpr uint8_t kDMPMaxPacketLength   = 32;    /*!< DMP maximum Packet Length */
+}  // namepsace mpud
+
 /* These defines are copied from dmpDefaultMPU6050.c in the general MPL
  * releases. These defines may change for each DMP image, so be sure to modify
  * these values when switching to a new image.

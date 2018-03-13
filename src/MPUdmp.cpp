@@ -36,21 +36,24 @@ static const char* TAG = CONFIG_MPU_CHIP_MODEL;
 namespace mpud
 {
 /* CONSTANTS */
-static constexpr uint32_t kGyroScaleFactor               = (46850825UL * 200 / kDMPSampleRate);
+static constexpr size_t kGyroScaleFactor                 = (46850825 * (200 / kDMPSampleRate));
 static constexpr dmp_feature_t DMP_FEATURE_SEND_ANY_GYRO = (DMP_FEATURE_SEND_RAW_GYRO | DMP_FEATURE_SEND_CAL_GYRO);
 static constexpr dmp_feature_t DMP_FEATURE_ANY_LP_QUAT   = (DMP_FEATURE_LP_3X_QUAT | DMP_FEATURE_LP_6X_QUAT);
 
 /**
  * @brief Activate the DMP.
- * @attention
- *   The DMP image must already have been pushed to memory with loadDMPFirware().
- * @warning
- *   This function sets the Sample Rate to 200 Hz which is the default DMP operation rate.
- *   Cannot be changed while DMP enabled. Use setDMPOutputRate() to change DMP Output Rate to FIFO.
+ * The DMP image must already have been pushed to memory with loadDMPFirmware().
+ * @note
+ *  - This function sets the Sample Rate to 200 Hz which is the default DMP operation rate.
+ *    Cannot be changed while DMP enabled. Use setDMPOutputRate() to change DMP Output Rate to FIFO.
+ *  - This function enables the FIFO, and sets Accel FSR to 2G, Gyro FSR to 2000 DPS.
+ *    These configs cannot be changed while DMP enabled.
  */
 esp_err_t MPUdmp::enableDMP()
 {
     if (MPU_ERR_CHECK(setSampleRate(kDMPSampleRate))) return err;
+    if (MPU_ERR_CHECK(setAccelFullScale(ACCEL_FS_2G))) return err;
+    if (MPU_ERR_CHECK(setGyroFullScale(GYRO_FS_2000DPS))) return err;
     if (MPU_ERR_CHECK(setFIFOEnabled(true))) return err;
     if (MPU_ERR_CHECK(writeBit(regs::USER_CTRL, regs::USERCTRL_DMP_EN_BIT, 0x1))) return err;
     MPU_LOGI("DMP activated");
@@ -190,14 +193,14 @@ esp_err_t MPUdmp::readMemory(uint16_t memAddr, uint8_t length, uint8_t* data)
 /**
  * @brief Enable DMP Features
  * @note
- *  - DMP_FEATURE_LP_QUAT and DMP_FEATURE_6X_LP_QUAT are mutually exclusive.
- *  - DMP_FEATURE_SEND_RAW_GYRO and DMP_FEATURE_SEND_CAL_GYRO are also mutually exclusive.
- *  - DMP_FEATURE_PEDOMETER is always enabled.
- * @param features Combined (`ORed`) features to enable.
+ *  - `DMP_FEATURE_LP_QUAT` and `DMP_FEATURE_6X_LP_QUAT` are mutually exclusive.
+ *  - `DMP_FEATURE_SEND_RAW_GYRO` and `DMP_FEATURE_SEND_CAL_GYRO` are also mutually exclusive.
+ *  - `DMP_FEATURE_PEDOMETER` is always enabled.
+ * @param features Combined _(ORed)_ features to enable.
  * @todo Implement rest of the features
  * @return
  *  - `ESP_ERR_INVALID_ARG`: Invalid set of features, see note.
- *  - `I2C/SPI` default read/write errors.
+ *  - I2C/SPI default read/write errors.
  */
 esp_err_t MPUdmp::setDMPFeatures(dmp_feature_t features)
 {
@@ -311,7 +314,7 @@ esp_err_t MPUdmp::setDMPFeatures(dmp_feature_t features)
     /* Pedometer is always enabled. */
     this->enabledFeatures = features | DMP_FEATURE_PEDOMETER;
 
-    // Clean FIFO buffer
+    // Clean FIFO an INT_STATUS
     if (MPU_ERR_CHECK(resetFIFO())) return err;
     this->getInterruptStatus();
     if (MPU_ERR_CHECK(lastError())) return err;
@@ -346,12 +349,15 @@ esp_err_t MPUdmp::setGyroCalFeature(bool enable)
  */
 esp_err_t MPUdmp::setLP3xQuatFeature(bool enable)
 {
-    uint8_t buffer[4] = {0x8B};  // 0x8B -> disable
+    uint8_t buffer[4];
     if (enable) {
         buffer[0] = DINBC0;
         buffer[1] = DINBC2;
         buffer[2] = DINBC4;
         buffer[3] = DINBC6;
+    }
+    else {
+        memset(buffer, 0x8B, 4);  // 0x8B -> disable
     }
     return MPU_ERR_CHECK(writeMemory(CFG_LP_QUAT, 4, buffer));
 }
@@ -362,12 +368,15 @@ esp_err_t MPUdmp::setLP3xQuatFeature(bool enable)
  */
 esp_err_t MPUdmp::setLP6xQuatFeature(bool enable)
 {
-    uint8_t buffer[4] = {0xA3};  // 0xA3 -> disable
+    uint8_t buffer[4];
     if (enable) {
         buffer[0] = DINA20;
         buffer[1] = DINA28;
         buffer[2] = DINA30;
         buffer[3] = DINA38;
+    }
+    else {
+        memset(buffer, 0xA3, 4);  // 0xA3 -> disable
     }
     return MPU_ERR_CHECK(writeMemory(CFG_8, 4, buffer));
 }
@@ -592,7 +601,7 @@ uint8_t MPUdmp::getDMPPacketLength(dmp_feature_t otherFeatures)
 int8_t MPUdmp::getPacketIndex(dmp_feature_t feature)
 {
     int8_t index = 0;
-    if (enabledFeatures & DMP_FEATURE_ANY_LP_QUAT){
+    if (enabledFeatures & DMP_FEATURE_ANY_LP_QUAT) {
         if (feature & DMP_FEATURE_ANY_LP_QUAT) return index;
         index += 16;
     }
@@ -618,7 +627,7 @@ int8_t MPUdmp::getPacketIndex(dmp_feature_t feature)
  * @param quat Quaternion data.
  * @return esp_err_t
  */
-esp_err_t MPUdmp::getDMPQuaternion(const uint8_t* fifoPacket, quaternion_t* quat)
+esp_err_t MPUdmp::getDMPQuaternion(const uint8_t* fifoPacket, quat_q30_t* quat)
 {
     const int8_t index = getPacketIndex(enabledFeatures & DMP_FEATURE_ANY_LP_QUAT);
     if (index < 0) {
@@ -627,10 +636,10 @@ esp_err_t MPUdmp::getDMPQuaternion(const uint8_t* fifoPacket, quaternion_t* quat
     }
     const uint8_t* data = fifoPacket + index;
 
-    quat->x = (data[0] << 24) | (data[1] << 16) | (data[2] << 8) | (data[3]);
-    quat->y = (data[4] << 24) | (data[5] << 16) | (data[6] << 8) | (data[7]);
-    quat->z = (data[8] << 24) | (data[9] << 16) | (data[10] << 8) | (data[11]);
-    quat->w = (data[12] << 24) | (data[13] << 16) | (data[14] << 8) | (data[15]);
+    quat->w = (data[0] << 24) | (data[1] << 16) | (data[2] << 8) | (data[3]);
+    quat->x = (data[4] << 24) | (data[5] << 16) | (data[6] << 8) | (data[7]);
+    quat->y = (data[8] << 24) | (data[9] << 16) | (data[10] << 8) | (data[11]);
+    quat->z = (data[12] << 24) | (data[13] << 16) | (data[14] << 8) | (data[15]);
 #if defined CONFIG_MPU_FIFO_CORRUPTION_CHECK
     // TODO
 #endif
@@ -682,37 +691,36 @@ esp_err_t MPUdmp::getDMPGyro(const uint8_t* fifoPacket, raw_axes_t* gyro)
 }
 
 /**
- * @brief Read DMP output data from FIFO directly.
+ * @brief Read DMP output data (single packet) from FIFO directly.
  */
-esp_err_t MPUdmp::readDMPData(quaternion_t* quat, raw_axes_t* gyro, raw_axes_t* accel)
+esp_err_t MPUdmp::readDMPPacket(quat_q30_t* quat, raw_axes_t* gyro, raw_axes_t* accel)
 {
-    uint8_t i = 0;
-    uint8_t data[kDMPMaxPacketLength] = {0};
+    uint8_t* data = (uint8_t*) alloca(kDMPMaxPacketLength);
     if (MPU_ERR_CHECK(readFIFO(packetLength, data))) return err;
 
     if (enabledFeatures & DMP_FEATURE_ANY_LP_QUAT) {
-        quat->x = (data[0] << 24) | (data[1] << 16) | (data[2] << 8) | (data[3]);
-        quat->y = (data[4] << 24) | (data[5] << 16) | (data[6] << 8) | (data[7]);
-        quat->z = (data[8] << 24) | (data[9] << 16) | (data[10] << 8) | (data[11]);
-        quat->w = (data[12] << 24) | (data[13] << 16) | (data[14] << 8) | (data[15]);
-        i += 16;
+        quat->w = (data[0] << 24) | (data[1] << 16) | (data[2] << 8) | (data[3]);
+        quat->x = (data[4] << 24) | (data[5] << 16) | (data[6] << 8) | (data[7]);
+        quat->y = (data[8] << 24) | (data[9] << 16) | (data[10] << 8) | (data[11]);
+        quat->z = (data[12] << 24) | (data[13] << 16) | (data[14] << 8) | (data[15]);
+        data += 16;
 #if defined CONFIG_MPU_FIFO_CORRUPTION_CHECK
         // TODO
 #endif
     }
 
     if (enabledFeatures & DMP_FEATURE_SEND_RAW_ACCEL) {
-        accel->x = (data[0 + i] << 8) | (data[1 + i]);
-        accel->y = (data[2 + i] << 8) | (data[3 + i]);
-        accel->z = (data[4 + i] << 8) | (data[5 + i]);
-        i += 6;
+        accel->x = (data[0] << 8) | (data[1]);
+        accel->y = (data[2] << 8) | (data[3]);
+        accel->z = (data[4] << 8) | (data[5]);
+        data += 6;
     }
 
     if (enabledFeatures & DMP_FEATURE_SEND_ANY_GYRO) {
-        gyro->x = (data[0 + i] << 8) | (data[1 + i]);
-        gyro->y = (data[2 + i] << 8) | (data[3 + i]);
-        gyro->z = (data[4 + i] << 8) | (data[5 + i]);
-        i += 6;
+        gyro->x = (data[0] << 8) | (data[1]);
+        gyro->y = (data[2] << 8) | (data[3]);
+        gyro->z = (data[4] << 8) | (data[5]);
+        data += 6;
     }
 
     /* Gesture data is at the end of the DMP packet. Parse it and call
