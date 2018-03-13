@@ -793,14 +793,20 @@ WARN_LOGFILE           = doxygen-warning-log.txt
 
 INPUT                  = mainpage.dox \
                          ../../include/MPU.hpp \
-                         ../../include/MPUdmp.hpp \
                          ../../include/mpu/types.hpp \
                          ../../include/mpu/registers.hpp \
                          ../../include/mpu/math.hpp \
                          ../../include/mpu/utils.hpp \
                          ../../include/mpu/log.hpp \
+                         ../../include/MPUdmp.hpp \
+                         ../../include/dmp/defines.hpp \
+                         ../../include/dmp/image.hpp \
+                         ../../include/dmp/keys.hpp \
+                         ../../include/dmp/map.hpp \
+                         ../../include/dmp/types.hpp \
                          ../../src/MPU.cpp \
-                         ../../src/MPUdmp.cpp
+                         ../../src/MPUdmp.cpp \
+                         ../../src/math.cpp
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding. Doxygen uses
