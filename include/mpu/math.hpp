@@ -14,6 +14,7 @@
 
 #include <math.h>
 #include <stdint.h>
+#include "dmp/types.hpp"
 #include "mpu/types.hpp"
 #include "sdkconfig.h"
 
@@ -130,32 +131,76 @@ inline int16_t magAdjust(const int16_t axis, const uint8_t adjValue)
 }
 #endif
 
-inline uint16_t orientationMatrixToScalar(const int8_t* matrix)
+/**
+ * @brief Convert Orientation Matrix to Scalar.
+ */
+uint16_t orientationMatrixToScalar(const int8_t* matrix);
+
+inline float q30_to_float(int32_t q30)
 {
-    auto rowToScale = [](const int8_t* row) {
-        uint16_t b;
-        if (row[0] > 0)
-            b = 0;
-        else if (row[0] < 0)
-            b = 4;
-        else if (row[1] > 0)
-            b = 1;
-        else if (row[1] < 0)
-            b = 5;
-        else if (row[2] > 0)
-            b = 2;
-        else if (row[2] < 0)
-            b = 6;
-        else
-            b = 7;  // error
-        return b;
-    };
-    uint16_t scalar = 0;
-    scalar |= rowToScale(matrix);
-    scalar |= rowToScale(matrix + 3) << 3;
-    scalar |= rowToScale(matrix + 6) << 6;
-    return scalar;
+    return (float) q30 / ((float) (1 << 30));
 }
+
+inline double q30_to_double(int32_t q30)
+{
+    return (double) q30 / ((double) (1 << 30));
+}
+
+inline float q16_to_float(int32_t q16)
+{
+    return (float) q16 / (1 << 16);
+}
+
+inline double q16_to_double(int32_t q16)
+{
+    return (double) q16 / (1 << 16);
+}
+
+/**
+ * Performs a multiply and shift by 29.
+ */
+inline int32_t q29_multiply(int32_t a, int32_t b)
+{
+#if true
+    int32_t result;
+    result = (int32_t)((float) a * b / (1L << 29));
+    return result;
+#else
+    int64_t temp;
+    int32_t result;
+    temp   = (int64_t) a * b;
+    result = (int32_t)(temp >> 29);
+    return result;
+#endif
+}
+
+inline quat_t q30_to_float(const quat_q30_t& quatQ30)
+{
+    quat_t quatFloat;
+    quatFloat.w = q30_to_float(quatQ30.w);
+    quatFloat.x = q30_to_float(quatQ30.x);
+    quatFloat.y = q30_to_float(quatQ30.y);
+    quatFloat.z = q30_to_float(quatQ30.z);
+    return quatFloat;
+}
+
+inline float_axes_t q16_to_float(const axes_q16_t& eulerQ16)
+{
+    float_axes_t eulerFloat;
+    eulerFloat.x = q16_to_float(eulerQ16.x);
+    eulerFloat.y = q16_to_float(eulerQ16.y);
+    eulerFloat.z = q16_to_float(eulerQ16.z);
+    return eulerFloat;
+}
+
+/**
+ *  @brief Body-to-world frame euler angles.
+ *  The euler angles are output with the following convention:
+ *  Pitch: -180 to 180
+ *  Roll: -90 to 90
+ *  Yaw: -180 to 180
+ */
+axes_q16_t quaternionToEuler(const quat_q30_t& quat);
 
 }  // namespace math
 
