@@ -30,11 +30,13 @@ typedef enum {  //
 static constexpr mpu_i2caddr_t MPU_DEFAULT_I2CADDRESS = MPU_I2CADDRESS_AD0_LOW;
 
 #ifdef CONFIG_MPU_I2C
+#include "I2Cbus.hpp"
 typedef I2C_t mpu_bus_t;                 /*!< Communication bus type, `I2Cbus` or `SPIbus`. */
 typedef mpu_i2caddr_t mpu_addr_handle_t; /*!< MPU Address/Handle type, `mpu_i2caddr_t` or `spi_device_handle_t` */
 static constexpr mpu_bus_t& MPU_DEFAULT_BUS                = i2c0;
 static constexpr mpu_addr_handle_t MPU_DEFAULT_ADDR_HANDLE = MPU_DEFAULT_I2CADDRESS;
 #elif CONFIG_MPU_SPI
+#include "SPIbus.hpp"
 typedef SPI_t mpu_bus_t;
 typedef spi_device_handle_t mpu_addr_handle_t;
 static constexpr mpu_bus_t& MPU_DEFAULT_BUS                = hspi;
@@ -447,24 +449,28 @@ static constexpr fifo_config_t FIFO_CFG_COMPASS = (FIFO_CFG_SLAVE0);  // 8 bytes
 #endif
 
 /*! Generic axes struct to store sensors' data */
-template <class type_t>
-struct axes_t
+template <class T>
+struct Axes
 {
     union
     {
-        type_t xyz[3] = {0};
+        T xyz[3];
         struct
         {
-            type_t x;
-            type_t y;
-            type_t z;
+            T x;
+            T y;
+            T z;
         };
     };
-    type_t& operator[](int i) { return xyz[i]; }
+    Axes() : x{0}, y{0}, z{0} {}
+    Axes(T x, T y, T z) : x{x}, y{y}, z{z} {}
+    T& operator[](int i) { return xyz[i]; }
+    const T& operator[](int i) const { return xyz[i]; }
 };
-// Ready-to-use axes types
-typedef axes_t<int16_t> raw_axes_t;  //!< Axes type to hold gyroscope, accelerometer, magnetometer raw data.
-typedef axes_t<float> float_axes_t;  //!< Axes type to hold converted sensor data.
+/* Readymade axes types */
+typedef Axes<int16_t> raw_axes_t;  //!< Axes type to store gyroscope, accelerometer, magnetometer raw data.
+typedef Axes<float> float_axes_t;  //!< Axes type to store converted sensor data as float.
+typedef Axes<int32_t> axes_q16_t;  //!< Axes type in q16 fixed point format.
 
 /*! Sensors struct for fast reading all sensors at once */
 typedef struct

@@ -2444,7 +2444,7 @@ esp_err_t MPU::getBiases(accel_fs_t accelFS, gyro_fs_t gyroFS, raw_axes_t* accel
         if (MPU_ERR_CHECK(readFIFO(overrunCount, buffer))) return err;
     }
     // fetch data and add up
-    axes_t<int> accelAvg, gyroAvg;
+    Axes<int> accelAvg, gyroAvg;
     for (int i = 0; i < packetCount; i++) {
         if (MPU_ERR_CHECK(readFIFO(kPacketSize, buffer))) return err;
         // retrieve data
