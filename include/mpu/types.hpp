@@ -348,7 +348,10 @@ static constexpr auxi2c_stat_t AUXI2C_STAT_SLV0_NACK = (1 << regs::I2CMST_STAT_S
 
 #if defined CONFIG_MPU9150 || (defined CONFIG_MPU6050 && !defined CONFIG_MPU6000)
 /*! Auxiliary I2C bus VDDIO level [MPU6050 / MPU9150 only] */
-typedef enum { AUXVDDIO_LVL_VLOGIC = 0, AUXVDDIO_LVL_VDD = 1 } auxvddio_lvl_t;
+typedef enum {  //
+    AUXVDDIO_LVL_VLOGIC = 0,
+    AUXVDDIO_LVL_VDD    = 1
+} auxvddio_lvl_t;
 #endif
 
 /*! Interrupt active level */
@@ -506,18 +509,18 @@ typedef enum {
 
 /*! Magnetometer sensor status 1 */
 typedef uint8_t mag_stat1_t;
-static constexpr mag_stat1_t MAG_STAT1_DATA_RDY = {1 << regs::mag::STATUS1_DATA_RDY_BIT};
+static constexpr mag_stat1_t MAG_STAT1_DATA_RDY = (1 << regs::mag::STATUS1_DATA_RDY_BIT);
 #ifdef CONFIG_MPU_AK8963
-static constexpr mag_stat1_t MAG_STAT1_DATA_OVERRUN = {1 << regs::mag::STATUS1_DATA_OVERRUN_BIT};
+static constexpr mag_stat1_t MAG_STAT1_DATA_OVERRUN = (1 << regs::mag::STATUS1_DATA_OVERRUN_BIT);
 #endif
 
 /*! Magnetometer sensor status 2 */
 typedef uint8_t mag_stat2_t;
-static constexpr mag_stat2_t MAG_STAT2_SENSOR_OVERFLOW = {1 << regs::mag::STATUS2_OVERFLOW_BIT};
+static constexpr mag_stat2_t MAG_STAT2_SENSOR_OVERFLOW = (1 << regs::mag::STATUS2_OVERFLOW_BIT);
 #ifdef CONFIG_MPU_AK8963
-static constexpr mag_stat2_t MAG_STAT2_BIT_OUTPUT_SETTING = {1 << regs::mag::STATUS2_BIT_OUTPUT_M_BIT};
+static constexpr mag_stat2_t MAG_STAT2_BIT_OUTPUT_SETTING = (1 << regs::mag::STATUS2_BIT_OUTPUT_M_BIT);
 #elif CONFIG_MPU_AK8975
-static constexpr mag_stat2_t MAG_STAT2_DATA_ERROR{1 << regs::mag::STATUS2_DATA_ERROR_BIT};
+static constexpr mag_stat2_t MAG_STAT2_DATA_ERROR = (1 << regs::mag::STATUS2_DATA_ERROR_BIT);
 #endif
 
 #ifdef CONFIG_MPU_AK8963

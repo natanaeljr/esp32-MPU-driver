@@ -262,7 +262,7 @@ class MPU
 namespace mpud
 {
 /*! Default Constructor. */
-inline MPU::MPU() : MPU(MPU_DEFAULT_BUS){};
+inline MPU::MPU() : MPU(MPU_DEFAULT_BUS) {}
 /**
  * @brief Contruct a MPU in the given communication bus.
  * @param bus Bus protocol object of type `I2Cbus` or `SPIbus`.

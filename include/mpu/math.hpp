@@ -98,17 +98,17 @@ inline float_axes_t gyroRadPerSec(const raw_axes_t& raw_axes, const gyro_fs_t fs
 }
 
 #if defined CONFIG_MPU6500 || defined CONFIG_MPU9250
-constexpr int16_t kRoomTempOffset = 0;        // LSB
-constexpr float kCelsiusOffset    = 21.f;     // ºC
-constexpr float kTempSensitivity  = 333.87f;  // LSB/ºC
+static constexpr int16_t kRoomTempOffset = 0;        // LSB
+static constexpr float kCelsiusOffset    = 21.f;     // ºC
+static constexpr float kTempSensitivity  = 333.87f;  // LSB/ºC
 #elif defined CONFIG_MPU6000 || defined CONFIG_MPU6050 || defined CONFIG_MPU9150
-constexpr int16_t kRoomTempOffset = -521;   // LSB
-constexpr float kCelsiusOffset    = 35.f;   // ºC
-constexpr float kTempSensitivity  = 340.f;  // LSB/ºC
+static constexpr int16_t kRoomTempOffset = -521;   // LSB
+static constexpr float kCelsiusOffset    = 35.f;   // ºC
+static constexpr float kTempSensitivity  = 340.f;  // LSB/ºC
 #endif
 
-constexpr float kTempResolution   = 98.67f / INT16_MAX;
-constexpr float kFahrenheitOffset = kCelsiusOffset * 1.8f + 32;  // ºF
+static constexpr float kTempResolution   = 98.67f / INT16_MAX;
+static constexpr float kFahrenheitOffset = kCelsiusOffset * 1.8f + 32;  // ºF
 
 inline float tempCelsius(const int16_t temp)
 {
