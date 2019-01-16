@@ -1,0 +1,178 @@
+menu "MPU driver"
+
+#
+# Options defined in this menu
+#
+# CONFIG_MPU_CHIP_MODEL
+# CONFIG_MPU6000
+# CONFIG_MPU6050
+# CONFIG_MPU6500
+# CONFIG_MPU6555
+# CONFIG_MPU9150
+# CONFIG_MPU9250
+# CONFIG_MPU9255
+# CONFIG_MPU_AK8963
+# CONFIG_MPU_AK8975
+# CONFIG_MPU_AK89xx
+# CONFIG_MPU_COMM_PROTOCOL
+# CONFIG MPU_I2C
+# CONFIG MPU_SPI
+# CONFIG_MPU_ENABLE_DMP
+# CONFIG_MPU_FIFO_CORRUPTION_CHECK
+# CONFIG_MPU_LOG_LEVEL
+# CONFIG_MPU_LOG_LEVEL_DEFAULT
+# CONFIG_MPU_LOG_LEVEL_NONE
+# CONFIG_MPU_LOG_LEVEL_ERROR
+# CONFIG_MPU_LOG_LEVEL_WARN
+# CONFIG_MPU_LOG_LEVEL_INFO
+# CONFIG_MPU_LOG_LEVEL_DEBUG
+# CONFIG_MPU_LOG_LEVEL_VERBOSE
+#
+
+
+choice MPU_CHIP_MODEL
+    prompt "MPU chip model"
+    default MPU6050
+    help
+        Select MPU chip model which will be used with MPU library.
+
+config MPU6000
+    bool "MPU6000"
+config MPU6050
+    bool "MPU6050"
+config MPU6500
+    bool "MPU6500"
+config MPU6555
+    bool "MPU6555"
+config MPU9150
+    bool "MPU9150"
+config MPU9250
+    bool "MPU9250"
+config MPU9255
+    bool "MPU9255"
+
+endchoice
+
+
+config MPU_CHIP_MODEL
+    string
+    default "MPU6000" if MPU6000
+    default "MPU6050" if MPU6050
+    default "MPU6500" if MPU6500
+    default "MPU6555" if MPU6555
+    default "MPU9150" if MPU9150
+    default "MPU9250" if MPU9250
+    default "MPU9255" if MPU9255
+
+
+config MPU_AK8963
+    bool
+    default "y"
+    depends on MPU9250 || MPU9255
+
+config MPU_AK8975
+    bool
+    default "y"
+    depends on MPU9150
+
+config MPU_AK89xx
+    bool
+    default "y"
+    depends on MPU_AK8963 || MPU_AK8975
+
+
+choice MPU_COMM_PROTOCOL
+    prompt "Communication Protocol"
+    default MPU_I2C
+    help
+        Select MPU communication protocol. Available options are I2C and SPI, according to the MPU model.
+
+config MPU_I2C
+    bool "I2C"
+    help
+        Inter-Integrated Circuit (I2C)
+        
+config MPU_SPI
+    bool "SPI"
+    depends on MPU6000 || MPU6500 || MPU6555 || MPU9250 || MPU9255
+    help
+        Serial Peripheral Interface bus (SPI)
+
+endchoice
+
+
+config MPU_COMM_PROTOCOL
+    string
+    default "I2C" if MPU_I2C
+    default "SPI" if MPU_SPI
+
+
+choice MPU_LOG_LEVEL
+    prompt "Log verbosity"
+    default MPU_LOG_LEVEL_DEFAULT
+    help
+        Specify how much output to see in logs from MPU library.
+        Options depend on default log level, change on Log output.
+
+config MPU_LOG_LEVEL_DEFAULT
+    bool "Default"
+    help
+        Log level Default is whatever is set in default esp32 log output verbosity.
+
+config MPU_LOG_LEVEL_NONE
+    bool "No output"
+config MPU_LOG_LEVEL_ERROR
+    bool "Error"
+    depends on LOG_DEFAULT_LEVEL_ERROR || LOG_DEFAULT_LEVEL_WARN  || LOG_DEFAULT_LEVEL_INFO  || LOG_DEFAULT_LEVEL_DEBUG  || LOG_DEFAULT_LEVEL_VERBOSE
+config MPU_LOG_LEVEL_WARN
+    bool "Warning"
+    depends on LOG_DEFAULT_LEVEL_WARN  || LOG_DEFAULT_LEVEL_INFO  || LOG_DEFAULT_LEVEL_DEBUG || LOG_DEFAULT_LEVEL_VERBOSE
+config MPU_LOG_LEVEL_INFO
+    bool "Info"
+    depends on LOG_DEFAULT_LEVEL_INFO  || LOG_DEFAULT_LEVEL_DEBUG || LOG_DEFAULT_LEVEL_VERBOSE
+config MPU_LOG_LEVEL_DEBUG
+    bool "Debug"
+    depends on LOG_DEFAULT_LEVEL_DEBUG || LOG_DEFAULT_LEVEL_VERBOSE
+config MPU_LOG_LEVEL_VERBOSE
+    bool "Verbose"
+    depends on LOG_DEFAULT_LEVEL_VERBOSE
+
+endchoice
+
+config MPU_LOG_LEVEL
+    int
+    default 0 if MPU_LOG_LEVEL_NONE    || (MPU_LOG_LEVEL_DEFAULT && LOG_DEFAULT_LEVEL_NONE)
+    default 1 if MPU_LOG_LEVEL_ERROR   || (MPU_LOG_LEVEL_DEFAULT && LOG_DEFAULT_LEVEL_ERROR)
+    default 2 if MPU_LOG_LEVEL_WARN    || (MPU_LOG_LEVEL_DEFAULT && LOG_DEFAULT_LEVEL_WARN)
+    default 3 if MPU_LOG_LEVEL_INFO    || (MPU_LOG_LEVEL_DEFAULT && LOG_DEFAULT_LEVEL_INFO)
+    default 4 if MPU_LOG_LEVEL_DEBUG   || (MPU_LOG_LEVEL_DEFAULT && LOG_DEFAULT_LEVEL_DEBUG)
+    default 5 if MPU_LOG_LEVEL_VERBOSE || (MPU_LOG_LEVEL_DEFAULT && LOG_DEFAULT_LEVEL_VERBOSE)
+
+
+config MPU_ENABLE_DMP
+    bool "Digital Motion Processor (DMP)"
+    default "n"
+    help
+        Enable DMP (Digital Motion Processor) code to be compiled.
+
+# config MPU_FIFO_CORRUPTION_CHECK
+#     bool "Enable FIFO packet corruption check (DMP only)"
+#     depends on MPU_ENABLE_DMP
+#     default "y"
+#     help
+#         Check for corrupted FIFO packet by monitoring the quaternion data and
+#         ensuring that the magnitude is always normalized to one. This
+#         shouldn't happen in normal operation, but if an I2C error occurs,
+#         the FIFO reads might become misaligned.
+
+
+config MPU_LOG_ERROR_TRACES
+    bool "Log communication error traces"
+    depends on MPU_LOG_LEVEL > 0
+    default "y"
+    help
+        Display on console communication error traces that occur within MPU driver code.
+        Mostly for debugging.
+
+
+endmenu
