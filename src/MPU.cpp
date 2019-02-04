@@ -1026,8 +1026,8 @@ esp_err_t MPU::motion(raw_axes_t* accel, raw_axes_t* gyro, raw_axes_t* mag)
     gyro->y  = buffer[10] << 8 | buffer[11];
     gyro->z  = buffer[12] << 8 | buffer[13];
     mag->x   = buffer[16] << 8 | buffer[15];
-    mag->x   = buffer[18] << 8 | buffer[17];
-    mag->x   = buffer[20] << 8 | buffer[19];
+    mag->y   = buffer[18] << 8 | buffer[17];
+    mag->z   = buffer[20] << 8 | buffer[19];
     return err;
 }
 #endif  // AK89xx
